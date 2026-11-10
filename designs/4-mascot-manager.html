@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MyClaud Mascot manager</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+body{margin:0;background:#0B132B}
+a{color:#5BC0BE}a:hover{color:#F2F4F8}
+</style>
+</head>
+<body>
+<div style="min-height: 1340px; display: flex; flex-wrap: wrap; background: #0B132B; color: #F2F4F8; font-family: 'IBM Plex Mono', monospace; font-size: 14px; line-height: 1.5">
+
+<nav aria-label="Main" style="flex: 1 1 168px; box-sizing: border-box; background: #1C2541; border-right: 4px solid #3A506B; padding: 20px 12px; display: flex; flex-direction: column; gap: 10px">
+<div style="font-family: 'Press Start 2P', monospace; font-size: 13px; color: #5BC0BE; padding: 4px 8px 16px">MyClaud</div>
+<a href="1-inbox.html" style="display: flex; align-items: center; justify-content: space-between; min-height: 44px; box-sizing: border-box; padding: 0 10px; border: 4px solid #3A506B; color: #F2F4F8; font-family: 'Press Start 2P', monospace; font-size: 10px; text-decoration: none">INBOX<span style="background: #F2F4F8; color: #0B132B; padding: 4px 6px">1</span></a>
+<a href="3-agent-manager.html" style="display: flex; align-items: center; min-height: 44px; box-sizing: border-box; padding: 0 10px; border: 4px solid #3A506B; color: #F2F4F8; font-family: 'Press Start 2P', monospace; font-size: 10px; text-decoration: none">AGENTS</a>
+<a href="4-mascot-manager.html" aria-current="page" style="display: flex; align-items: center; min-height: 44px; box-sizing: border-box; padding: 0 10px; background: #5BC0BE; color: #0B132B; border: 4px solid #F2F4F8; box-shadow: 4px 4px 0 #000; font-family: 'Press Start 2P', monospace; font-size: 10px; text-decoration: none">MASCOTS</a>
+<div style="margin-top: auto; padding: 8px; font-size: 12px; color: #A9B6C6">Project<br><span style="color: #F2F4F8">my-app</span></div>
+</nav>
+
+<main style="flex: 999 1 560px; min-width: 0; box-sizing: border-box; padding: 20px 28px; display: flex; flex-wrap: wrap; gap: 28px; align-items: flex-start">
+
+<section aria-label="Mascot gallery" style="flex: 1 1 320px; min-width: 0; display: flex; flex-direction: column; gap: 16px">
+<h1 style="margin: 0; font-family: 'Press Start 2P', monospace; font-size: 14px">MASCOTS</h1>
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px">
+
+<div style="padding: 14px; background: #1C2541; border: 4px solid #F2F4F8; box-shadow: 4px 4px 0 #5BC0BE; display: flex; flex-direction: column; align-items: center; gap: 10px">
+<img src="mascot.png" alt="Default mascot" style="width: 128px; height: 128px; object-fit: cover; image-rendering: pixelated; background: #0B132B">
+<div style="font-weight: 600">Default mascot</div>
+<div style="font-size: 12px; color: #A9B6C6">5 of 5 loops</div>
+<div style="font-family: 'Press Start 2P', monospace; font-size: 8px; padding: 6px 8px; background: #5BC0BE; color: #0B132B">ACTIVE</div>
+</div>
+
+<div style="padding: 14px; border: 4px solid #3A506B; display: flex; flex-direction: column; align-items: center; gap: 10px">
+<svg width="128" height="128" viewBox="0 0 16 16" shape-rendering="crispEdges" role="img" aria-label="Bolt, a robot mascot" style="background: #1C2541"><path fill="#F2F4F8" d="M7 1h2v2H7z"></path><path fill="#5BC0BE" d="M4 3h8v7H4z"></path><path fill="#0B132B" d="M6 5h1v2H6zM9 5h1v2H9zM6 8h4v1H6z"></path><path fill="#3A506B" d="M5 11h6v3H5zM3 11h1v2H3zM12 11h1v2h-1z"></path></svg>
+<div style="font-weight: 600">Bolt</div>
+<div style="font-size: 12px; color: #A9B6C6">3 of 5 loops</div>
+<button type="button" style="min-height: 44px; padding: 0 10px; background: #0B132B; color: #F2F4F8; border: 4px solid #3A506B; font-family: 'Press Start 2P', monospace; font-size: 8px; cursor: pointer">SET ACTIVE</button>
+</div>
+
+<div style="padding: 14px; border: 4px solid #3A506B; display: flex; flex-direction: column; align-items: center; gap: 10px">
+<svg width="128" height="128" viewBox="0 0 16 16" shape-rendering="crispEdges" role="img" aria-label="Goo, a slime mascot" style="background: #1C2541"><path fill="#F2F4F8" d="M6 5h4v1H6zM5 6h6v1H5zM4 7h8v2H4zM3 9h10v4H3z"></path><path fill="#0B132B" d="M6 9h1v2H6zM9 9h1v2H9z"></path><path fill="#5BC0BE" d="M3 13h10v1H3z"></path></svg>
+<div style="font-weight: 600">Goo</div>
+<div style="font-size: 12px; color: #A9B6C6">1 of 5 loops</div>
+<button type="button" style="min-height: 44px; padding: 0 10px; background: #0B132B; color: #F2F4F8; border: 4px solid #3A506B; font-family: 'Press Start 2P', monospace; font-size: 8px; cursor: pointer">SET ACTIVE</button>
+</div>
+
+<button type="button" style="min-height: 240px; padding: 14px; background: #0B132B; color: #5BC0BE; border: 4px dashed #5BC0BE; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; font-family: 'Press Start 2P', monospace; font-size: 10px; cursor: pointer"><span style="font-size: 28px">+</span>ADD MASCOT</button>
+
+</div>
+</section>
+
+<form aria-label="Add mascot" style="flex: 2 1 560px; min-width: 0; box-sizing: border-box; margin: 0; padding: 20px; background: #1C2541; border: 4px solid #F2F4F8; box-shadow: 6px 6px 0 #000; display: flex; flex-direction: column; gap: 16px">
+<h2 style="margin: 0; font-family: 'Press Start 2P', monospace; font-size: 11px; color: #5BC0BE">ADD MASCOT</h2>
+
+<div style="display: flex; flex-direction: column; gap: 6px">
+<label for="m-name" style="font-family: 'Press Start 2P', monospace; font-size: 9px">NAME</label>
+<input id="m-name" type="text" placeholder="Name your mascot" style="min-height: 44px; box-sizing: border-box; padding: 0 12px; background: #0B132B; color: #F2F4F8; border: 4px solid #3A506B; font-family: 'IBM Plex Mono', monospace; font-size: 14px">
+</div>
+
+<div style="padding: 10px 12px; border: 4px solid #5BC0BE; background: #0B132B"><span style="font-family: 'Press Start 2P', monospace; font-size: 9px; color: #5BC0BE">FORMAT</span><br>One spritesheet per state. Horizontal strip of 64x64 frames, PNG. Height 64px, width a multiple of 64, up to 16 frames. Idle is required; a state with no sheet plays the idle loop.</div>
+
+<div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap">
+<span style="font-family: 'Press Start 2P', monospace; font-size: 9px">ANIMATION LOOPS</span>
+<span style="font-size: 12px; color: #A9B6C6">3 of 5 uploaded</span>
+</div>
+
+<section aria-label="Idle loop" style="padding: 12px; background: #0B132B; border: 4px solid #3A506B; display: flex; flex-direction: column; gap: 10px">
+<div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap">
+<span style="font-family: 'Press Start 2P', monospace; font-size: 10px; color: #F2F4F8">IDLE</span>
+<span style="font-size: 12px; color: #A9B6C6">idle.png · 256x64 · 4 frames</span>
+<label style="margin-left: auto; display: inline-flex; align-items: center; gap: 8px; font-family: 'Press Start 2P', monospace; font-size: 8px">FPS<input type="number" min="1" max="24" value="4" style="width: 64px; min-height: 44px; box-sizing: border-box; padding: 0 8px; background: #1C2541; color: #F2F4F8; border: 4px solid #3A506B; font-family: 'IBM Plex Mono', monospace; font-size: 14px"></label>
+<button type="button" style="min-height: 44px; padding: 0 10px; background: #1C2541; color: #F2F4F8; border: 4px solid #3A506B; font-family: 'Press Start 2P', monospace; font-size: 8px; cursor: pointer">REPLACE</button>
+</div>
+<div style="display: flex; gap: 12px; align-items: center">
+<div style="flex: none; border: 4px solid #F2F4F8"><img src="mascot.png" alt="Idle loop playing, frame 2 of 4" style="display: block; width: 64px; height: 64px; object-fit: cover; image-rendering: pixelated"></div>
+<div style="min-width: 0; overflow-x: auto"><div style="display: flex; width: 268px; border: 4px solid #3A506B">
+<img src="mascot.png" alt="Frame 1" style="width: 64px; height: 64px; object-fit: cover; image-rendering: pixelated; border-right: 4px solid #5BC0BE">
+<img src="mascot.png" alt="Frame 2" style="width: 64px; height: 64px; object-fit: cover; image-rendering: pixelated; border-right: 4px solid #5BC0BE">
+<img src="mascot.png" alt="Frame 3" style="width: 64px; height: 64px; object-fit: cover; image-rendering: pixelated; border-right: 4px solid #5BC0BE">
+<img src="mascot.png" alt="Frame 4" style="width: 64px; height: 64px; object-fit: cover; image-rendering: pixelated">
+</div></div>
+</div>
+</section>
+
+<section aria-label="Thinking loop" style="padding: 12px; background: #0B132B; border: 4px solid #3A506B; display: flex; flex-direction: column; gap: 10px">
+<div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap">
+<span style="font-family: 'Press Start 2P', monospace; font-size: 10px; color: #5BC0BE">THINKING</span>
+<span style="font-size: 12px; color: #A9B6C6">think.png · 256x64 · 4 frames</span>
+<label style="margin-left: auto; display: inline-flex; align-items: center; gap: 8px; font-family: 'Press Start 2P', monospace; font-size: 8px">FPS<input type="number" min="1" max="24" value="6" style="width: 64px; min-height: 44px; box-sizing: border-box; padding: 0 8px; background: #1C2541; color: #F2F4F8; border: 4px solid #3A506B; font-family: 'IBM Plex Mono', monospace; font-size: 14px"></label>
+<button type="button" style="min-height: 44px; padding: 0 10px; background: #1C2541; color: #F2F4F8; border: 4px solid #3A506B; font-family: 'Press Start 2P', monospace; font-size: 8px; cursor: pointer">REPLACE</button>
+</div>
+<div style="display: flex; gap: 12px; align-items: center">
+<div style="flex: none; border: 4px solid #F2F4F8"><img src="mascot.png" alt="Thinking loop playing, frame 1 of 4" style="display: block; width: 64px; height: 64px; object-fit: cover; image-rendering: pixelated"></div>
+<div style="min-width: 0; overflow-x: auto"><div style="display: flex; width: 268px; border: 4px solid #3A506B">
+<img src="mascot.png" alt="Frame 1" style="width: 64px; height: 64px; object-fit: cover; image-rendering: pixelated; border-right: 4px solid #5BC0BE">
+<img src="mascot.png" alt="Frame 2" style="width: 64px; height: 64px; object-fit: cover; image-rendering: pixelated; border-right: 4px solid #5BC0BE">
+<img src="mascot.png" alt="Frame 3" style="width: 64px; height: 64px; object-fit: cover; image-rendering: pixelated; border-right: 4px solid #5BC0BE">
+<img src="mascot.png" alt="Frame 4" style="width: 64px; height: 64px; object-fit: cover; image-rendering: pixelated">
+</div></div>
+</div>
+</section>
+
+<section aria-label="Talking loop" style="padding: 12px; background: #0B132B; border: 4px solid #3A506B; display: flex; flex-direction: column; gap: 10px">
+<div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap">
+<span style="font-family: 'Press Start 2P', monospace; font-size: 10px; color: #5BC0BE">TALKING</span>
+<span style="font-size: 12px; color: #A9B6C6">talk.png · 384x64 · 6 frames</span>
+<label style="margin-left: auto; display: inline-flex; align-items: center; gap: 8px; font-family: 'Press Start 2P', monospace; font-size: 8px">FPS<input type="number" min="1" max="24" value="8" style="width: 64px; min-height: 44px; box-sizing: border-box; padding: 0 8px; background: #1C2541; color: #F2F4F8; border: 4px solid #3A506B; font-family: 'IBM Plex Mono', monospace; font-size: 14px"></label>
+<button type="button" style="min-height: 44px; padding: 0 10px; background: #1C2541; color: #F2F4F8; border: 4px solid #3A506B; font-family: 'Press Start 2P', monospace; font-size: 8px; cursor: pointer">REPLACE</button>
+</div>
+<div style="display: flex; gap: 12px; align-items: center">
+<div style="flex: none; border: 4px solid #F2F4F8"><img src="mascot.png" alt="Talking loop playing, frame 3 of 6" style="display: block; width: 64px; height: 64px; object-fit: cover; image-rendering: pixelated"></div>
+<div style="min-width: 0; overflow-x: auto"><div style="display: flex; width: 404px; border: 4px solid #3A506B">
+<img src="mascot.png" alt="Frame 1" style="width: 64px; height: 64px; object-fit: cover; image-rendering: pixelated; border-right: 4px solid #5BC0BE">
+<img src="mascot.png" alt="Frame 2" style="width: 64px; height: 64px; object-fit: cover; image-rendering: pixelated; border-right: 4px solid #5BC0BE">
+<img src="mascot.png" alt="Frame 3" style="width: 64px; height: 64px; object-fit: cover; image-rendering: pixelated; border-right: 4px solid #5BC0BE">
+<img src="mascot.png" alt="Frame 4" style="width: 64px; height: 64px; object-fit: cover; image-rendering: pixelated; border-right: 4px solid #5BC0BE">
+<img src="mascot.png" alt="Frame 5" style="width: 64px; height: 64px; object-fit: cover; image-rendering: pixelated; border-right: 4px solid #5BC0BE">
+<img src="mascot.png" alt="Frame 6" style="width: 64px; height: 64px; object-fit: cover; image-rendering: pixelated">
+</div></div>
+</div>
+</section>
+
+<section aria-label="Working loop" style="padding: 12px; background: #0B132B; border: 4px solid #F0706A; display: flex; flex-direction: column; gap: 10px">
+<div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap">
+<span style="font-family: 'Press Start 2P', monospace; font-size: 10px; color: #6FCF7F">WORKING</span>
+<span style="font-size: 12px; color: #A9B6C6">work-big.png · rejected</span>
+<button type="button" style="margin-left: auto; min-height: 44px; padding: 0 10px; background: #1C2541; color: #F2F4F8; border: 4px solid #5BC0BE; font-family: 'Press Start 2P', monospace; font-size: 8px; cursor: pointer">TRY AGAIN</button>
+</div>
+<div role="alert" style="display: flex; gap: 10px; align-items: center; color: #F0706A"><span style="font-family: 'Press Start 2P', monospace; font-size: 10px">X</span><span>Height must be 64px. work-big.png is 128px tall.</span></div>
+</section>
+
+<section aria-label="Asking loop" style="padding: 12px; background: #0B132B; border: 4px dashed #3A506B; display: flex; flex-direction: column; gap: 10px">
+<div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap">
+<span style="font-family: 'Press Start 2P', monospace; font-size: 10px; color: #F2B84B">ASKING</span>
+<span style="font-size: 12px; color: #A9B6C6">No sheet yet. Plays the idle loop.</span>
+<button type="button" style="margin-left: auto; min-height: 44px; padding: 0 10px; background: #1C2541; color: #F2F4F8; border: 4px solid #5BC0BE; font-family: 'Press Start 2P', monospace; font-size: 8px; cursor: pointer">UPLOAD PNG</button>
+</div>
+<div style="padding: 14px; border: 4px dashed #3A506B; text-align: center; font-size: 12px; color: #A9B6C6">Drop a 64px-tall spritesheet here</div>
+</section>
+
+<div style="display: flex; gap: 12px; flex-wrap: wrap">
+<button type="button" style="min-height: 44px; padding: 0 16px; background: #5BC0BE; color: #0B132B; border: 4px solid #F2F4F8; box-shadow: 4px 4px 0 #000; font-family: 'Press Start 2P', monospace; font-size: 10px; cursor: pointer">SAVE MASCOT</button>
+<button type="button" style="min-height: 44px; padding: 0 16px; background: #0B132B; color: #F2F4F8; border: 4px solid #3A506B; box-shadow: 4px 4px 0 #000; font-family: 'Press Start 2P', monospace; font-size: 10px; cursor: pointer">CANCEL</button>
+</div>
+</form>
+
+</main>
+</div>
+</body>
+</html>

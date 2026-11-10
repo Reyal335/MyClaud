@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MyClaud Inbox</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+body{margin:0;background:#0B132B}
+a{color:#5BC0BE}a:hover{color:#F2F4F8}
+</style>
+</head>
+<body>
+<div style="min-height: 800px; display: flex; flex-wrap: wrap; background: #0B132B; color: #F2F4F8; font-family: 'IBM Plex Mono', monospace; font-size: 14px; line-height: 1.5">
+
+<nav aria-label="Main" style="flex: 1 1 168px; box-sizing: border-box; background: #1C2541; border-right: 4px solid #3A506B; padding: 20px 12px; display: flex; flex-direction: column; gap: 10px">
+<div style="font-family: 'Press Start 2P', monospace; font-size: 13px; color: #5BC0BE; padding: 4px 8px 16px">MyClaud</div>
+<a href="1-inbox.html" aria-current="page" style="display: flex; align-items: center; justify-content: space-between; min-height: 44px; box-sizing: border-box; padding: 0 10px; background: #5BC0BE; color: #0B132B; border: 4px solid #F2F4F8; box-shadow: 4px 4px 0 #000; font-family: 'Press Start 2P', monospace; font-size: 10px; text-decoration: none">INBOX<span style="background: #0B132B; color: #F2F4F8; padding: 4px 6px">1</span></a>
+<a href="3-agent-manager.html" style="display: flex; align-items: center; min-height: 44px; box-sizing: border-box; padding: 0 10px; border: 4px solid #3A506B; color: #F2F4F8; font-family: 'Press Start 2P', monospace; font-size: 10px; text-decoration: none">AGENTS</a>
+<a href="4-mascot-manager.html" style="display: flex; align-items: center; min-height: 44px; box-sizing: border-box; padding: 0 10px; border: 4px solid #3A506B; color: #F2F4F8; font-family: 'Press Start 2P', monospace; font-size: 10px; text-decoration: none">MASCOTS</a>
+<div style="margin-top: auto; padding: 8px; font-size: 12px; color: #A9B6C6">Project<br><span style="color: #F2F4F8">my-app</span></div>
+</nav>
+
+<section aria-label="Conversations" style="flex: 1 1 340px; box-sizing: border-box; border-right: 4px solid #3A506B; padding: 20px 16px; display: flex; flex-direction: column; gap: 12px">
+<div style="display: flex; align-items: center; justify-content: space-between; gap: 12px">
+<h1 style="margin: 0; font-family: 'Press Start 2P', monospace; font-size: 14px">INBOX</h1>
+<button type="button" style="min-height: 44px; padding: 0 12px; background: #1C2541; color: #F2F4F8; border: 4px solid #5BC0BE; box-shadow: 4px 4px 0 #000; font-family: 'Press Start 2P', monospace; font-size: 10px; cursor: pointer">+ NEW CHAT</button>
+</div>
+
+<a href="2-conversation.html" style="display: flex; gap: 12px; padding: 12px; background: #1C2541; border: 4px solid #F2F4F8; box-shadow: 4px 4px 0 #5BC0BE; color: #F2F4F8; text-decoration: none">
+<svg width="32" height="32" viewBox="0 0 16 16" shape-rendering="crispEdges" role="img" aria-label="code-reviewer icon" style="flex: none"><rect width="16" height="16" fill="#5BC0BE"></rect><path fill="#0B132B" d="M5 4h2v2H5zM3 6h2v2H3zM5 8h2v2H5zM9 4h2v2H9zM11 6h2v2h-2zM9 8h2v2H9zM4 12h8v2H4z"></path></svg>
+<div style="min-width: 0; flex: 1; display: flex; flex-direction: column; gap: 6px">
+<div style="display: flex; align-items: center; justify-content: space-between; gap: 8px"><span style="font-weight: 600">code-reviewer</span><span style="font-size: 12px; color: #A9B6C6">2:14 AM</span></div>
+<div style="font-weight: 600">Can I edit src/auth.js to fix the token expiry check?</div>
+<div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap"><span style="font-family: 'Press Start 2P', monospace; font-size: 8px; padding: 4px 6px; border: 2px solid #5BC0BE; color: #5BC0BE">PROJECT</span><span style="display: inline-flex; align-items: center; gap: 6px; font-family: 'Press Start 2P', monospace; font-size: 8px; color: #F2B84B"><span style="width: 8px; height: 8px; background: #F2B84B"></span>WAITING</span><span style="font-family: 'Press Start 2P', monospace; font-size: 8px; padding: 4px 6px; background: #F2F4F8; color: #0B132B">NEW</span></div>
+</div>
+</a>
+
+<a href="2-conversation.html" style="display: flex; gap: 12px; padding: 12px; border: 4px solid #3A506B; color: #F2F4F8; text-decoration: none">
+<svg width="32" height="32" viewBox="0 0 16 16" shape-rendering="crispEdges" role="img" aria-label="test-writer icon" style="flex: none"><rect width="16" height="16" fill="#F2F4F8"></rect><path fill="#0B132B" d="M3 8h2v2H3zM5 10h2v2H5zM7 8h2v2H7zM9 6h2v2H9zM11 4h2v2h-2z"></path></svg>
+<div style="min-width: 0; flex: 1; display: flex; flex-direction: column; gap: 6px">
+<div style="display: flex; align-items: center; justify-content: space-between; gap: 8px"><span>test-writer</span><span style="font-size: 12px; color: #A9B6C6">2:11 AM</span></div>
+<div style="color: #A9B6C6">Writing tests for the cart reducer, 6 of 9 cases done.</div>
+<div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap"><span style="font-family: 'Press Start 2P', monospace; font-size: 8px; padding: 4px 6px; border: 2px solid #5BC0BE; color: #5BC0BE">PROJECT</span><span style="display: inline-flex; align-items: center; gap: 6px; font-family: 'Press Start 2P', monospace; font-size: 8px; color: #6FCF7F"><span style="width: 8px; height: 8px; background: #6FCF7F"></span>RUNNING</span></div>
+</div>
+</a>
+
+<a href="2-conversation.html" style="display: flex; gap: 12px; padding: 12px; border: 4px solid #3A506B; color: #F2F4F8; text-decoration: none">
+<svg width="32" height="32" viewBox="0 0 16 16" shape-rendering="crispEdges" role="img" aria-label="docs-helper icon" style="flex: none"><rect width="16" height="16" fill="#3A506B"></rect><path fill="#F2F4F8" d="M4 3h8v2H4zM4 7h8v2H4zM4 11h5v2H4z"></path></svg>
+<div style="min-width: 0; flex: 1; display: flex; flex-direction: column; gap: 6px">
+<div style="display: flex; align-items: center; justify-content: space-between; gap: 8px"><span>docs-helper</span><span style="font-size: 12px; color: #A9B6C6">1:40 AM</span></div>
+<div style="color: #A9B6C6">README setup section is updated with the new env vars.</div>
+<div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap"><span style="font-family: 'Press Start 2P', monospace; font-size: 8px; padding: 4px 6px; border: 2px solid #A9B6C6; color: #A9B6C6">GLOBAL</span><span style="display: inline-flex; align-items: center; gap: 6px; font-family: 'Press Start 2P', monospace; font-size: 8px; color: #A9B6C6"><span style="width: 8px; height: 8px; background: #A9B6C6"></span>DONE</span></div>
+</div>
+</a>
+
+<a href="2-conversation.html" style="display: flex; gap: 12px; padding: 12px; border: 4px solid #3A506B; color: #F2F4F8; text-decoration: none">
+<svg width="32" height="32" viewBox="0 0 16 16" shape-rendering="crispEdges" role="img" aria-label="Default agent icon" style="flex: none"><rect x=".5" y=".5" width="15" height="15" fill="#1C2541" stroke="#3A506B"></rect><path fill="#A9B6C6" d="M6 3h4v2H6zM10 5h2v2h-2zM8 7h2v2H8zM8 11h2v2H8z"></path></svg>
+<div style="min-width: 0; flex: 1; display: flex; flex-direction: column; gap: 6px">
+<div style="display: flex; align-items: center; justify-content: space-between; gap: 8px"><span>bug-hunter</span><span style="font-size: 12px; color: #A9B6C6">12:58 AM</span></div>
+<div style="color: #A9B6C6">npm test exited with code 1. I stopped here.</div>
+<div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap"><span style="font-family: 'Press Start 2P', monospace; font-size: 8px; padding: 4px 6px; border: 2px solid #A9B6C6; color: #A9B6C6">GLOBAL</span><span style="display: inline-flex; align-items: center; gap: 6px; font-family: 'Press Start 2P', monospace; font-size: 8px; color: #F0706A"><span style="width: 8px; height: 8px; background: #F0706A"></span>ERROR</span></div>
+</div>
+</a>
+
+<a href="2-conversation.html" style="display: flex; gap: 12px; padding: 12px; border: 4px solid #3A506B; color: #F2F4F8; text-decoration: none">
+<svg width="32" height="32" viewBox="0 0 16 16" shape-rendering="crispEdges" role="img" aria-label="docs-helper icon" style="flex: none"><rect width="16" height="16" fill="#3A506B"></rect><path fill="#F2F4F8" d="M4 3h8v2H4zM4 7h8v2H4zM4 11h5v2H4z"></path></svg>
+<div style="min-width: 0; flex: 1; display: flex; flex-direction: column; gap: 6px">
+<div style="display: flex; align-items: center; justify-content: space-between; gap: 8px"><span>docs-helper</span><span style="font-size: 12px; color: #A9B6C6">Yesterday</span></div>
+<div style="color: #A9B6C6">Added JSDoc comments to the api/ folder.</div>
+<div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap"><span style="font-family: 'Press Start 2P', monospace; font-size: 8px; padding: 4px 6px; border: 2px solid #A9B6C6; color: #A9B6C6">GLOBAL</span><span style="display: inline-flex; align-items: center; gap: 6px; font-family: 'Press Start 2P', monospace; font-size: 8px; color: #A9B6C6"><span style="width: 8px; height: 8px; background: #A9B6C6"></span>DONE</span></div>
+</div>
+</a>
+</section>
+
+<main style="flex: 999 1 480px; min-width: 0; box-sizing: border-box; padding: 20px 24px; display: flex; flex-direction: column; gap: 16px">
+<header style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding-bottom: 16px; border-bottom: 4px solid #3A506B">
+<svg width="48" height="48" viewBox="0 0 16 16" shape-rendering="crispEdges" role="img" aria-label="code-reviewer icon"><rect width="16" height="16" fill="#5BC0BE"></rect><path fill="#0B132B" d="M5 4h2v2H5zM3 6h2v2H3zM5 8h2v2H5zM9 4h2v2H9zM11 6h2v2h-2zM9 8h2v2H9zM4 12h8v2H4z"></path></svg>
+<div style="flex: 1; min-width: 0">
+<h2 style="margin: 0 0 8px; font-family: 'Press Start 2P', monospace; font-size: 12px">code-reviewer</h2>
+<div style="font-size: 12px; color: #A9B6C6">Project agent in my-app · started 2:02 AM</div>
+</div>
+<span style="display: inline-flex; align-items: center; gap: 6px; font-family: 'Press Start 2P', monospace; font-size: 9px; color: #F2B84B"><span style="width: 8px; height: 8px; background: #F2B84B"></span>WAITING FOR APPROVAL</span>
+</header>
+
+<div style="align-self: flex-end; max-width: 80%; padding: 12px 14px; background: #3A506B; border: 4px solid #5BC0BE">Review the auth changes on this branch before I open a PR.</div>
+
+<div style="display: flex; gap: 10px; flex-wrap: wrap">
+<div style="padding: 8px 10px; border: 2px solid #3A506B; background: #1C2541; font-size: 12px; color: #A9B6C6">Reading <span style="color: #F2F4F8">src/auth.js</span></div>
+<div style="padding: 8px 10px; border: 2px solid #3A506B; background: #1C2541; font-size: 12px; color: #A9B6C6">Reading <span style="color: #F2F4F8">src/routes/refresh.js</span></div>
+<div style="padding: 8px 10px; border: 2px solid #3A506B; background: #1C2541; font-size: 12px; color: #A9B6C6">Running <span style="color: #F2F4F8">git diff main</span></div>
+</div>
+
+<div style="max-width: 80%; padding: 12px 14px; background: #1C2541; border: 4px solid #3A506B">I found 2 issues. The token expiry check in src/auth.js compares seconds to milliseconds, so tokens never expire. The refresh route also has no rate limit.</div>
+
+<div style="padding: 16px; background: #1C2541; border: 4px solid #F2B84B; box-shadow: 6px 6px 0 #000; display: flex; flex-direction: column; gap: 12px">
+<div style="font-family: 'Press Start 2P', monospace; font-size: 10px; color: #F2B84B">PERMISSION REQUEST</div>
+<div>Edit <span style="font-weight: 600">src/auth.js</span> to fix the token expiry check?</div>
+<div style="display: flex; gap: 12px; flex-wrap: wrap">
+<button type="button" style="min-height: 44px; padding: 0 16px; background: #5BC0BE; color: #0B132B; border: 4px solid #F2F4F8; box-shadow: 4px 4px 0 #000; font-family: 'Press Start 2P', monospace; font-size: 10px; cursor: pointer">APPROVE</button>
+<button type="button" style="min-height: 44px; padding: 0 16px; background: #0B132B; color: #F2F4F8; border: 4px solid #3A506B; box-shadow: 4px 4px 0 #000; font-family: 'Press Start 2P', monospace; font-size: 10px; cursor: pointer">DENY</button>
+<a href="2-conversation.html" style="display: inline-flex; align-items: center; min-height: 44px; padding: 0 8px; font-family: 'Press Start 2P', monospace; font-size: 10px">OPEN CHAT</a>
+</div>
+</div>
+</main>
+
+</div>
+</body>
+</html>

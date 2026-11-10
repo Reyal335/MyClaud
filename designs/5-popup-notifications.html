@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MyClaud Mascot popup notifications</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+body{margin:0;background:#0B132B}
+a{color:#5BC0BE}a:hover{color:#F2F4F8}
+</style>
+</head>
+<body>
+<div style="position: relative; width: 1280px; height: 800px; overflow: hidden; background: #3A506B; color: #F2F4F8; font-family: 'IBM Plex Mono', monospace; font-size: 13px; line-height: 1.45">
+
+<div aria-hidden="true" style="position: absolute; inset: 0; filter: blur(7px)">
+<div style="position: absolute; left: 70px; top: 60px; width: 760px; height: 520px; background: #F2F4F8"></div>
+<div style="position: absolute; left: 70px; top: 60px; width: 760px; height: 44px; background: #A9B6C6"></div>
+<div style="position: absolute; left: 110px; top: 140px; width: 420px; height: 20px; background: #A9B6C6"></div>
+<div style="position: absolute; left: 110px; top: 180px; width: 600px; height: 20px; background: #A9B6C6"></div>
+<div style="position: absolute; left: 110px; top: 220px; width: 520px; height: 20px; background: #A9B6C6"></div>
+<div style="position: absolute; left: 110px; top: 290px; width: 680px; height: 240px; background: #1C2541"></div>
+<div style="position: absolute; left: 560px; top: 360px; width: 420px; height: 300px; background: #1C2541"></div>
+<div style="position: absolute; left: 0; bottom: 0; width: 1280px; height: 52px; background: #0B132B"></div>
+</div>
+
+<div style="position: absolute; right: 24px; bottom: 76px; display: flex; flex-direction: column; gap: 28px; align-items: flex-end">
+
+<div style="display: flex; align-items: center; gap: 16px">
+<span style="font-family: 'Press Start 2P', monospace; font-size: 9px; padding: 8px; background: #0B132B">TASK FINISHED</span>
+<div role="status" style="width: 340px; min-height: 140px; box-sizing: border-box; padding: 12px; background: #0B132B; border: 4px solid #F2F4F8; box-shadow: 6px 6px 0 #000; display: flex; gap: 12px; align-items: center">
+<img src="mascot.png" alt="Mascot" style="flex: none; width: 96px; height: 96px; object-fit: cover; image-rendering: pixelated; border: 4px solid #3A506B">
+<div style="flex: 1; min-width: 0; padding: 10px; background: #1C2541; border: 4px solid #3A506B; display: flex; flex-direction: column; gap: 6px">
+<div style="display: flex; align-items: center; gap: 8px"><svg width="16" height="16" viewBox="0 0 16 16" shape-rendering="crispEdges" aria-hidden="true"><rect width="16" height="16" fill="#3A506B"></rect><path fill="#F2F4F8" d="M4 3h8v2H4zM4 7h8v2H4zM4 11h5v2H4z"></path></svg><span style="font-family: 'Press Start 2P', monospace; font-size: 8px; color: #5BC0BE">docs-helper</span></div>
+<div>All done! README setup section is updated.</div>
+<div style="display: inline-flex; align-items: center; gap: 6px; font-family: 'Press Start 2P', monospace; font-size: 8px; color: #A9B6C6"><span style="width: 8px; height: 8px; background: #A9B6C6"></span>DONE</div>
+</div>
+</div>
+</div>
+
+<div style="display: flex; align-items: center; gap: 16px">
+<span style="font-family: 'Press Start 2P', monospace; font-size: 9px; padding: 8px; background: #0B132B">NEEDS YOUR APPROVAL</span>
+<div role="alertdialog" aria-label="code-reviewer needs approval" style="width: 340px; min-height: 140px; box-sizing: border-box; padding: 12px; background: #0B132B; border: 4px solid #F2B84B; box-shadow: 6px 6px 0 #000; display: flex; flex-direction: column; gap: 10px">
+<div style="display: flex; gap: 12px; align-items: center">
+<img src="mascot.png" alt="Mascot, asking permission" style="flex: none; width: 96px; height: 96px; object-fit: cover; image-rendering: pixelated; border: 4px solid #3A506B">
+<div style="flex: 1; min-width: 0; padding: 10px; background: #1C2541; border: 4px solid #3A506B; display: flex; flex-direction: column; gap: 6px">
+<div style="display: flex; align-items: center; gap: 8px"><svg width="16" height="16" viewBox="0 0 16 16" shape-rendering="crispEdges" aria-hidden="true"><rect width="16" height="16" fill="#5BC0BE"></rect><path fill="#0B132B" d="M5 4h2v2H5zM3 6h2v2H3zM5 8h2v2H5zM9 4h2v2H9zM11 6h2v2h-2zM9 8h2v2H9zM4 12h8v2H4z"></path></svg><span style="font-family: 'Press Start 2P', monospace; font-size: 8px; color: #5BC0BE">code-reviewer</span></div>
+<div>Can I edit src/auth.js to fix the expiry check?</div>
+</div>
+</div>
+<div style="display: flex; gap: 8px">
+<button type="button" style="flex: 1; min-height: 44px; background: #5BC0BE; color: #0B132B; border: 4px solid #F2F4F8; font-family: 'Press Start 2P', monospace; font-size: 8px; cursor: pointer">APPROVE</button>
+<button type="button" style="flex: 1; min-height: 44px; background: #0B132B; color: #F2F4F8; border: 4px solid #3A506B; font-family: 'Press Start 2P', monospace; font-size: 8px; cursor: pointer">DENY</button>
+<button type="button" style="flex: 1; min-height: 44px; background: #0B132B; color: #5BC0BE; border: 4px solid #5BC0BE; font-family: 'Press Start 2P', monospace; font-size: 8px; cursor: pointer">OPEN</button>
+</div>
+</div>
+</div>
+
+<div style="display: flex; align-items: center; gap: 16px">
+<span style="font-family: 'Press Start 2P', monospace; font-size: 9px; padding: 8px; background: #0B132B">ERROR</span>
+<div role="alert" style="width: 340px; min-height: 140px; box-sizing: border-box; padding: 12px; background: #0B132B; border: 4px solid #F0706A; box-shadow: 6px 6px 0 #000; display: flex; gap: 12px; align-items: center">
+<img src="mascot.png" alt="Mascot" style="flex: none; width: 96px; height: 96px; object-fit: cover; image-rendering: pixelated; border: 4px solid #3A506B">
+<div style="flex: 1; min-width: 0; padding: 10px; background: #1C2541; border: 4px solid #3A506B; display: flex; flex-direction: column; gap: 6px">
+<div style="display: flex; align-items: center; gap: 8px"><svg width="16" height="16" viewBox="0 0 16 16" shape-rendering="crispEdges" aria-hidden="true"><rect x=".5" y=".5" width="15" height="15" fill="#1C2541" stroke="#3A506B"></rect><path fill="#A9B6C6" d="M6 3h4v2H6zM10 5h2v2h-2zM8 7h2v2H8zM8 11h2v2H8z"></path></svg><span style="font-family: 'Press Start 2P', monospace; font-size: 8px; color: #5BC0BE">bug-hunter</span></div>
+<div>npm test exited with code 1. I stopped here.</div>
+<div style="display: inline-flex; align-items: center; gap: 6px; font-family: 'Press Start 2P', monospace; font-size: 8px; color: #F0706A"><span style="width: 8px; height: 8px; background: #F0706A"></span>ERROR</div>
+</div>
+</div>
+</div>
+
+</div>
+</div>
+</body>
+</html>
