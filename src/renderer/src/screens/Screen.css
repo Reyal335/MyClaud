@@ -1,0 +1,16 @@
+.screen {
+  padding: 20px 24px;
+}
+
+.screen__title {
+  margin: 0 0 12px;
+  font-family: var(--font-pixel);
+  font-size: 14px;
+  font-weight: normal;
+  line-height: 1.5;
+}
+
+.screen__note {
+  margin: 0;
+  color: var(--muted);
+}

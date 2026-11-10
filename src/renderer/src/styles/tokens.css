@@ -1,0 +1,26 @@
+/* Design tokens from designs/DESIGN.md. Components use these variables only. */
+:root {
+  /* Colors */
+  --bg: #0b132b;
+  --panel: #1c2541;
+  --line: #3a506b; /* borders only, too dark for text */
+  --accent: #5bc0be;
+  --text: #f2f4f8;
+  --muted: #a9b6c6;
+  --running: #6fcf7f;
+  --waiting: #f2b84b;
+  --error: #f0706a;
+  --shadow: #000000;
+
+  /* Type */
+  --font-pixel: 'Press Start 2P', monospace;
+  --font-mono: 'IBM Plex Mono', monospace;
+
+  /* Borders */
+  --border: 4px;
+  --border-thin: 2px;
+
+  /* Hard shadows, no blur */
+  --shadow-hard: 4px 4px 0 var(--shadow);
+  --shadow-dialog: 6px 6px 0 var(--shadow);
+}

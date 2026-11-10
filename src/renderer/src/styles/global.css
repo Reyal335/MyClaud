@@ -1,0 +1,26 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+/* Visible keyboard focus. The offset keeps it clear of 4px borders and accent fills. */
+:focus-visible {
+  outline: var(--border-thin) solid var(--text);
+  outline-offset: 4px;
+}
