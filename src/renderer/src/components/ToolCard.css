@@ -1,0 +1,74 @@
+/* Tool card from designs/2-conversation.html: 2px line border, panel fill, small muted text. */
+.tool-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+  max-width: 100%;
+  padding: 8px 10px;
+  background: var(--panel);
+  border: var(--border-thin) solid var(--line);
+  font-size: 12px;
+  color: var(--muted);
+}
+
+/* A card waiting for an answer takes the full row so its details fit. */
+.tool-card--asking {
+  flex-basis: 100%;
+  border-color: var(--waiting);
+}
+
+.tool-card__line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.tool-card__square {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  background: var(--muted);
+}
+
+.tool-card__label {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.tool-card__target {
+  color: var(--text);
+}
+
+.tool-card__state {
+  flex: none;
+  margin-left: 4px;
+  font-family: var(--font-pixel);
+  font-size: 8px;
+  color: var(--muted);
+}
+
+.tool-card--running .tool-card__square {
+  background: var(--running);
+}
+
+.tool-card--running .tool-card__state {
+  color: var(--running);
+}
+
+.tool-card--waiting .tool-card__square {
+  background: var(--waiting);
+}
+
+.tool-card--waiting .tool-card__state {
+  color: var(--waiting);
+}
+
+.tool-card--failed .tool-card__square {
+  background: var(--error);
+}
+
+.tool-card--failed .tool-card__state {
+  color: var(--error);
+}

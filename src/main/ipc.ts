@@ -1,6 +1,6 @@
 import { BrowserWindow, dialog, ipcMain } from 'electron'
 import { IpcChannel, type AgentSendResult, type ProjectInfo } from '../shared/ipc'
-import { clearSession, isRunning, startRun, stopRun } from './agent'
+import { answerPermission, clearSession, isRunning, startRun, stopRun } from './agent'
 import { getProject, setProject } from './settings'
 
 export function registerIpc(): void {
@@ -44,4 +44,14 @@ export function registerIpc(): void {
   ipcMain.handle(IpcChannel.AgentStop, (): void => {
     stopRun()
   })
+
+  ipcMain.handle(
+    IpcChannel.AgentPermission,
+    (_event, permissionId: unknown, decision: unknown): { ok: boolean } => {
+      if (typeof permissionId !== 'string' || (decision !== 'approve' && decision !== 'deny')) {
+        return { ok: false }
+      }
+      return { ok: answerPermission(permissionId, decision) }
+    }
+  )
 }

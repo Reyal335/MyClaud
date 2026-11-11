@@ -9,10 +9,14 @@
   margin-top: 16px;
 }
 
-.inbox__reply {
+.inbox__history {
   flex: 1 1 auto;
   min-height: 0;
   overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
   padding: 12px 16px;
   background: var(--panel);
   border: var(--border) solid var(--line);
@@ -22,15 +26,28 @@
 .inbox__text,
 .inbox__status,
 .inbox__error {
-  margin: 0 0 12px;
+  margin: 0;
+  max-width: 100%;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
 
+/* My messages sit on the right in the user bubble colors from DESIGN.md. */
 .inbox__prompt {
+  align-self: flex-end;
+  max-width: 72%;
   padding: 8px 12px;
-  border: var(--border-thin) solid var(--line);
-  color: var(--muted);
+  background: var(--line);
+  border: var(--border-thin) solid var(--accent);
+  color: var(--text);
+}
+
+/* Consecutive tool cards wrap in one row. */
+.inbox__tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-self: stretch;
 }
 
 .inbox__status {

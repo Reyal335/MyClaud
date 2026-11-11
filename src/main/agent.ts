@@ -1,18 +1,31 @@
 // The only module that uses the Claude Agent SDK. The renderer and preload never import it.
 import { randomUUID } from 'crypto'
 import type { WebContents } from 'electron'
-import type { Options, SDKAssistantMessageError } from '@anthropic-ai/claude-agent-sdk'
+import type {
+  CanUseTool,
+  Options,
+  PermissionResult,
+  SDKAssistantMessageError
+} from '@anthropic-ai/claude-agent-sdk'
 import {
   IpcChannel,
   type AgentError,
   type AgentErrorCode,
   type AgentEvent,
-  type AgentSendResult
+  type AgentSendResult,
+  type PermissionDecision,
+  type ToolInput
 } from '../shared/ipc'
 
-// Read-only built-in tools for this step. `tools` limits what exists,
-// `allowedTools` lets those run without asking.
+// Reading never asks. Editing, writing, and shell commands wait for the user's
+// Approve or Deny through canUseTool. `tools` limits which built-ins exist at all.
 const READ_ONLY_TOOLS = ['Read', 'Grep', 'Glob']
+const TOOLS = [...READ_ONLY_TOOLS, 'Edit', 'Write', 'Bash']
+
+const DENY_MESSAGE = 'The user denied this action.'
+
+// Longest string field sent to the renderer in a tool input.
+const MAX_IPC_STRING = 20_000
 
 type Run = {
   requestId: string
@@ -21,9 +34,21 @@ type Run = {
   abortController: AbortController
   // Set when we abort the run ourselves for a reason that is an error, not a user stop.
   failure: AgentError | null
+  // Tool calls the user denied, so their results end as 'denied' rather than 'failed'.
+  deniedToolIds: Set<string>
+}
+
+type PendingPermission = {
+  run: Run
+  toolId: string
+  input: Record<string, unknown>
+  resolve: (result: PermissionResult) => void
 }
 
 let activeRun: Run | null = null
+
+// Permission requests waiting for the user, by permissionId. More than one can wait.
+const pendingPermissions = new Map<string, PendingPermission>()
 
 // Session for the open project, in memory only. Cleared when the project changes.
 let session: { id: string; cwd: string } | null = null
@@ -77,9 +102,54 @@ function errorMessage(err: unknown): string {
   return err instanceof Error ? err.message : String(err)
 }
 
+// Copy of a tool input for IPC, with any string longer than MAX_IPC_STRING cut.
+function forIpc(input: Record<string, unknown>): { input: ToolInput; truncated: boolean } {
+  let truncated = false
+  const cut = (value: unknown): unknown => {
+    if (typeof value === 'string') {
+      if (value.length <= MAX_IPC_STRING) return value
+      truncated = true
+      return value.slice(0, MAX_IPC_STRING)
+    }
+    if (Array.isArray(value)) return value.map(cut)
+    if (value !== null && typeof value === 'object') {
+      return Object.fromEntries(Object.entries(value).map(([key, item]) => [key, cut(item)]))
+    }
+    return value
+  }
+  return { input: cut(input) as ToolInput, truncated }
+}
+
 function emit(run: Run, event: AgentEvent): void {
   if (!run.sender.isDestroyed()) {
     run.sender.send(IpcChannel.AgentEvent, event)
+  }
+}
+
+// Answers one pending request. Returns false for an unknown or already answered id.
+function settlePermission(permissionId: string, decision: PermissionDecision): boolean {
+  const pending = pendingPermissions.get(permissionId)
+  if (!pending) return false
+  pendingPermissions.delete(permissionId)
+
+  if (decision === 'approve') {
+    pending.resolve({ behavior: 'allow', updatedInput: pending.input })
+  } else {
+    pending.run.deniedToolIds.add(pending.toolId)
+    pending.resolve({ behavior: 'deny', message: DENY_MESSAGE })
+  }
+  emit(pending.run, {
+    requestId: pending.run.requestId,
+    type: 'permission_resolved',
+    permissionId,
+    decision
+  })
+  return true
+}
+
+function denyAllPending(): void {
+  for (const permissionId of [...pendingPermissions.keys()]) {
+    settlePermission(permissionId, 'deny')
   }
 }
 
@@ -91,8 +161,15 @@ export function clearSession(): void {
   session = null
 }
 
+export function answerPermission(permissionId: string, decision: PermissionDecision): boolean {
+  return settlePermission(permissionId, decision)
+}
+
+// STOP, window close, and app quit. Abort first so the agent does not act on the
+// denials, then answer every waiting request with Deny.
 export function stopRun(): void {
   activeRun?.abortController.abort()
+  denyAllPending()
 }
 
 export function startRun(prompt: string, cwd: string, sender: WebContents): AgentSendResult {
@@ -104,11 +181,46 @@ export function startRun(prompt: string, cwd: string, sender: WebContents): Agen
     cwd,
     sender,
     abortController: new AbortController(),
-    failure: null
+    failure: null,
+    deniedToolIds: new Set()
   }
   activeRun = run
   void execute(run, prompt)
   return { ok: true, requestId: run.requestId }
+}
+
+// Called by the SDK when a tool call needs the user's decision. Stays pending until
+// the user answers or the run ends. Nothing is approved automatically.
+function permissionHandler(run: Run): CanUseTool {
+  return (toolName, input, { signal, toolUseID }) =>
+    new Promise<PermissionResult>((resolve) => {
+      if (signal.aborted || run.abortController.signal.aborted) {
+        resolve({ behavior: 'deny', message: DENY_MESSAGE })
+        return
+      }
+
+      const permissionId = randomUUID()
+      pendingPermissions.set(permissionId, { run, toolId: toolUseID, input, resolve })
+      // The SDK gave up on this call while it was still waiting: deny it and end the run.
+      signal.addEventListener(
+        'abort',
+        () => {
+          if (pendingPermissions.has(permissionId)) stopRun()
+        },
+        { once: true }
+      )
+
+      const shown = forIpc(input)
+      emit(run, {
+        requestId: run.requestId,
+        type: 'permission_request',
+        permissionId,
+        toolId: toolUseID,
+        name: toolName,
+        input: shown.input,
+        truncated: shown.truncated
+      })
+    })
 }
 
 async function execute(run: Run, prompt: string): Promise<void> {
@@ -116,7 +228,6 @@ async function execute(run: Run, prompt: string): Promise<void> {
   // so each run ends with exactly one terminal event.
   let assistantError: AgentError | null = null
   let outcome: AgentError | 'done' | null = null
-  let forwardedText = false
 
   try {
     const { query } = await loadSdk()
@@ -124,11 +235,12 @@ async function execute(run: Run, prompt: string): Promise<void> {
     const options: Options = {
       cwd: run.cwd,
       includePartialMessages: true,
-      tools: READ_ONLY_TOOLS,
+      tools: TOOLS,
       allowedTools: READ_ONLY_TOOLS,
-      permissionMode: 'dontAsk',
+      permissionMode: 'default',
+      canUseTool: permissionHandler(run),
       // Ignore MCP servers from user and project config, so no tools beyond the
-      // read-only built-ins are available in this step.
+      // built-ins above are available.
       strictMcpConfig: true,
       systemPrompt: { type: 'preset', preset: 'claude_code' },
       settingSources: ['user', 'project', 'local'],
@@ -160,23 +272,65 @@ async function execute(run: Run, prompt: string): Promise<void> {
           break
 
         case 'stream_event': {
+          // Only the main conversation. There are no subagents yet.
+          if (message.parent_tool_use_id !== null) break
           const { event } = message
-          if (event.type === 'message_start' && forwardedText) {
-            // Keep text before and after a tool call from running together.
-            emit(run, { requestId: run.requestId, type: 'text', text: '\n\n' })
+          if (event.type === 'content_block_start' && event.content_block.type === 'tool_use') {
+            emit(run, {
+              requestId: run.requestId,
+              type: 'tool_start',
+              toolId: event.content_block.id,
+              name: event.content_block.name
+            })
           } else if (event.type === 'content_block_delta' && event.delta.type === 'text_delta') {
-            forwardedText = true
             emit(run, { requestId: run.requestId, type: 'text', text: event.delta.text })
           }
           break
         }
 
         case 'assistant':
-          // The text deltas already covered this message's text. Only check for errors.
           if (message.error) {
             assistantError ??= fromAssistantError(message.error)
           }
+          if (message.parent_tool_use_id !== null) break
+          // The text deltas already covered this message's text. The complete
+          // message carries each tool call's full input.
+          for (const block of message.message.content) {
+            if (block.type === 'tool_use') {
+              const shown = forIpc(block.input as Record<string, unknown>)
+              emit(run, {
+                requestId: run.requestId,
+                type: 'tool_input',
+                toolId: block.id,
+                input: shown.input,
+                truncated: shown.truncated
+              })
+            }
+          }
           break
+
+        case 'user': {
+          // Tool outcomes come back as tool_result blocks in a user message.
+          if ('isReplay' in message && message.isReplay) break
+          if (message.parent_tool_use_id !== null) break
+          const { content } = message.message
+          if (typeof content === 'string') break
+          for (const block of content) {
+            if (block.type !== 'tool_result') continue
+            const state = run.deniedToolIds.has(block.tool_use_id)
+              ? 'denied'
+              : block.is_error
+                ? 'failed'
+                : 'done'
+            emit(run, {
+              requestId: run.requestId,
+              type: 'tool_end',
+              toolId: block.tool_use_id,
+              state
+            })
+          }
+          break
+        }
 
         case 'result':
           if (assistantError) {
@@ -196,6 +350,8 @@ async function execute(run: Run, prompt: string): Promise<void> {
       outcome = assistantError ?? { code: 'sdk_error', message: errorMessage(err) }
     }
   } finally {
+    // Nothing may stay waiting after its run ends.
+    denyAllPending()
     if (activeRun === run) {
       activeRun = null
     }

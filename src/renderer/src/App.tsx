@@ -34,6 +34,7 @@ function App(): React.JSX.Element {
           project={project}
           canOpenProject={!conversation.running}
           onOpenProject={handleOpenProject}
+          inboxCount={conversation.status === 'waiting' ? 1 : 0}
         />
       }
     >

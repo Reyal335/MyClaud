@@ -9,6 +9,8 @@ type SidebarProps = {
   project: ProjectInfo | null
   canOpenProject: boolean
   onOpenProject: () => void
+  // Shown as a badge on INBOX, so a waiting request is noticed from other screens.
+  inboxCount: number
 }
 
 const NAV_ITEMS: { screen: Screen; label: string }[] = [
@@ -22,7 +24,8 @@ function Sidebar({
   onNavigate,
   project,
   canOpenProject,
-  onOpenProject
+  onOpenProject,
+  inboxCount
 }: SidebarProps): React.JSX.Element {
   return (
     <nav className="sidebar" aria-label="Main">
@@ -33,6 +36,7 @@ function Sidebar({
           label={item.label}
           active={screen === item.screen}
           onClick={() => onNavigate(item.screen)}
+          count={item.screen === 'inbox' ? inboxCount : undefined}
         />
       ))}
       <div className="sidebar__footer">

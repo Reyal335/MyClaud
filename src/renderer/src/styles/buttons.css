@@ -19,6 +19,12 @@
   border-color: var(--text);
 }
 
+/* Secondary choice next to a primary one, like DENY in the mockup. */
+.button--secondary {
+  background: var(--bg);
+  border-color: var(--line);
+}
+
 .button--small {
   padding: 0 10px;
   font-size: 8px;

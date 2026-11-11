@@ -1,0 +1,70 @@
+.permission {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+
+.permission__field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.permission__label {
+  font-family: var(--font-pixel);
+  font-size: 8px;
+  color: var(--muted);
+}
+
+/* Plain text, about 12 lines tall at most, then it scrolls. */
+.permission__block {
+  margin: 0;
+  max-height: calc(12 * 1.5em);
+  overflow: auto;
+  padding: 8px 10px;
+  background: var(--bg);
+  border: var(--border-thin) solid var(--line);
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.permission__empty {
+  color: var(--muted);
+}
+
+.permission__path {
+  margin: 0;
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+
+.permission__note {
+  margin: 0;
+  color: var(--muted);
+  white-space: pre-wrap;
+}
+
+/* The Approve / Deny row from the mockup. */
+.permission__actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding-top: 12px;
+  border-top: var(--border) solid var(--line);
+}
+
+.permission__question {
+  min-width: 0;
+  font-family: var(--font-pixel);
+  font-size: 9px;
+  line-height: 1.5;
+  color: var(--waiting);
+  overflow-wrap: anywhere;
+}

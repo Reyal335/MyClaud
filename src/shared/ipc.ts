@@ -6,6 +6,7 @@ export const IpcChannel = {
   ProjectOpen: 'project:open',
   AgentSend: 'agent:send',
   AgentStop: 'agent:stop',
+  AgentPermission: 'agent:permission',
   AgentEvent: 'agent:event'
 } as const
 
@@ -32,10 +33,35 @@ export type AgentError = {
 
 export type AgentSendResult = { ok: true; requestId: string } | { ok: false; error: AgentError }
 
+// A tool call's input as the SDK gives it. String fields over the IPC size limit
+// are cut, and the event says so with `truncated`.
+export type ToolInput = Record<string, unknown>
+
+export type ToolEndState = 'done' | 'failed' | 'denied'
+
+export type PermissionDecision = 'approve' | 'deny'
+
 // Main to renderer, on IpcChannel.AgentEvent. Every event carries the requestId.
-// Step 3 adds tool and permission events to this union.
 export type AgentEvent =
   | { requestId: string; type: 'text'; text: string }
+  | { requestId: string; type: 'tool_start'; toolId: string; name: string }
+  | { requestId: string; type: 'tool_input'; toolId: string; input: ToolInput; truncated: boolean }
+  | { requestId: string; type: 'tool_end'; toolId: string; state: ToolEndState }
+  | {
+      requestId: string
+      type: 'permission_request'
+      permissionId: string
+      toolId: string
+      name: string
+      input: ToolInput
+      truncated: boolean
+    }
+  | {
+      requestId: string
+      type: 'permission_resolved'
+      permissionId: string
+      decision: PermissionDecision
+    }
   | { requestId: string; type: 'done' }
   | { requestId: string; type: 'stopped' }
   | { requestId: string; type: 'error'; code: AgentErrorCode; message: string }
@@ -49,6 +75,10 @@ export type MyClaudApi = {
   agent: {
     send: (prompt: string) => Promise<AgentSendResult>
     stop: () => Promise<void>
+    answerPermission: (
+      permissionId: string,
+      decision: PermissionDecision
+    ) => Promise<{ ok: boolean }>
     onEvent: (callback: (event: AgentEvent) => void) => () => void
   }
 }

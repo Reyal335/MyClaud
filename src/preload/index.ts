@@ -10,6 +10,8 @@ const api: MyClaudApi = {
   agent: {
     send: (prompt) => ipcRenderer.invoke(IpcChannel.AgentSend, prompt),
     stop: () => ipcRenderer.invoke(IpcChannel.AgentStop),
+    answerPermission: (permissionId, decision) =>
+      ipcRenderer.invoke(IpcChannel.AgentPermission, permissionId, decision),
     onEvent: (callback) => {
       const listener = (_event: IpcRendererEvent, agentEvent: AgentEvent): void =>
         callback(agentEvent)
