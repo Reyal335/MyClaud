@@ -1,7 +1,7 @@
 import { app, shell, BrowserWindow } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
-import icon from '../../resources/icon.png?asset'
+import { appIcon, windowIconOptions } from './appIcon'
 import { stopRun } from './agent'
 import { registerIpc } from './ipc'
 import { loadProject } from './settings'
@@ -18,7 +18,7 @@ function createWindow(): void {
     title: 'MyClaud',
     backgroundColor: WINDOW_BACKGROUND,
     show: false,
-    ...(process.platform === 'linux' ? { icon } : {}),
+    ...windowIconOptions,
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
       contextIsolation: true,
@@ -57,6 +57,12 @@ function createWindow(): void {
 app.whenReady().then(async () => {
   // Set app user model id for windows
   electronApp.setAppUserModelId('com.electron.app')
+
+  // A packaged macOS app gets its icon from the bundle; in development the dock
+  // would otherwise show the default Electron icon.
+  if (is.dev && process.platform === 'darwin') {
+    app.dock?.setIcon(appIcon)
+  }
 
   // F12 toggles DevTools in development; Ctrl/Cmd+R is ignored in production.
   app.on('browser-window-created', (_, window) => {
