@@ -36,8 +36,13 @@ Claude Code, using the Claude Agent SDK.
 - App data (mascots, agent icons, the icon mapping, settings) lives in
   Electron's `userData` folder. Never add custom fields to agent Markdown
   files; map agent file path to icon in a JSON file instead.
-- The API key comes from the `ANTHROPIC_API_KEY` environment variable or a
-  local `.env` file that is in `.gitignore`. Never hard-code or commit it.
+- Authentication: the app runs on the Claude Code login already on the
+  machine, so usage counts against that person's Claude plan. The user
+  signs in once by running `claude` and `/login` in a terminal. The app
+  has no API key, no `.env`, and no login screen of its own. It never
+  reads, copies, stores, or displays credentials or tokens. It removes
+  `ANTHROPIC_API_KEY` and `ANTHROPIC_AUTH_TOKEN` from the environment it
+  gives the SDK, so a stray key cannot switch billing to the API.
 
 ## Design
 
