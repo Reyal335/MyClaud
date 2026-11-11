@@ -6,3 +6,4 @@ out
 *.log*
 .env
 .claude/settings.local.json
+*.tsbuildinfo
