@@ -1,10 +1,14 @@
 import NavItem from './NavItem'
 import type { Screen } from '../screens/types'
+import type { ProjectInfo } from '../../../shared/ipc'
 import './Sidebar.css'
 
 type SidebarProps = {
   screen: Screen
   onNavigate: (screen: Screen) => void
+  project: ProjectInfo | null
+  canOpenProject: boolean
+  onOpenProject: () => void
 }
 
 const NAV_ITEMS: { screen: Screen; label: string }[] = [
@@ -13,7 +17,13 @@ const NAV_ITEMS: { screen: Screen; label: string }[] = [
   { screen: 'mascots', label: 'MASCOTS' }
 ]
 
-function Sidebar({ screen, onNavigate }: SidebarProps): React.JSX.Element {
+function Sidebar({
+  screen,
+  onNavigate,
+  project,
+  canOpenProject,
+  onOpenProject
+}: SidebarProps): React.JSX.Element {
   return (
     <nav className="sidebar" aria-label="Main">
       <div className="sidebar__wordmark">MyClaud</div>
@@ -28,7 +38,17 @@ function Sidebar({ screen, onNavigate }: SidebarProps): React.JSX.Element {
       <div className="sidebar__footer">
         Project
         <br />
-        <span className="sidebar__project">No project open</span>
+        <span className="sidebar__project" title={project?.path}>
+          {project ? project.name : 'No project open'}
+        </span>
+        <button
+          type="button"
+          className="button button--small sidebar__open"
+          disabled={!canOpenProject}
+          onClick={onOpenProject}
+        >
+          {project ? 'CHANGE' : 'OPEN'}
+        </button>
       </div>
     </nav>
   )

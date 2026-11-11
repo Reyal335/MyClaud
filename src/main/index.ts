@@ -2,6 +2,9 @@ import { app, shell, BrowserWindow } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
+import { stopRun } from './agent'
+import { registerIpc } from './ipc'
+import { loadProject } from './settings'
 
 // Matches --bg in the renderer tokens, so the window never flashes white on load.
 const WINDOW_BACKGROUND = '#0B132B'
@@ -33,6 +36,11 @@ function createWindow(): void {
     mainWindow.show()
   })
 
+  // A run belongs to this window. Stop it when the window goes away.
+  mainWindow.on('closed', () => {
+    stopRun()
+  })
+
   mainWindow.webContents.setWindowOpenHandler((details) => {
     shell.openExternal(details.url)
     return { action: 'deny' }
@@ -46,7 +54,7 @@ function createWindow(): void {
   }
 }
 
-app.whenReady().then(() => {
+app.whenReady().then(async () => {
   // Set app user model id for windows
   electronApp.setAppUserModelId('com.electron.app')
 
@@ -55,11 +63,17 @@ app.whenReady().then(() => {
     optimizer.watchWindowShortcuts(window)
   })
 
+  await loadProject()
+  registerIpc()
   createWindow()
 
   app.on('activate', function () {
     if (BrowserWindow.getAllWindows().length === 0) createWindow()
   })
+})
+
+app.on('before-quit', () => {
+  stopRun()
 })
 
 app.on('window-all-closed', () => {

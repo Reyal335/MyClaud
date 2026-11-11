@@ -24,5 +24,11 @@
 }
 
 .sidebar__project {
+  display: block;
+  overflow-wrap: anywhere;
   color: var(--text);
+}
+
+.sidebar__open {
+  margin-top: 10px;
 }

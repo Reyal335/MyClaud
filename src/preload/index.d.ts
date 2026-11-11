@@ -1,6 +1,8 @@
+import type { MyClaudApi } from '../shared/ipc'
+
 declare global {
   interface Window {
-    api: Record<string, never>
+    myclaud: MyClaudApi
   }
 }
 

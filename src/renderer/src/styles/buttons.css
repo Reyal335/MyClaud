@@ -1,0 +1,33 @@
+/* Pixel buttons, matching the SEND and APPROVE buttons in the mockups. */
+.button {
+  min-height: 44px;
+  padding: 0 16px;
+  background: var(--panel);
+  color: var(--text);
+  border: var(--border) solid var(--accent);
+  border-radius: 0;
+  box-shadow: var(--shadow-hard);
+  font-family: var(--font-pixel);
+  font-size: 10px;
+  line-height: 1.5;
+  cursor: pointer;
+}
+
+.button--primary {
+  background: var(--accent);
+  color: var(--bg);
+  border-color: var(--text);
+}
+
+.button--small {
+  padding: 0 10px;
+  font-size: 8px;
+}
+
+.button:disabled {
+  border-color: var(--line);
+  background: var(--panel);
+  color: var(--muted);
+  box-shadow: none;
+  cursor: not-allowed;
+}
