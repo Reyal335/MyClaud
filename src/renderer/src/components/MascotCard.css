@@ -51,6 +51,27 @@
   color: var(--muted);
 }
 
+/* Which state a running cycle shows. Keeps its height so the card does not jump. */
+.mascot-card__cycle {
+  min-height: 34px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.mascot-card__cycle-state {
+  font-family: var(--font-pixel);
+  font-size: 8px;
+  line-height: 1.5;
+  color: var(--accent);
+}
+
+.mascot-card__cycle-note {
+  font-size: 12px;
+  color: var(--muted);
+}
+
 .mascot-card__problem {
   margin: 0;
   display: flex;

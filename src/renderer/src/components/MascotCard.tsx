@@ -1,5 +1,6 @@
 import type { MascotLoops } from '../../../shared/ipc'
 import { MASCOT_STATES } from '../../../shared/mascotRules'
+import { useStateCycle } from '../mascots/useStateCycle'
 import Mascot from './Mascot'
 import './MascotCard.css'
 
@@ -21,6 +22,7 @@ type MascotCardProps = {
 
 // One mascot in the gallery from designs/4-mascot-manager.html: its idle loop
 // playing, the name, how many loops it has, and what can be done with it.
+// CYCLE STATES plays every state's loop in turn, CYCLE_STEP_MS each.
 function MascotCard({
   name,
   loops,
@@ -35,6 +37,10 @@ function MascotCard({
 }: MascotCardProps): React.JSX.Element {
   const count = MASCOT_STATES.filter((state) => loops[state]).length
   const idle = loops.idle
+  const cycle = useStateCycle()
+  const shownState = cycle.state ?? 'idle'
+  // A state with no sheet plays the idle loop.
+  const shown = loops[shownState] ?? idle
   const classes = ['mascot-card']
   if (active) classes.push('mascot-card--active')
   if (problem) classes.push('mascot-card--problem')
@@ -42,13 +48,13 @@ function MascotCard({
   return (
     <article className={classes.join(' ')} aria-label={name}>
       <div className="mascot-card__stage">
-        {idle ? (
+        {shown ? (
           <Mascot
-            src={idle.src}
-            frames={idle.frames}
-            fps={idle.fps}
+            src={shown.src}
+            frames={shown.frames}
+            fps={shown.fps}
             scale={2}
-            label={`${name}, idle loop`}
+            label={`${name}, ${shownState} loop`}
           />
         ) : (
           <span className="mascot-card__broken" aria-hidden="true">
@@ -58,6 +64,20 @@ function MascotCard({
       </div>
       <div className="mascot-card__name">{name}</div>
       {idle && <div className="mascot-card__count">{count} of 5 loops</div>}
+      {idle && (
+        <div className="mascot-card__cycle" aria-live="polite">
+          {cycle.state && (
+            <>
+              <span className="mascot-card__cycle-state">
+                {cycle.state.toUpperCase()} {cycle.step}/{MASCOT_STATES.length}
+              </span>
+              {!loops[cycle.state] && (
+                <span className="mascot-card__cycle-note">No sheet, plays idle</span>
+              )}
+            </>
+          )}
+        </div>
+      )}
       {problem && (
         <p className="mascot-card__problem">
           <span className="mascot-card__problem-mark" aria-hidden="true">
@@ -73,6 +93,16 @@ function MascotCard({
         </div>
       )}
       <div className="mascot-card__actions">
+        {idle && (
+          <button
+            type="button"
+            className="button button--secondary button--small"
+            aria-label={cycle.state ? `Stop cycling ${name}` : `Cycle ${name} through every state`}
+            onClick={cycle.state ? cycle.stop : cycle.start}
+          >
+            {cycle.state ? 'STOP' : 'CYCLE STATES'}
+          </button>
+        )}
         {onSetActive && !active && (
           <button
             type="button"
