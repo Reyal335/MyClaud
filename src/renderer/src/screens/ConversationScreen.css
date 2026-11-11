@@ -1,0 +1,214 @@
+/* Conversation screen from designs/2-conversation.html. Rows: header, history (takes
+   the free space and scrolls), stage, input. The history gives up space first, so
+   the stage and input stay fully visible at the minimum window size. */
+.conversation {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  height: 100%;
+  min-height: 0;
+  padding: 20px 28px;
+}
+
+.conversation__header {
+  flex: none;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding-bottom: 16px;
+  border-bottom: var(--border) solid var(--line);
+}
+
+.conversation__heading {
+  flex: 1;
+  min-width: 0;
+}
+
+.conversation__title {
+  margin: 0 0 8px;
+  font-family: var(--font-pixel);
+  font-size: 12px;
+  font-weight: normal;
+  line-height: 1.5;
+}
+
+.conversation__subtitle {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+/* Status: colored square plus a text label, never color alone. */
+.conversation__status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-pixel);
+  font-size: 9px;
+  color: var(--muted);
+}
+
+.conversation__status-square {
+  width: 8px;
+  height: 8px;
+  background: currentColor;
+}
+
+.conversation__status--running {
+  color: var(--running);
+}
+
+.conversation__status--waiting {
+  color: var(--waiting);
+}
+
+.conversation__status--error {
+  color: var(--error);
+}
+
+/* History */
+.conversation__history {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.conversation__mine,
+.conversation__reply,
+.conversation__stopped,
+.conversation__error {
+  margin: 0;
+  max-width: 72%;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.conversation__mine {
+  align-self: flex-end;
+  padding: 12px 14px;
+  background: var(--line);
+  border: var(--border) solid var(--accent);
+}
+
+.conversation__reply {
+  padding: 12px 14px;
+  background: var(--panel);
+  border: var(--border) solid var(--line);
+}
+
+.conversation__stopped {
+  color: var(--muted);
+}
+
+.conversation__error {
+  color: var(--error);
+}
+
+.conversation__tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-self: stretch;
+}
+
+/* Stage: the mascot beside the dialogue box. */
+.conversation__stage {
+  flex: none;
+  display: flex;
+  align-items: flex-end;
+  gap: 16px;
+}
+
+.stage__mascot {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.stage__frame {
+  position: relative;
+  background: var(--panel);
+  border: var(--border) solid var(--text);
+  box-shadow: var(--shadow-dialog);
+}
+
+.stage__badge {
+  position: absolute;
+  top: -12px;
+  right: -12px;
+  padding: 8px;
+  background: var(--text);
+  color: var(--bg);
+  border: var(--border) solid var(--bg);
+  font-family: var(--font-pixel);
+  font-size: 10px;
+  line-height: 1;
+}
+
+.stage__badge--working {
+  background: var(--bg);
+  color: var(--running);
+  border-color: var(--running);
+}
+
+.stage__badge--asking {
+  padding: 8px 10px;
+  background: var(--waiting);
+}
+
+/* The state as a word, since the default mascot looks the same in every state. */
+.stage__tag {
+  padding: 6px 8px;
+  font-family: var(--font-pixel);
+  font-size: 8px;
+  line-height: 1;
+  color: var(--bg);
+  background: var(--muted);
+}
+
+.stage__tag--thinking,
+.stage__tag--talking {
+  background: var(--accent);
+}
+
+.stage__tag--working {
+  background: var(--running);
+}
+
+.stage__tag--asking {
+  background: var(--waiting);
+}
+
+/* Input row */
+.conversation__input-row {
+  flex: none;
+  display: flex;
+  align-items: stretch;
+  gap: 12px;
+  margin: 0;
+}
+
+.conversation__input {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 48px;
+  padding: 12px 14px;
+  resize: none;
+  background: var(--bg);
+  color: var(--text);
+  border: var(--border) solid var(--line);
+  border-radius: 0;
+  font-family: var(--font-mono);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.conversation__input:disabled {
+  color: var(--muted);
+}

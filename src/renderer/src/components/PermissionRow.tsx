@@ -1,15 +1,10 @@
-import { useEffect, useRef } from 'react'
 import type { PermissionDecision, ToolInput } from '../../../shared/ipc'
 import type { PermissionRequest } from '../hooks/useConversation'
 import { relativePath } from './toolLabel'
 import './PermissionRow.css'
 
-type PermissionRowProps = {
-  name: string
-  request: PermissionRequest
-  projectPath: string | null
-  onAnswer: (permissionId: string, decision: PermissionDecision) => void
-}
+// A waiting tool call, in two parts the dialogue box places separately: the
+// details scroll with the box body, and the actions stay pinned below it.
 
 function stringField(input: ToolInput, key: string): string {
   const value = input[key]
@@ -82,46 +77,61 @@ function question(name: string, input: ToolInput, projectPath: string | null): s
   }
 }
 
-// The details of a waiting tool call and the APPROVE / DENY buttons, as in
-// designs/2-conversation.html. No keyboard shortcut and no automatic focus.
-function PermissionRow({
-  name,
-  request,
-  projectPath,
-  onAnswer
-}: PermissionRowProps): React.JSX.Element {
-  const ref = useRef<HTMLDivElement>(null)
+type PartProps = {
+  name: string
+  request: PermissionRequest
+  projectPath: string | null
+}
 
-  // Bring the request into view when it appears, without moving keyboard focus.
-  useEffect(() => {
-    ref.current?.scrollIntoView({ block: 'nearest' })
-  }, [])
-
+// What the agent wants to do: plain text blocks that scroll after about 12 lines.
+export function PermissionDetails({ name, request, projectPath }: PartProps): React.JSX.Element {
   return (
-    <div ref={ref} className="permission" role="group" aria-label="Permission request">
+    <div className="permission">
       <Details name={name} input={request.input} projectPath={projectPath} />
       {request.truncated && <p className="permission__note">Shown in part.</p>}
-      <div className="permission__actions">
-        <span className="permission__question">{question(name, request.input, projectPath)}</span>
-        <button
-          type="button"
-          className="button button--primary"
-          disabled={request.answering}
-          onClick={() => onAnswer(request.permissionId, 'approve')}
-        >
-          APPROVE
-        </button>
-        <button
-          type="button"
-          className="button button--secondary"
-          disabled={request.answering}
-          onClick={() => onAnswer(request.permissionId, 'deny')}
-        >
-          DENY
-        </button>
-      </div>
     </div>
   )
 }
 
-export default PermissionRow
+type ActionsProps = PartProps & {
+  // Where this request is among those pending, shown as "1 of 2" when more than one.
+  position: { index: number; total: number }
+  onAnswer: (permissionId: string, decision: PermissionDecision) => void
+}
+
+// The APPROVE / DENY row from designs/2-conversation.html. Both buttons are
+// disabled after one click. No keyboard shortcut and no automatic focus.
+export function PermissionActions({
+  name,
+  request,
+  projectPath,
+  position,
+  onAnswer
+}: ActionsProps): React.JSX.Element {
+  return (
+    <div className="permission__actions" role="group" aria-label="Permission request">
+      {position.total > 1 && (
+        <span className="permission__position">
+          {position.index + 1} of {position.total}
+        </span>
+      )}
+      <span className="permission__question">{question(name, request.input, projectPath)}</span>
+      <button
+        type="button"
+        className="button button--primary"
+        disabled={request.answering}
+        onClick={() => onAnswer(request.permissionId, 'approve')}
+      >
+        APPROVE
+      </button>
+      <button
+        type="button"
+        className="button button--secondary"
+        disabled={request.answering}
+        onClick={() => onAnswer(request.permissionId, 'deny')}
+      >
+        DENY
+      </button>
+    </div>
+  )
+}

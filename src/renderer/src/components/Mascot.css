@@ -1,0 +1,28 @@
+.mascot {
+  flex: none;
+  background-repeat: no-repeat;
+  background-position: 0 0;
+  /* Hard pixels at whole-number scales, no smoothing. */
+  image-rendering: pixelated;
+}
+
+/* steps(n) jumps between whole frames: offsets 0, -size, -2*size, ... */
+.mascot--animated {
+  animation: mascot-play var(--mascot-duration) steps(var(--mascot-frames)) infinite;
+}
+
+@keyframes mascot-play {
+  from {
+    background-position-x: 0;
+  }
+  to {
+    background-position-x: var(--mascot-end);
+  }
+}
+
+/* Reduced motion: frame 0 only. */
+@media (prefers-reduced-motion: reduce) {
+  .mascot--animated {
+    animation: none;
+  }
+}
