@@ -1,0 +1,32 @@
+/* The frame strip from the upload dialog in designs/4-mascot-manager.html. */
+.sheet-strip {
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.sheet-strip:focus-visible {
+  outline: var(--border-thin) solid var(--text);
+  outline-offset: 2px;
+}
+
+.sheet-strip__frames {
+  display: flex;
+  width: max-content;
+  border: var(--border) solid var(--line);
+}
+
+.sheet-strip__frame {
+  flex: none;
+  width: 64px;
+  height: 64px;
+  background-image: var(--sheet);
+  background-size: var(--sheet-width) 64px;
+  background-repeat: no-repeat;
+  image-rendering: pixelated;
+  border-right: var(--border) solid var(--accent);
+}
+
+.sheet-strip__frame:last-child {
+  border-right: 0;
+}

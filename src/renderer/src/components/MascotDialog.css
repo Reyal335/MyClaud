@@ -1,0 +1,231 @@
+/* The upload dialog from designs/4-mascot-manager.html. */
+.mascot-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.mascot-form__field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.mascot-form__label {
+  font-family: var(--font-pixel);
+  font-size: 9px;
+  line-height: 1.5;
+}
+
+.mascot-form__input {
+  min-height: 44px;
+  padding: 0 12px;
+  background: var(--bg);
+  color: var(--text);
+  border: var(--border) solid var(--line);
+  border-radius: 0;
+  font-family: var(--font-mono);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.mascot-form__input[aria-invalid='true'] {
+  border-color: var(--error);
+}
+
+.mascot-form__error {
+  margin: 0;
+  font-size: 12px;
+  color: var(--error);
+}
+
+.mascot-form__note {
+  margin: 0;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.mascot-form__format {
+  padding: 10px 12px;
+  background: var(--bg);
+  border: var(--border) solid var(--accent);
+}
+
+.mascot-form__format-title {
+  font-family: var(--font-pixel);
+  font-size: 9px;
+  color: var(--accent);
+}
+
+.mascot-form__loops-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.mascot-form__count {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.mascot-form__alert {
+  padding: 10px 12px;
+  background: var(--bg);
+  border: var(--border) solid var(--error);
+  color: var(--error);
+  overflow-wrap: anywhere;
+}
+
+/* One row per state. */
+.sheet-row {
+  min-width: 0;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: var(--bg);
+  border: var(--border) solid var(--line);
+}
+
+.sheet-row--empty {
+  border-style: dashed;
+}
+
+.sheet-row--error {
+  border-color: var(--error);
+}
+
+/* The row with the sheet slicer open. */
+.sheet-row--slicing {
+  border-color: var(--accent);
+}
+
+.sheet-row__head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+}
+
+.sheet-row__state {
+  font-family: var(--font-pixel);
+  font-size: 10px;
+  line-height: 1.5;
+  color: var(--text);
+}
+
+/* State colors as in the mockup and the conversation stage tags. */
+.sheet-row__state--thinking,
+.sheet-row__state--talking {
+  color: var(--accent);
+}
+
+.sheet-row__state--working {
+  color: var(--running);
+}
+
+.sheet-row__state--asking {
+  color: var(--waiting);
+}
+
+.sheet-row__required {
+  padding: 2px 6px;
+  border: var(--border-thin) solid var(--line);
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.sheet-row__meta {
+  min-width: 0;
+  font-size: 12px;
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+
+.sheet-row__controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  margin-left: auto;
+}
+
+.sheet-row__fps {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-pixel);
+  font-size: 8px;
+}
+
+.sheet-row__fps-input {
+  width: 64px;
+  min-height: 44px;
+  padding: 0 8px;
+  background: var(--panel);
+  color: var(--text);
+  border: var(--border) solid var(--line);
+  border-radius: 0;
+  font-family: var(--font-mono);
+  font-size: 14px;
+}
+
+.sheet-row__fps-input[aria-invalid='true'] {
+  border-color: var(--error);
+}
+
+.sheet-row__fps-input:disabled {
+  color: var(--muted);
+  cursor: not-allowed;
+}
+
+.sheet-row__button {
+  background: var(--panel);
+  box-shadow: none;
+}
+
+.sheet-row__button:disabled {
+  background: var(--bg);
+}
+
+.sheet-row__error {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  color: var(--error);
+  overflow-wrap: anywhere;
+}
+
+.sheet-row__error-mark {
+  flex: none;
+  font-family: var(--font-pixel);
+  font-size: 10px;
+}
+
+.sheet-row__body {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  min-width: 0;
+}
+
+.sheet-row__loop {
+  flex: none;
+  border: var(--border) solid var(--text);
+}
+
+.sheet-row__placeholder {
+  padding: 14px;
+  border: var(--border) dashed var(--line);
+  text-align: center;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.sheet-row__fps-error {
+  margin: 0;
+  font-size: 12px;
+  color: var(--error);
+}

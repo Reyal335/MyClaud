@@ -1,0 +1,62 @@
+/* The gallery from designs/4-mascot-manager.html. The upload dialog is a modal,
+   so the gallery takes the whole width. */
+.mascots {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 20px 28px;
+}
+
+.mascots__title {
+  margin: 0;
+  font-family: var(--font-pixel);
+  font-size: 14px;
+  font-weight: normal;
+  line-height: 1.5;
+}
+
+.mascots__title:focus {
+  outline: none;
+}
+
+.mascots__error {
+  margin: 0;
+  padding: 10px 12px;
+  border: var(--border) solid var(--error);
+  color: var(--error);
+  overflow-wrap: anywhere;
+}
+
+.mascots__gallery {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 16px;
+  align-items: stretch;
+}
+
+.mascots__add {
+  min-height: 240px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  background: var(--bg);
+  color: var(--accent);
+  border: var(--border) dashed var(--accent);
+  border-radius: 0;
+  font-family: var(--font-pixel);
+  font-size: 10px;
+  line-height: 1.5;
+  cursor: pointer;
+}
+
+.mascots__add:hover {
+  color: var(--text);
+  border-color: var(--text);
+}
+
+.mascots__add-plus {
+  font-size: 28px;
+}

@@ -30,6 +30,27 @@ const api: MyClaudApi = {
     remove: (filePath) => ipcRenderer.invoke(IpcChannel.AgentsRemove, filePath),
     pickIcon: () => ipcRenderer.invoke(IpcChannel.AgentsPickIcon),
     discardIcon: (token) => ipcRenderer.invoke(IpcChannel.AgentsDiscardIcon, token)
+  },
+  mascots: {
+    list: () => ipcRenderer.invoke(IpcChannel.MascotsList),
+    getActive: () => ipcRenderer.invoke(IpcChannel.MascotsGetActive),
+    pickSheet: () => ipcRenderer.invoke(IpcChannel.MascotsPickSheet),
+    discardSheet: (token) => ipcRenderer.invoke(IpcChannel.MascotsDiscardSheet, token),
+    sliceSheet: (sourceToken, columns, rows, cells) =>
+      ipcRenderer.invoke(IpcChannel.MascotsSliceSheet, sourceToken, columns, rows, cells),
+    dropSources: () => ipcRenderer.invoke(IpcChannel.MascotsDropSources),
+    create: (draft) => ipcRenderer.invoke(IpcChannel.MascotsCreate, draft),
+    update: (id, draft) => ipcRenderer.invoke(IpcChannel.MascotsUpdate, id, draft),
+    remove: (id) => ipcRenderer.invoke(IpcChannel.MascotsRemove, id),
+    resetDefault: () => ipcRenderer.invoke(IpcChannel.MascotsResetDefault),
+    setActive: (id) => ipcRenderer.invoke(IpcChannel.MascotsSetActive, id),
+    onChanged: (callback) => {
+      const listener = (): void => callback()
+      ipcRenderer.on(IpcChannel.MascotsChanged, listener)
+      return () => {
+        ipcRenderer.removeListener(IpcChannel.MascotsChanged, listener)
+      }
+    }
   }
 }
 

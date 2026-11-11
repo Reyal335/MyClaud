@@ -1,17 +1,17 @@
 import { app, BrowserWindow, dialog } from 'electron'
 import { randomBytes } from 'crypto'
-import { mkdir, open, readFile, unlink } from 'fs/promises'
+import { mkdir, readFile, unlink } from 'fs/promises'
 import { join } from 'path'
 import type { AgentIconChange, PickIconResult } from '../shared/ipc'
 import { writeFileSafely } from './safeWrite'
 import { normalizePath, prunePathMap, readPathMap, writePathMap, type PathMap } from './pathMap'
+import { pngSize, readPngHeader, toPngDataUrl } from './png'
+import { PendingFiles } from './pendingFiles'
 
 // Icons live in userData, never in the agent files: icon images in agent-icons/
 // and the map from agent file path to icon filename in agent-icons.json.
 
 const ICON_SIZE = 16
-const PNG_SIGNATURE = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])
-const PNG_HEADER_LENGTH = 24
 const NOT_PNG = 'Icon must be a PNG file.'
 const ICON_FILE = /^[0-9a-f]{32}\.png$/
 
@@ -44,40 +44,21 @@ export async function loadIcons(): Promise<(agentPath: string) => Promise<string
     const file = map[normalizePath(agentPath)]
     if (!file) return null
     try {
-      return toDataUrl(await readFile(join(iconsDir(), file)))
+      return toPngDataUrl(await readFile(join(iconsDir(), file)))
     } catch {
       return null
     }
   }
 }
 
-function toDataUrl(bytes: Buffer): string {
-  return `data:image/png;base64,${bytes.toString('base64')}`
-}
-
 // Picked icons wait here until the agent is saved. There is one form, so one pick at a time.
-const pendingIcons = new Map<string, Buffer>()
-
-async function readHeader(path: string): Promise<Buffer> {
-  const file = await open(path, 'r')
-  try {
-    const header = Buffer.alloc(PNG_HEADER_LENGTH)
-    const { bytesRead } = await file.read(header, 0, PNG_HEADER_LENGTH, 0)
-    return header.subarray(0, bytesRead)
-  } finally {
-    await file.close()
-  }
-}
+const pendingIcons = new PendingFiles<Buffer>(1)
 
 // Returns the message to show, or null if the header is a 16x16 PNG.
 function iconProblem(header: Buffer): string | null {
-  const isPng =
-    header.length >= PNG_HEADER_LENGTH &&
-    header.subarray(0, PNG_SIGNATURE.length).equals(PNG_SIGNATURE) &&
-    header.toString('latin1', 12, 16) === 'IHDR'
-  if (!isPng) return NOT_PNG
-  const width = header.readUInt32BE(16)
-  const height = header.readUInt32BE(20)
+  const size = pngSize(header)
+  if (!size) return NOT_PNG
+  const { width, height } = size
   if (width === ICON_SIZE && height === ICON_SIZE) return null
   return `Icon must be exactly 16x16. This one is ${width}x${height}.`
 }
@@ -95,13 +76,11 @@ export async function pickIcon(window: BrowserWindow | null): Promise<PickIconRe
 
   const path = result.filePaths[0]
   try {
-    const problem = iconProblem(await readHeader(path))
+    const problem = iconProblem(await readPngHeader(path))
     if (problem) return { ok: false, error: { code: 'invalid', message: problem } }
     const bytes = await readFile(path)
-    const token = randomBytes(16).toString('hex')
-    pendingIcons.clear()
-    pendingIcons.set(token, bytes)
-    return { ok: true, canceled: false, token, preview: toDataUrl(bytes) }
+    const token = pendingIcons.add(bytes)
+    return { ok: true, canceled: false, token, preview: toPngDataUrl(bytes) }
   } catch (err) {
     console.error('Could not read the icon:', err)
     return { ok: false, error: { code: 'io_error', message: 'The icon file could not be read.' } }

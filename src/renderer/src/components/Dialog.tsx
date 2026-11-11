@@ -4,6 +4,8 @@ import './Dialog.css'
 type DialogProps = {
   title: string
   tone?: 'default' | 'danger'
+  // Wide dialogs hold a whole form and scroll inside when the window is short.
+  size?: 'default' | 'wide'
   children: ReactNode
   // The buttons. The first one gets focus when the dialog opens.
   actions: ReactNode
@@ -19,6 +21,7 @@ const FOCUSABLE =
 function Dialog({
   title,
   tone = 'default',
+  size = 'default',
   children,
   actions,
   onClose
@@ -62,7 +65,7 @@ function Dialog({
     <div className="dialog-backdrop">
       <div
         ref={ref}
-        className={`dialog dialog--${tone}`}
+        className={`dialog dialog--${tone}${size === 'wide' ? ' dialog--wide' : ''}`}
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}

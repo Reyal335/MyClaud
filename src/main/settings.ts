@@ -1,23 +1,22 @@
 import { app } from 'electron'
-import { readFile, writeFile, stat } from 'fs/promises'
+import { readFile, stat } from 'fs/promises'
 import { basename, join } from 'path'
 import type { ProjectInfo } from '../shared/ipc'
+import { DEFAULT_MASCOT_ID } from '../shared/mascotRules'
+import { writeFileSafely } from './safeWrite'
 
-type Settings = {
-  projectPath?: string
-}
+type RawSettings = Record<string, unknown>
 
 function settingsPath(): string {
   return join(app.getPath('userData'), 'settings.json')
 }
 
 // A missing or corrupt file means empty settings, never a crash.
-async function readSettings(): Promise<Settings> {
+async function readSettings(): Promise<RawSettings> {
   try {
     const parsed: unknown = JSON.parse(await readFile(settingsPath(), 'utf8'))
     if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
-      const { projectPath } = parsed as Record<string, unknown>
-      return typeof projectPath === 'string' ? { projectPath } : {}
+      return parsed as RawSettings
     }
   } catch {
     // Fall through to empty settings.
@@ -25,8 +24,18 @@ async function readSettings(): Promise<Settings> {
   return {}
 }
 
-async function writeSettings(settings: Settings): Promise<void> {
-  await writeFile(settingsPath(), JSON.stringify(settings, null, 2), 'utf8')
+// One read-change-write at a time, so two settings never overwrite each other.
+// Keys this version does not know are kept.
+let queue: Promise<unknown> = Promise.resolve()
+
+function updateSettings(patch: RawSettings): Promise<void> {
+  const task = async (): Promise<void> => {
+    const next = { ...(await readSettings()), ...patch }
+    await writeFileSafely(settingsPath(), JSON.stringify(next, null, 2))
+  }
+  const result = queue.then(task, task)
+  queue = result.catch(() => {})
+  return result
 }
 
 async function isDirectory(path: string): Promise<boolean> {
@@ -47,7 +56,9 @@ let currentProject: ProjectInfo | null = null
 export async function loadProject(): Promise<void> {
   const { projectPath } = await readSettings()
   currentProject =
-    projectPath && (await isDirectory(projectPath)) ? toProjectInfo(projectPath) : null
+    typeof projectPath === 'string' && (await isDirectory(projectPath))
+      ? toProjectInfo(projectPath)
+      : null
 }
 
 export function getProject(): ProjectInfo | null {
@@ -57,10 +68,20 @@ export function getProject(): ProjectInfo | null {
 export async function setProject(path: string): Promise<ProjectInfo> {
   currentProject = toProjectInfo(path)
   try {
-    await writeSettings({ ...(await readSettings()), projectPath: path })
+    await updateSettings({ projectPath: path })
   } catch (err) {
     // The project still opens for this session; it just won't be remembered.
     console.error('Could not save settings:', err instanceof Error ? err.message : err)
   }
   return currentProject
+}
+
+// The chosen mascot's id as saved. The caller checks it still exists and works.
+export async function getActiveMascotId(): Promise<string> {
+  const { activeMascotId } = await readSettings()
+  return typeof activeMascotId === 'string' ? activeMascotId : DEFAULT_MASCOT_ID
+}
+
+export function setActiveMascotId(id: string): Promise<void> {
+  return updateSettings({ activeMascotId: id })
 }

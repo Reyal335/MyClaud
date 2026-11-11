@@ -1,18 +1,15 @@
-export type MascotStateName = 'idle' | 'thinking' | 'talking' | 'working' | 'asking'
+import type { MascotLoop, MascotLoops } from '../../../shared/ipc'
+import type { MascotStateName } from '../../../shared/mascotRules'
 
-// One spritesheet: a horizontal strip of 64x64 frames, played at `fps`.
-export type MascotLoop = {
-  src: string
-  frames: number
-  fps: number
-}
+export type { MascotLoop, MascotStateName }
 
 // A mascot has one loop per state. idle is required; a state without a loop plays idle.
 export type Mascot = {
   name: string
-  loops: { idle: MascotLoop } & Partial<Record<Exclude<MascotStateName, 'idle'>, MascotLoop>>
+  loops: MascotLoops
 }
 
+// The one place a missing state falls back to the idle loop.
 export function loopFor(mascot: Mascot, state: MascotStateName): MascotLoop {
   return mascot.loops[state] ?? mascot.loops.idle
 }

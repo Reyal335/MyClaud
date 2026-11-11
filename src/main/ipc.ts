@@ -4,6 +4,19 @@ import { answerPermission, clearSession, isRunning, startRun, stopRun } from './
 import { getProject, setProject } from './settings'
 import { createAgent, listAgents, readAgent, removeAgent, updateAgent } from './agents'
 import { discardIcon, pickIcon } from './agentIcons'
+import {
+  createMascot,
+  discardSheet,
+  dropSources,
+  getActiveMascot,
+  listMascots,
+  pickSheet,
+  removeMascot,
+  resetDefaultMascot,
+  setActiveMascot,
+  sliceSheet,
+  updateMascot
+} from './mascots'
 
 export function registerIpc(): void {
   ipcMain.handle(IpcChannel.ProjectGet, (): ProjectInfo | null => getProject())
@@ -74,4 +87,28 @@ export function registerIpc(): void {
   ipcMain.handle(IpcChannel.AgentsDiscardIcon, (_event, token: unknown) => {
     if (typeof token === 'string') discardIcon(token)
   })
+
+  // Mascots. The renderer names a mascot by id only; mascots.ts checks every argument again.
+  ipcMain.handle(IpcChannel.MascotsList, () => listMascots())
+  ipcMain.handle(IpcChannel.MascotsGetActive, () => getActiveMascot())
+  ipcMain.handle(IpcChannel.MascotsPickSheet, (event) =>
+    pickSheet(BrowserWindow.fromWebContents(event.sender))
+  )
+  ipcMain.handle(IpcChannel.MascotsDiscardSheet, (_event, token: unknown) => {
+    if (typeof token === 'string') discardSheet(token)
+  })
+  // The renderer sends a source token and numbers only; mascots.ts checks the slice again.
+  ipcMain.handle(
+    IpcChannel.MascotsSliceSheet,
+    (_event, sourceToken: unknown, columns: unknown, rows: unknown, cells: unknown) =>
+      sliceSheet(sourceToken, columns, rows, cells)
+  )
+  ipcMain.handle(IpcChannel.MascotsDropSources, () => dropSources())
+  ipcMain.handle(IpcChannel.MascotsCreate, (_event, draft: unknown) => createMascot(draft))
+  ipcMain.handle(IpcChannel.MascotsUpdate, (_event, id: unknown, draft: unknown) =>
+    updateMascot(id, draft)
+  )
+  ipcMain.handle(IpcChannel.MascotsRemove, (_event, id: unknown) => removeMascot(id))
+  ipcMain.handle(IpcChannel.MascotsResetDefault, () => resetDefaultMascot())
+  ipcMain.handle(IpcChannel.MascotsSetActive, (_event, id: unknown) => setActiveMascot(id))
 }

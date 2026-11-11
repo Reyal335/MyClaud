@@ -68,7 +68,7 @@ function App(): React.JSX.Element {
         />
       )}
       {screen === 'agents' && <AgentsScreen project={project} setLeaveGuard={setLeaveGuard} />}
-      {screen === 'mascots' && <MascotsScreen />}
+      {screen === 'mascots' && <MascotsScreen setLeaveGuard={setLeaveGuard} />}
     </AppShell>
   )
 }

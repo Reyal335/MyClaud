@@ -1,0 +1,434 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MyClaud mockup 7: sheet slicer</title>
+<!--
+  MyClaud design mockup 7: the sheet slicer inside the mascot dialog.
+
+  This is a mockup. The script at the bottom only exists so the mockup can be
+  tried in a browser. Do not copy the markup or the script into the app: build
+  React components and use the tokens from DESIGN.md.
+
+  What it shows
+  - A state row in three conditions: empty, slicing, and filled.
+  - The slicer: columns and rows steppers, grid lines over the sheet, cells
+    picked in play order, the status box (ok, warning, error), a loop preview,
+    the picked frames, and USE N FRAMES / CANCEL SLICE.
+  - REUSE SHEET on the other rows once a sheet has been loaded.
+
+  Mockup-only behaviour
+  - UPLOAD and REPLACE open the browser's file picker, so any PNG can be tried.
+  - Every picked PNG opens the slicer. In the app a sheet that is already a
+    legal 64px strip skips the slicer.
+-->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+:root{
+  --bg:#0B132B; --panel:#1C2541; --line:#3A506B; --accent:#5BC0BE; --text:#F2F4F8;
+  --muted:#A9B6C6; --running:#6FCF7F; --waiting:#F2B84B; --error:#F0706A; --shadow:#000;
+  --backdrop:#060B1A; --check:#26335A; --dim:rgba(11,19,43,.62);
+  --pixel:'Press Start 2P',monospace; --mono:'IBM Plex Mono',monospace;
+}
+*{box-sizing:border-box}
+body{margin:0;padding:32px 20px;background:var(--backdrop);color:var(--text);font:14px/1.5 var(--mono)}
+:focus-visible{outline:3px solid var(--text);outline-offset:2px}
+h1,h2{margin:0;font-family:var(--pixel);font-weight:400;color:var(--accent)}
+h1{font-size:12px}
+h2{font-size:9px}
+
+.dialog{max-width:960px;margin:0 auto;padding:20px;background:var(--panel);border:4px solid var(--text);box-shadow:6px 6px 0 var(--shadow);display:flex;flex-direction:column;gap:16px}
+.stack{display:flex;flex-direction:column;gap:6px}
+.line{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.push{margin-left:auto}
+.label{font:9px var(--pixel)}
+.muted{font-size:12px;color:var(--muted)}
+.tag{font-size:12px;padding:2px 6px;border:2px solid var(--line);color:var(--muted)}
+.field{min-height:44px;padding:0 12px;background:var(--bg);color:var(--text);border:4px solid var(--line);font:14px var(--mono)}
+.fps{display:inline-flex;align-items:center;gap:8px;font:8px var(--pixel)}
+.fps input{width:64px;padding:0 8px;background:var(--panel)}
+.format{padding:10px 12px;border:4px solid var(--accent);background:var(--bg)}
+.format b{font:9px var(--pixel);color:var(--accent);font-weight:400}
+
+.btn{min-height:44px;padding:0 10px;background:var(--panel);color:var(--text);border:4px solid var(--line);font:8px var(--pixel);cursor:pointer}
+.btn.accent{border-color:var(--accent)}
+.btn.big{padding:0 16px;font-size:10px;background:var(--bg);box-shadow:4px 4px 0 var(--shadow)}
+.btn.primary{background:var(--accent);color:var(--bg);border-color:var(--text)}
+.btn:disabled{background:var(--line);color:var(--muted);border-color:var(--line);box-shadow:none;cursor:not-allowed}
+
+.row{padding:12px;background:var(--bg);border:4px solid var(--line);display:flex;flex-direction:column;gap:12px}
+.row.empty{border-style:dashed}
+.row.slicing{border-color:var(--accent)}
+.row .name{font:10px var(--pixel)}
+.rowerror{display:flex;gap:10px;align-items:center;color:var(--error)}
+.rowerror b{font:10px var(--pixel);font-weight:400}
+
+.px{background-repeat:no-repeat;image-rendering:pixelated}
+.checker{background-color:var(--panel);background-image:linear-gradient(45deg,var(--check) 25%,transparent 25%,transparent 75%,var(--check) 75%),linear-gradient(45deg,var(--check) 25%,transparent 25%,transparent 75%,var(--check) 75%);background-size:16px 16px;background-position:0 0,8px 8px}
+
+.slicehead{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding-top:12px;border-top:4px solid var(--line)}
+.slicebody{display:flex;gap:20px;flex-wrap:wrap;align-items:flex-start}
+.sheetscroll{flex:none;max-width:100%;overflow-x:auto}
+.sheetbox{position:relative;border:4px solid var(--line)}
+.sheetbox .px,.cells{position:absolute;inset:0}
+.cells{display:grid}
+.cell{position:relative;min-width:0;min-height:0;margin:0;padding:0;border:0;background:var(--dim);cursor:pointer}
+.cell.on{background:transparent}
+.cell:focus-visible{outline-offset:-3px}
+.badge{position:absolute;top:3px;left:3px;min-width:18px;padding:5px 3px 4px;background:var(--accent);color:var(--bg);font:8px/1 var(--pixel);text-align:center}
+.side{flex:1 1 300px;min-width:0;display:flex;flex-direction:column;gap:16px}
+.steppers{display:flex;gap:20px;flex-wrap:wrap}
+.stepper{display:flex}
+.stepper button{width:44px;height:44px;padding:0;background:var(--panel);color:var(--text);border:4px solid var(--line);font:12px var(--pixel);cursor:pointer}
+.stepper button:disabled{color:var(--line);cursor:not-allowed}
+.stepper output{width:52px;height:44px;display:flex;align-items:center;justify-content:center;background:var(--text);color:var(--bg);font:12px var(--pixel)}
+.status{display:flex;gap:10px;align-items:center;padding:10px 12px;border:4px solid}
+.status b{font:10px var(--pixel);font-weight:400}
+.status.ok{color:var(--running)}
+.status.warn{color:var(--waiting)}
+.status.err{color:var(--error)}
+.previewline{display:flex;gap:16px;align-items:flex-end;flex-wrap:wrap}
+.preview{border:4px solid var(--text)}
+.frames{display:flex;gap:10px;overflow-x:auto;padding-bottom:4px}
+.frame{flex:none;display:flex;flex-direction:column;align-items:center;gap:4px}
+.frame .checker{border:4px solid var(--line)}
+.nopick{padding:14px;border:4px dashed var(--line);text-align:center;font-size:12px;color:var(--muted)}
+.strip{display:flex;border:4px solid var(--line)}
+.strip .px + .px{border-left:4px solid var(--accent);box-sizing:content-box}
+.filledbody{display:flex;gap:12px;align-items:center}
+.stripscroll{min-width:0;overflow-x:auto}
+</style>
+</head>
+<body>
+
+<form class="dialog" role="dialog" aria-labelledby="dlg-title" onsubmit="return false">
+  <h1 id="dlg-title">EDIT DEFAULT MASCOT</h1>
+
+  <div class="stack">
+    <label class="label" for="m-name">NAME</label>
+    <input class="field" id="m-name" type="text" value="Default">
+  </div>
+
+  <div class="muted">This is the built-in mascot. Your name and loops are kept in the app's data folder and the built-in files never change. RESET on its card brings back the built-in version.</div>
+
+  <div class="format"><b>FORMAT</b><br>One spritesheet per state, as a strip or a grid. PNG under 3 MB. A strip of 64x64 frames is used as it is. Any other sheet opens the slicer: set columns and rows, then pick the frames for the loop. Frames must be square and are scaled to 64x64. Up to 16 frames per loop. Idle is required; a state with no sheet plays the idle loop.</div>
+
+  <div class="line" style="justify-content:space-between">
+    <span class="label">ANIMATION LOOPS</span>
+    <span class="muted" id="count"></span>
+  </div>
+
+  <div id="rows" style="display:flex;flex-direction:column;gap:16px"></div>
+
+  <div class="line">
+    <button type="button" class="btn big primary" id="save">SAVE MASCOT</button>
+    <button type="button" class="btn big">CANCEL</button>
+  </div>
+</form>
+
+<script>
+/* Mockup script. Not app code. */
+(function () {
+  var PLACEHOLDER = 'data:image/png;base64,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';
+  var STATES = [
+    { id: 'idle', label: 'IDLE', color: 'var(--text)', required: true },
+    { id: 'thinking', label: 'THINKING', color: 'var(--accent)' },
+    { id: 'talking', label: 'TALKING', color: 'var(--accent)' },
+    { id: 'working', label: 'WORKING', color: 'var(--running)' },
+    { id: 'asking', label: 'ASKING', color: 'var(--waiting)' }
+  ];
+  var MAX_GRID = 16, MAX_FRAMES = 16, BOX = 384, MAX_SIDE = 4096, MAX_BYTES = 3145728;
+  var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  var source = { name: 'expressions.png', url: PLACEHOLDER, w: 384, h: 384 };
+  var loops = {};                       // state id -> { source, cols, rows, cells }
+  var fps = { idle: 2, thinking: 8, talking: 8, working: 8, asking: 8 };
+  var slice = { state: 'idle', source: source, cols: 3, rows: 3, picked: [0, 3], playing: false, start: 0 };
+  var rowError = null;                  // { state, text }
+  var pending = null;                   // state id waiting for the file picker
+  var anims = [];
+
+  function h(tag, props) {
+    var el = document.createElement(tag), k, v, i;
+    props = props || {};
+    for (k in props) {
+      v = props[k];
+      if (v == null || v === false) continue;
+      if (k === 'class') el.className = v;
+      else if (k === 'style') el.style.cssText = v;
+      else if (k === 'text') el.textContent = v;
+      else if (k === 'key') el.dataset.key = v;
+      else if (k.slice(0, 2) === 'on') el.addEventListener(k.slice(2), v);
+      else el.setAttribute(k, v === true ? '' : v);
+    }
+    for (i = 2; i < arguments.length; i++) {
+      [].concat(arguments[i]).forEach(function (kid) {
+        if (kid == null || kid === false) return;
+        el.appendChild(kid.nodeType ? kid : document.createTextNode(String(kid)));
+      });
+    }
+    return el;
+  }
+  function fmt(x) { return String(Math.round(x * 10) / 10); }
+  function clamp(x, lo, hi) { return Math.min(hi, Math.max(lo, x)); }
+
+  function crop(el, src, cols, rows, index, size) {
+    el.style.width = size + 'px';
+    el.style.height = size + 'px';
+    el.style.backgroundImage = 'url("' + src.url + '")';
+    el.style.backgroundSize = (cols * size) + 'px ' + (rows * size) + 'px';
+    el.style.backgroundPosition = '-' + ((index % cols) * size) + 'px -' + (Math.floor(index / cols) * size) + 'px';
+  }
+
+  /* The slice rules, in the order they are checked. */
+  function check(s) {
+    var W = s.source.w, H = s.source.h, cw = W / s.cols, ch = H / s.rows, n = s.picked.length;
+    var size = fmt(cw) + 'x' + fmt(ch);
+    if (!Number.isInteger(cw)) return { level: 'err', size: size, text: 'Sheet width ' + W + ' does not divide into ' + s.cols + ' columns.' };
+    if (!Number.isInteger(ch)) return { level: 'err', size: size, text: 'Sheet height ' + H + ' does not divide into ' + s.rows + ' rows.' };
+    if (cw !== ch) return { level: 'err', size: size, text: 'Frames must be square. ' + s.cols + ' x ' + s.rows + ' gives ' + cw + 'x' + ch + '.' };
+    if (n > MAX_FRAMES) return { level: 'err', size: size, text: 'A loop can have at most 16 frames. ' + n + ' are picked.' };
+    if (cw === 64) return { level: 'ok', size: size, text: '64x64 frames, used as they are.' };
+    if (cw % 64 === 0 || 64 % cw === 0) return { level: 'ok', size: size, text: cw + 'x' + cw + ' frames, scaled to 64x64.' };
+    return { level: 'warn', size: size, text: cw + 'x' + cw + ' is not a multiple of 64. Scaled frames may look uneven.' };
+  }
+  function allCells(cols, rows) {
+    var n = cols * rows, out = [], i;
+    if (n <= MAX_FRAMES) for (i = 0; i < n; i++) out.push(i);
+    return out;
+  }
+  function guessGrid(src) {
+    if (src.grid) return { cols: src.grid.cols, rows: src.grid.rows };
+    var c = src.w / 64, r = src.h / 64;
+    if (Number.isInteger(c) && Number.isInteger(r) && c <= MAX_GRID && r <= MAX_GRID) return { cols: c, rows: r };
+    return { cols: 1, rows: 1 };
+  }
+  function openSlice(stateId, src) {
+    var g = guessGrid(src);
+    rowError = null;
+    slice = { state: stateId, source: src, cols: g.cols, rows: g.rows, picked: allCells(g.cols, g.rows), playing: false, start: 0 };
+    render();
+  }
+  function setGrid(cols, rows) {
+    slice.cols = clamp(cols, 1, MAX_GRID);
+    slice.rows = clamp(rows, 1, MAX_GRID);
+    slice.picked = allCells(slice.cols, slice.rows);
+    slice.playing = false;
+    render();
+  }
+
+  /* File picking (mockup only: the app picks files in the main process). */
+  var picker = h('input', { type: 'file', accept: 'image/png', hidden: true, onchange: onFile });
+  document.body.appendChild(picker);
+  function pick(stateId) { pending = stateId; picker.value = ''; picker.click(); }
+  function fail(text) { rowError = { state: pending, text: text }; render(); }
+  function onFile() {
+    var f = picker.files[0];
+    if (!f) return;
+    if (f.type !== 'image/png') return fail('Sheet must be a PNG file.');
+    if (f.size > MAX_BYTES) return fail('Sheet must be under 3 MB. This one is ' + (f.size / 1048576).toFixed(1) + ' MB.');
+    var reader = new FileReader();
+    reader.onload = function () {
+      var im = new Image();
+      im.onload = function () {
+        if (im.naturalWidth > MAX_SIDE || im.naturalHeight > MAX_SIDE) {
+          return fail('Sheet must be at most 4096 pixels on each side. This one is ' + im.naturalWidth + 'x' + im.naturalHeight + '.');
+        }
+        source = { name: f.name, url: reader.result, w: im.naturalWidth, h: im.naturalHeight };
+        openSlice(pending, source);
+      };
+      im.onerror = function () { fail('This file could not be read as an image.'); };
+      im.src = reader.result;
+    };
+    reader.readAsDataURL(f);
+  }
+
+  function fpsField(st, disabled) {
+    return h('label', { class: 'fps push' }, 'FPS',
+      h('input', {
+        class: 'field', type: 'number', min: 1, max: 30, step: 1, value: fps[st.id], disabled: disabled, key: st.id + ':fps',
+        onchange: function (e) { fps[st.id] = clamp(parseInt(e.target.value, 10) || 1, 1, 30); render(); }
+      }));
+  }
+  function nameLine(st, note) {
+    return [
+      h('span', { class: 'name', style: 'color:' + st.color, text: st.label }),
+      st.required ? h('span', { class: 'tag', text: 'required' }) : null,
+      h('span', { class: 'muted', text: note })
+    ];
+  }
+  function errorLine(st) {
+    if (!rowError || rowError.state !== st.id) return null;
+    return h('div', { class: 'rowerror', role: 'alert' }, h('b', { text: 'X' }), h('span', { text: rowError.text }));
+  }
+
+  function emptyRow(st) {
+    return h('section', { class: 'row empty', 'aria-label': st.label + ' loop' },
+      h('div', { class: 'line' },
+        nameLine(st, st.required ? 'Idle is required.' : 'No sheet yet. Plays the idle loop.'),
+        h('button', { type: 'button', class: 'btn accent push', key: st.id + ':upload', text: 'UPLOAD', onclick: function () { pick(st.id); } }),
+        source ? h('button', { type: 'button', class: 'btn', key: st.id + ':reuse', text: 'REUSE SHEET', title: 'Slice ' + source.name + ' again for this state', onclick: function () { openSlice(st.id, source); } }) : null),
+      errorLine(st));
+  }
+
+  function filledRow(st, loop) {
+    var n = loop.cells.length;
+    var live = h('div', { class: 'px', role: 'img', 'aria-label': st.label + ' loop playing' });
+    anims.push({ el: live, loop: loop, size: 64, fps: function () { return fps[st.id]; }, playing: function () { return true; }, start: 0 });
+    var strip = h('div', { class: 'strip checker', style: 'width:max-content' });
+    loop.cells.forEach(function (c, k) {
+      var f = h('div', { class: 'px', role: 'img', 'aria-label': 'Frame ' + (k + 1) });
+      crop(f, loop.source, loop.cols, loop.rows, c, 64);
+      strip.appendChild(f);
+    });
+    return h('section', { class: 'row', 'aria-label': st.label + ' loop' },
+      h('div', { class: 'line' },
+        nameLine(st, loop.source.name + ' · sliced ' + loop.cols + ' x ' + loop.rows + ' · ' + n + (n === 1 ? ' frame' : ' frames')),
+        fpsField(st, n === 1),
+        h('button', { type: 'button', class: 'btn accent', key: st.id + ':replace', text: 'REPLACE', onclick: function () { pick(st.id); } }),
+        h('button', { type: 'button', class: 'btn', key: st.id + ':remove', text: 'REMOVE', onclick: function () { delete loops[st.id]; render(); } })),
+      errorLine(st),
+      h('div', { class: 'filledbody' },
+        h('div', { class: 'preview checker', style: 'flex:none' }, live),
+        h('div', { class: 'stripscroll' }, strip)));
+  }
+
+  function stepper(name, value, down, up) {
+    return h('div', { class: 'stack', role: 'group', 'aria-label': name },
+      h('span', { class: 'label', text: name.toUpperCase() }),
+      h('div', { class: 'stepper' },
+        h('button', { type: 'button', key: name + ':down', 'aria-label': 'Fewer ' + name.toLowerCase(), disabled: value <= 1, text: '-', onclick: down }),
+        h('output', { text: String(value) }),
+        h('button', { type: 'button', key: name + ':up', 'aria-label': 'More ' + name.toLowerCase(), disabled: value >= MAX_GRID, text: '+', onclick: up })));
+  }
+
+  function sliceRow(st) {
+    var s = slice, src = s.source, res = check(s), n = s.cols * s.rows, picked = s.picked.length;
+    var lineColor = res.level === 'err' ? 'var(--error)' : res.level === 'warn' ? 'var(--waiting)' : 'var(--accent)';
+    var scale = Math.min(BOX / src.w, BOX / src.h);
+    if (scale >= 1) scale = Math.floor(scale);
+    var dw = Math.round(src.w * scale), dh = Math.round(src.h * scale);
+
+    var art = h('div', { class: 'px' });
+    art.style.backgroundImage = 'url("' + src.url + '")';
+    art.style.backgroundSize = dw + 'px ' + dh + 'px';
+    var cells = h('div', { class: 'cells', style: 'grid-template-columns:repeat(' + s.cols + ',1fr);grid-template-rows:repeat(' + s.rows + ',1fr)' });
+    for (var i = 0; i < n; i++) (function (i) {
+      var at = s.picked.indexOf(i);
+      cells.appendChild(h('button', {
+        type: 'button', class: 'cell' + (at > -1 ? ' on' : ''), key: 'cell:' + i,
+        'aria-pressed': String(at > -1),
+        'aria-label': 'Frame ' + (i + 1) + ', row ' + (Math.floor(i / s.cols) + 1) + ' column ' + (i % s.cols + 1),
+        style: 'box-shadow:inset 0 0 0 1px ' + lineColor,
+        onclick: function () {
+          if (at > -1) s.picked.splice(at, 1); else s.picked.push(i);
+          render();
+        }
+      }, at > -1 ? h('span', { class: 'badge', text: String(at + 1) }) : null));
+    })(i);
+
+    var live = h('div', { class: 'px', role: 'img', 'aria-label': 'Loop preview' });
+    var playText = h('span', { class: 'muted' });
+    if (picked) {
+      anims.push({ el: live, loop: { source: src, cols: s.cols, rows: s.rows, cells: s.picked }, size: 128, caption: playText,
+        fps: function () { return fps[st.id]; }, playing: function () { return s.playing; }, start: s.start });
+    } else {
+      live.style.width = live.style.height = '128px';
+      playText.textContent = 'Nothing to play';
+    }
+
+    var frames;
+    if (picked) {
+      frames = h('div', { class: 'frames' });
+      s.picked.forEach(function (c, k) {
+        var f = h('div', { class: 'px', role: 'img', 'aria-label': 'Loop frame ' + (k + 1) });
+        crop(f, src, s.cols, s.rows, c, 64);
+        frames.appendChild(h('div', { class: 'frame' }, h('div', { class: 'checker' }, f), h('span', { class: 'muted', text: String(k + 1) })));
+      });
+    } else {
+      frames = h('div', { class: 'nopick', text: 'No frames picked. Click a cell on the sheet.' });
+    }
+
+    var canUse = res.level !== 'err' && picked > 0;
+    var mark = res.level === 'ok' ? 'OK' : res.level === 'warn' ? '!' : 'X';
+
+    return h('section', { class: 'row slicing', 'aria-label': st.label + ' loop' },
+      h('div', { class: 'line' },
+        nameLine(st, src.name + ' · ' + src.w + 'x' + src.h + ' · slicing'),
+        fpsField(st, false),
+        h('button', { type: 'button', class: 'btn accent', key: st.id + ':replace', text: 'REPLACE', onclick: function () { pick(st.id); } })),
+      errorLine(st),
+      h('div', { class: 'slicehead' },
+        h('h2', { text: 'SLICE SHEET' }),
+        h('span', { class: 'muted', text: 'Set the grid, then click cells in play order. Click a cell again to drop it.' })),
+      h('div', { class: 'slicebody' },
+        h('div', { class: 'sheetscroll' },
+          h('div', { class: 'sheetbox checker', style: 'width:' + (dw + 8) + 'px;height:' + (dh + 8) + 'px' }, art, cells)),
+        h('div', { class: 'side' },
+          h('div', { class: 'steppers' },
+            stepper('Columns', s.cols, function () { setGrid(s.cols - 1, s.rows); }, function () { setGrid(s.cols + 1, s.rows); }),
+            stepper('Rows', s.rows, function () { setGrid(s.cols, s.rows - 1); }, function () { setGrid(s.cols, s.rows + 1); })),
+          h('div', { class: 'muted' }, 'Sheet ' + src.w + 'x' + src.h + ' · ' + n + (n === 1 ? ' cell of ' : ' cells of '), h('span', { style: 'color:var(--text)', text: res.size })),
+          h('div', { class: 'status ' + res.level, role: res.level === 'err' ? 'alert' : 'status' }, h('b', { text: mark }), h('span', { text: res.text })),
+          h('div', { class: 'previewline' },
+            h('div', { class: 'stack' }, h('span', { class: 'label', text: 'PREVIEW' }), h('div', { class: 'preview checker' }, live)),
+            h('div', { class: 'stack', style: 'gap:8px' }, playText,
+              h('button', { type: 'button', class: 'btn accent', key: 'play', disabled: !picked, text: s.playing ? 'STOP' : 'PLAY',
+                onclick: function () { s.playing = !s.playing; s.start = performance.now(); render(); } }))))),
+      h('div', { class: 'stack', style: 'gap:10px' },
+        h('div', { class: 'line' },
+          h('span', { class: 'label', text: 'LOOP FRAMES' }),
+          h('span', { class: 'muted', text: picked + ' of ' + n + ' cells picked' }),
+          h('button', { type: 'button', class: 'btn push', key: 'all', text: 'PICK ALL', onclick: function () { s.picked = []; for (var i = 0; i < n; i++) s.picked.push(i); render(); } }),
+          h('button', { type: 'button', class: 'btn', key: 'clear', text: 'CLEAR', onclick: function () { s.picked = []; s.playing = false; render(); } })),
+        frames),
+      h('div', { class: 'line' },
+        h('button', { type: 'button', class: 'btn big primary', key: 'use', disabled: !canUse, text: picked === 1 ? 'USE 1 FRAME' : 'USE ' + picked + ' FRAMES',
+          onclick: function () {
+            src.grid = { cols: s.cols, rows: s.rows };
+            loops[st.id] = { source: src, cols: s.cols, rows: s.rows, cells: s.picked.slice() };
+            slice = null; render();
+          } }),
+        h('button', { type: 'button', class: 'btn big', key: 'cancelslice', text: 'CANCEL SLICE', onclick: function () { slice = null; render(); } })));
+  }
+
+  function render() {
+    var active = document.activeElement && document.activeElement.dataset ? document.activeElement.dataset.key : null;
+    var rows = document.getElementById('rows');
+    anims = [];
+    rows.textContent = '';
+    STATES.forEach(function (st) {
+      if (slice && slice.state === st.id) rows.appendChild(sliceRow(st));
+      else if (loops[st.id]) rows.appendChild(filledRow(st, loops[st.id]));
+      else rows.appendChild(emptyRow(st));
+    });
+    document.getElementById('count').textContent = Object.keys(loops).length + ' of 5 uploaded';
+    document.getElementById('save').disabled = !!slice || !loops.idle;
+    paint();
+    if (active) {
+      var again = rows.querySelector('[data-key="' + active + '"]');
+      if (again && !again.disabled) again.focus();
+    }
+  }
+
+  function paint() {
+    var now = performance.now();
+    anims.forEach(function (a) {
+      var cells = a.loop.cells, n = cells.length, i = 0;
+      if (!n) return;
+      if (a.playing() && !reduce && n > 1) i = Math.floor((now - a.start) * a.fps() / 1000) % n;
+      if (a.shown !== i) {
+        a.shown = i;
+        crop(a.el, a.loop.source, a.loop.cols, a.loop.rows, cells[i], a.size);
+        if (a.caption) a.caption.textContent = 'Frame ' + (i + 1) + ' of ' + n + ' at ' + a.fps() + ' fps';
+      }
+    });
+  }
+
+  render();
+  setInterval(paint, 30);
+})();
+</script>
+</body>
+</html>

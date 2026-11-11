@@ -148,10 +148,17 @@ normally under `%APPDATA%`.
 
 | File or folder | What it holds |
 | --- | --- |
-| `settings.json` | The path of the project you last opened |
+| `settings.json` | The path of the project you last opened, and the active mascot's id (`activeMascotId`, `"default"` for the built-in one) |
 | `agent-icons/` | The 16x16 PNG icons you chose for agents |
 | `agent-icons.json` | A map from each agent file path to its icon file |
 | `agent-roles.json` | A map from each agent file path to its role label |
+| `mascots/<id>/` | One folder per uploaded mascot: `manifest.json` and one PNG per uploaded state (`idle.png`, `thinking.png`, `talking.png`, `working.png`, `asking.png`). A picked strip is stored exactly as picked; a sheet cut up in the slicer is stored as the strip it produced, never the original |
+
+The built-in default mascot ships with the app, and its files never change. If
+you edit its name or loops, your changes are kept in `mascots/default/` in the
+same format, and an empty idle slot keeps the built-in idle sheet. RESET on its
+card moves that folder to the trash. Deleting a mascot moves its folder to the trash. If a mascot folder is broken,
+the MASCOTS screen lists it with the reason, and the app uses the default.
 
 The icon and role maps use the agent file path as the key. MyClaud never adds
 its own fields to agent files, so Claude Code only sees the standard fields.

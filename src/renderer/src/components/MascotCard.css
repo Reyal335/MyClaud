@@ -1,0 +1,104 @@
+/* A gallery card from designs/4-mascot-manager.html. */
+.mascot-card {
+  min-width: 0;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  border: var(--border) solid var(--line);
+  text-align: center;
+}
+
+/* The active mascot: selected style from DESIGN.md. */
+.mascot-card--active {
+  background: var(--panel);
+  border-color: var(--text);
+  box-shadow: 4px 4px 0 var(--accent);
+}
+
+.mascot-card--problem {
+  border-color: var(--error);
+}
+
+.mascot-card__stage {
+  display: grid;
+  place-items: center;
+  width: 128px;
+  height: 128px;
+  background: var(--panel);
+}
+
+/* Against the active card's panel, the stage turns dark, as in the mockup. */
+.mascot-card--active .mascot-card__stage {
+  background: var(--bg);
+}
+
+.mascot-card__broken {
+  font-family: var(--font-pixel);
+  font-size: 28px;
+  color: var(--error);
+}
+
+.mascot-card__name {
+  max-width: 100%;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.mascot-card__count {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.mascot-card__problem {
+  margin: 0;
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+  max-width: 100%;
+  font-size: 12px;
+  color: var(--error);
+  text-align: left;
+  overflow-wrap: anywhere;
+}
+
+.mascot-card__problem-mark {
+  flex: none;
+  font-family: var(--font-pixel);
+  font-size: 8px;
+}
+
+.mascot-card__tags {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+}
+
+.mascot-card__tag {
+  padding: 6px 8px;
+  border: var(--border-thin) solid var(--line);
+  font-family: var(--font-pixel);
+  font-size: 8px;
+  line-height: 1.5;
+  color: var(--muted);
+}
+
+.mascot-card__tag--active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--bg);
+}
+
+.mascot-card__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  margin-top: auto;
+}
+
+.mascot-card__actions:empty {
+  display: none;
+}

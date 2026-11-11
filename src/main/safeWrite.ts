@@ -9,8 +9,8 @@ function errorCode(err: unknown): string | undefined {
   return (err as NodeJS.ErrnoException | undefined)?.code
 }
 
-// On Windows a virus scanner or indexer can hold a file for a moment.
-async function renameWithRetry(from: string, to: string): Promise<void> {
+// On Windows a virus scanner or indexer can hold a file or folder for a moment.
+export async function renameWithRetry(from: string, to: string): Promise<void> {
   for (let attempt = 1; ; attempt++) {
     try {
       await rename(from, to)
