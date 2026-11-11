@@ -1,0 +1,14 @@
+.agent-icon {
+  display: block;
+  flex: none;
+  image-rendering: pixelated;
+}
+
+.agent-icon__frame {
+  fill: var(--panel);
+  stroke: var(--line);
+}
+
+.agent-icon__mark {
+  fill: var(--muted);
+}

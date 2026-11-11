@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useRef, useState } from 'react'
 import AppShell from './components/AppShell'
 import Sidebar from './components/Sidebar'
 import InboxScreen from './screens/InboxScreen'
@@ -6,7 +6,7 @@ import AgentsScreen from './screens/AgentsScreen'
 import MascotsScreen from './screens/MascotsScreen'
 import { useConversation } from './hooks/useConversation'
 import { useProject } from './hooks/useProject'
-import type { Screen } from './screens/types'
+import type { LeaveGuard, Screen } from './screens/types'
 
 function App(): React.JSX.Element {
   const [screen, setScreen] = useState<Screen>('inbox')
@@ -25,15 +25,36 @@ function App(): React.JSX.Element {
     }
   }, [project, openProject, reset])
 
+  // A screen with unsaved changes asks before the app navigates or switches project.
+  const leaveGuard = useRef<LeaveGuard | null>(null)
+  const setLeaveGuard = useCallback((guard: LeaveGuard | null): void => {
+    leaveGuard.current = guard
+  }, [])
+  const confirmLeave = useCallback((proceed: () => void): void => {
+    if (leaveGuard.current) leaveGuard.current(proceed)
+    else proceed()
+  }, [])
+
+  const handleNavigate = useCallback(
+    (next: Screen): void => {
+      if (next !== screen) confirmLeave(() => setScreen(next))
+    },
+    [screen, confirmLeave]
+  )
+
+  const handleSidebarOpenProject = useCallback((): void => {
+    confirmLeave(() => void handleOpenProject())
+  }, [confirmLeave, handleOpenProject])
+
   return (
     <AppShell
       sidebar={
         <Sidebar
           screen={screen}
-          onNavigate={setScreen}
+          onNavigate={handleNavigate}
           project={project}
           canOpenProject={!conversation.running}
-          onOpenProject={handleOpenProject}
+          onOpenProject={handleSidebarOpenProject}
           inboxCount={conversation.status === 'waiting' ? 1 : 0}
         />
       }
@@ -46,7 +67,7 @@ function App(): React.JSX.Element {
           conversation={conversation}
         />
       )}
-      {screen === 'agents' && <AgentsScreen />}
+      {screen === 'agents' && <AgentsScreen project={project} setLeaveGuard={setLeaveGuard} />}
       {screen === 'mascots' && <MascotsScreen />}
     </AppShell>
   )

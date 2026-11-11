@@ -20,6 +20,16 @@ const api: MyClaudApi = {
         ipcRenderer.removeListener(IpcChannel.AgentEvent, listener)
       }
     }
+  },
+  agents: {
+    list: () => ipcRenderer.invoke(IpcChannel.AgentsList),
+    read: (filePath) => ipcRenderer.invoke(IpcChannel.AgentsRead, filePath),
+    create: (draft) => ipcRenderer.invoke(IpcChannel.AgentsCreate, draft),
+    update: (filePath, draft, modifiedTime) =>
+      ipcRenderer.invoke(IpcChannel.AgentsUpdate, filePath, draft, modifiedTime),
+    remove: (filePath) => ipcRenderer.invoke(IpcChannel.AgentsRemove, filePath),
+    pickIcon: () => ipcRenderer.invoke(IpcChannel.AgentsPickIcon),
+    discardIcon: (token) => ipcRenderer.invoke(IpcChannel.AgentsDiscardIcon, token)
   }
 }
 

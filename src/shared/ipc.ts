@@ -7,7 +7,14 @@ export const IpcChannel = {
   AgentSend: 'agent:send',
   AgentStop: 'agent:stop',
   AgentPermission: 'agent:permission',
-  AgentEvent: 'agent:event'
+  AgentEvent: 'agent:event',
+  AgentsList: 'agents:list',
+  AgentsRead: 'agents:read',
+  AgentsCreate: 'agents:create',
+  AgentsUpdate: 'agents:update',
+  AgentsRemove: 'agents:remove',
+  AgentsPickIcon: 'agents:pick-icon',
+  AgentsDiscardIcon: 'agents:discard-icon'
 } as const
 
 export type ProjectInfo = {
@@ -66,6 +73,65 @@ export type AgentEvent =
   | { requestId: string; type: 'stopped' }
   | { requestId: string; type: 'error'; code: AgentErrorCode; message: string }
 
+// Agent files: Claude Code subagents in <project>/.claude/agents/ and the global folder.
+
+export type AgentScope = 'project' | 'global'
+
+export type AgentSummary = {
+  scope: AgentScope
+  filePath: string
+  // The name field, or the filename when the file has a problem and no name.
+  name: string
+  description: string
+  // null means the tools key is left out, so the agent inherits every tool.
+  tools: string[] | null
+  // null means the model key is left out, so Claude Code picks the default.
+  model: string | null
+  otherFields: string[]
+  icon: string | null
+  // A MyClaud label such as "code-reader", kept in userData, not in the file.
+  role: string | null
+  problem: string | null
+}
+
+export type AgentDetail = AgentSummary & {
+  body: string
+  modifiedTime: number
+}
+
+export type AgentFolders = {
+  project: string | null
+  global: string
+}
+
+export type AgentIconChange =
+  { type: 'keep' } | { type: 'remove' } | { type: 'token'; token: string }
+
+export type AgentDraft = {
+  scope: AgentScope
+  name: string
+  description: string
+  body: string
+  tools: string[] | null
+  model: string | null
+  icon: AgentIconChange
+  // null means no role.
+  role: string | null
+}
+
+export type AgentsErrorCode =
+  'invalid' | 'exists' | 'conflict' | 'not_found' | 'outside_folder' | 'no_project' | 'io_error'
+
+export type AgentsError = { code: AgentsErrorCode; message: string }
+
+export type AgentsResult<T extends object = object> =
+  ({ ok: true } & T) | { ok: false; error: AgentsError }
+
+export type PickIconResult =
+  | { ok: true; canceled: true }
+  | { ok: true; canceled: false; token: string; preview: string }
+  | { ok: false; error: AgentsError }
+
 // The API the preload exposes as window.myclaud.
 export type MyClaudApi = {
   project: {
@@ -80,5 +146,19 @@ export type MyClaudApi = {
       decision: PermissionDecision
     ) => Promise<{ ok: boolean }>
     onEvent: (callback: (event: AgentEvent) => void) => () => void
+  }
+  agents: {
+    list: () => Promise<AgentsResult<{ agents: AgentSummary[]; folders: AgentFolders }>>
+    read: (filePath: string) => Promise<AgentsResult<{ agent: AgentDetail }>>
+    create: (draft: AgentDraft) => Promise<AgentsResult<{ filePath: string }>>
+    update: (
+      filePath: string,
+      draft: AgentDraft,
+      modifiedTime: number
+    ) => Promise<AgentsResult<{ filePath: string }>>
+    remove: (filePath: string) => Promise<AgentsResult>
+    pickIcon: () => Promise<PickIconResult>
+    // Drops a picked icon that will not be saved.
+    discardIcon: (token: string) => Promise<void>
   }
 }

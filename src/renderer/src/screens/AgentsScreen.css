@@ -1,0 +1,80 @@
+/* Layout from designs/3-agent-manager.html: the list and the form side by side,
+   the form wrapping below the list on narrow windows. */
+.agents {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 28px;
+  align-items: flex-start;
+  padding: 20px 28px;
+}
+
+.agents__list {
+  flex: 1 1 420px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.agents__title {
+  margin: 0;
+  font-family: var(--font-pixel);
+  font-size: 14px;
+  font-weight: normal;
+  line-height: 1.5;
+}
+
+.agents__title:focus {
+  outline: none;
+}
+
+.agents__section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.agents__section-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 12px;
+}
+
+.agents__section-title {
+  margin: 0;
+  min-width: 0;
+  font-family: var(--font-pixel);
+  font-size: 10px;
+  font-weight: normal;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.agents__section-title--project {
+  color: var(--accent);
+}
+
+.agents__section-title--global {
+  color: var(--muted);
+}
+
+.agents__empty {
+  margin: 0;
+  color: var(--muted);
+}
+
+.agents__error {
+  margin: 0;
+  padding: 10px 12px;
+  border: var(--border) solid var(--error);
+  color: var(--error);
+  overflow-wrap: anywhere;
+}
+
+.agents__dialog-path {
+  font-size: 12px;
+  color: var(--muted);
+}

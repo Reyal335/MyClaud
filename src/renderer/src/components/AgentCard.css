@@ -1,0 +1,95 @@
+.agent-card {
+  display: flex;
+  gap: 12px;
+  width: 100%;
+  padding: 12px;
+  margin: 0;
+  background: transparent;
+  color: var(--text);
+  border: var(--border) solid var(--line);
+  border-radius: 0;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.agent-card--selected {
+  background: var(--panel);
+  border-color: var(--text);
+  box-shadow: 4px 4px 0 var(--accent);
+}
+
+.agent-card--problem {
+  border-color: var(--error);
+  cursor: default;
+}
+
+.agent-card__text {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.agent-card__top {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+/* The MyClaud role, a small pixel-font tag above the name. */
+.agent-card__role {
+  font-family: var(--font-pixel);
+  font-size: 8px;
+  line-height: 1.5;
+  color: var(--accent);
+  text-transform: uppercase;
+  overflow-wrap: anywhere;
+}
+
+.agent-card__name {
+  min-width: 0;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.agent-card__model {
+  flex: none;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+/* Cut to two lines, as the mockup's descriptions wrap. */
+.agent-card__description {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+  color: var(--muted);
+}
+
+.agent-card__tools {
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+
+.agent-card__muted {
+  color: var(--muted);
+}
+
+.agent-card__problem {
+  color: var(--error);
+}
+
+.agent-card__path {
+  font-size: 12px;
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+
+.agent-card__delete {
+  align-self: flex-start;
+  margin-top: 4px;
+}

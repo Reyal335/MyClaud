@@ -25,6 +25,14 @@
   border-color: var(--line);
 }
 
+/* Destructive action, like DELETE in the agent form mockup: no shadow. */
+.button--danger {
+  background: var(--bg);
+  color: var(--error);
+  border-color: var(--error);
+  box-shadow: none;
+}
+
 .button--small {
   padding: 0 10px;
   font-size: 8px;

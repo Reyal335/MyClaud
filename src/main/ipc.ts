@@ -2,6 +2,8 @@ import { BrowserWindow, dialog, ipcMain } from 'electron'
 import { IpcChannel, type AgentSendResult, type ProjectInfo } from '../shared/ipc'
 import { answerPermission, clearSession, isRunning, startRun, stopRun } from './agent'
 import { getProject, setProject } from './settings'
+import { createAgent, listAgents, readAgent, removeAgent, updateAgent } from './agents'
+import { discardIcon, pickIcon } from './agentIcons'
 
 export function registerIpc(): void {
   ipcMain.handle(IpcChannel.ProjectGet, (): ProjectInfo | null => getProject())
@@ -54,4 +56,22 @@ export function registerIpc(): void {
       return { ok: answerPermission(permissionId, decision) }
     }
   )
+
+  // Agent files. Every handler validates its arguments again in agents.ts.
+  ipcMain.handle(IpcChannel.AgentsList, () => listAgents())
+  ipcMain.handle(IpcChannel.AgentsRead, (_event, filePath: unknown) => readAgent(filePath))
+  ipcMain.handle(IpcChannel.AgentsCreate, (_event, draft: unknown) => createAgent(draft))
+  ipcMain.handle(
+    IpcChannel.AgentsUpdate,
+    (_event, filePath: unknown, draft: unknown, modifiedTime: unknown) =>
+      updateAgent(filePath, draft, modifiedTime)
+  )
+  ipcMain.handle(IpcChannel.AgentsRemove, (_event, filePath: unknown) => removeAgent(filePath))
+  // The renderer never sends an icon path: main opens the picker itself.
+  ipcMain.handle(IpcChannel.AgentsPickIcon, (event) =>
+    pickIcon(BrowserWindow.fromWebContents(event.sender))
+  )
+  ipcMain.handle(IpcChannel.AgentsDiscardIcon, (_event, token: unknown) => {
+    if (typeof token === 'string') discardIcon(token)
+  })
 }
