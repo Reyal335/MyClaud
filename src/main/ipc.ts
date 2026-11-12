@@ -1,7 +1,15 @@
 import { BrowserWindow, dialog, ipcMain } from 'electron'
 import { IpcChannel, type AgentSendResult, type ChatHistory, type ProjectInfo } from '../shared/ipc'
 import { answerPermission, isRunning, loadChatHistory, resetChat, startRun, stopRun } from './agent'
-import { getPartyPanel, getProject, setPartyPanel, setProject } from './settings'
+import {
+  getPartyPanel,
+  getPopups,
+  getProject,
+  setPartyPanel,
+  setPopups,
+  setProject
+} from './settings'
+import { setPopupsEnabled, showTestPopup } from './popupWindow'
 import { clearFinishedTasks, getTask, listTasks, markTaskSeen, removeTask } from './tasks'
 import { createAgent, listAgents, readAgent, removeAgent, updateAgent } from './agents'
 import { discardIcon, pickIcon } from './agentIcons'
@@ -151,4 +159,20 @@ export function registerIpc(): void {
       return { ok: false }
     }
   })
+
+  // Popups on or off, kept in settings.json, and TEST POPUP.
+  ipcMain.handle(IpcChannel.UiGetPopups, () => getPopups())
+  ipcMain.handle(IpcChannel.UiSetPopups, async (_event, on: unknown) => {
+    if (typeof on !== 'boolean') return { ok: false }
+    // Takes effect at once, even if saving fails.
+    setPopupsEnabled(on)
+    try {
+      await setPopups(on)
+      return { ok: true }
+    } catch (err) {
+      console.error('Could not save settings:', err instanceof Error ? err.message : err)
+      return { ok: false }
+    }
+  })
+  ipcMain.handle(IpcChannel.UiTestPopup, () => showTestPopup())
 }

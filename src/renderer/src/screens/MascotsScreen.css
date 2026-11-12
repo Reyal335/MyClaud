@@ -7,6 +7,20 @@
   padding: 20px 28px;
 }
 
+.mascots__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+/* POPUPS ON / OFF and TEST POPUP, next to the heading. */
+.mascots__popups {
+  display: flex;
+  gap: 12px;
+}
+
 .mascots__title {
   margin: 0;
   font-family: var(--font-pixel);

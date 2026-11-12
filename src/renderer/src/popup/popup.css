@@ -1,0 +1,7 @@
+/* The popup window is transparent: only the card and its hard shadow draw. */
+html,
+body,
+#root {
+  background: transparent;
+  overflow: hidden;
+}

@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import AppShell from './components/AppShell'
 import NoProject from './components/NoProject'
 import Sidebar from './components/Sidebar'
@@ -76,6 +76,18 @@ function App(): React.JSX.Element {
     setSelectedTaskId(taskId)
     setScreen('inbox')
   }, [])
+
+  // OPEN on a popup: CHAT, or the task in INBOX. Unsaved changes still ask first.
+  useEffect(
+    () =>
+      window.myclaud.ui.onOpen((target) => {
+        confirmLeave(() => {
+          if (target.screen === 'inbox') openTask(target.taskId)
+          else setScreen('chat')
+        })
+      }),
+    [confirmLeave, openTask]
+  )
 
   const mainWaiting = conversation.items.some(
     (item) => item.kind === 'tool' && item.permission !== null && item.taskId === null

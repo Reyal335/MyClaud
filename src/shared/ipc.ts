@@ -40,7 +40,19 @@ export const IpcChannel = {
   // Main to every window: a task started, changed, ended, or was removed.
   TasksChanged: 'tasks:changed',
   UiGetPartyPanel: 'ui:get-party-panel',
-  UiSetPartyPanel: 'ui:set-party-panel'
+  UiSetPartyPanel: 'ui:set-party-panel',
+  UiGetPopups: 'ui:get-popups',
+  UiSetPopups: 'ui:set-popups',
+  UiTestPopup: 'ui:test-popup',
+  // Main to the main window: OPEN on a popup, with the screen to show.
+  UiOpen: 'ui:open',
+  // The popup window's own channels. Main answers them only from the popup.
+  PopupGetState: 'popup:get-state',
+  // Main to the popup: what to show now, or null.
+  PopupState: 'popup:state',
+  PopupAct: 'popup:act',
+  PopupHover: 'popup:hover',
+  PopupGetMascot: 'popup:get-mascot'
 } as const
 
 export type ProjectInfo = {
@@ -208,6 +220,46 @@ export type ChatHistory = {
 }
 
 export type PartyPanelMode = 'open' | 'rail'
+
+// Popups: the small always-on-top window with the mascot (designs/5-popup-notifications.html).
+
+// Who speaks in the bubble: an agent with its icon, or the main conversation's
+// speaker (the dialogue box's name), with no icon.
+export type PopupWho = { kind: 'agent'; name: string; icon: string | null } | { kind: 'speaker' }
+
+export type PopupAction = 'approve' | 'deny' | 'open' | 'details' | 'dismiss'
+
+// Where OPEN takes the main window.
+export type PopupOpenTarget = { screen: 'chat' } | { screen: 'inbox'; taskId: string }
+
+export type PopupView =
+  | {
+      id: string
+      kind: 'approval'
+      who: PopupWho
+      // The tool card's one-line label, such as "Editing src/auth.js".
+      label: string
+      // Where this request is among those pending, shown as "1 of 3" when more than one.
+      position: { index: number; total: number }
+      request: { name: string; input: ToolInput; truncated: boolean; projectPath: string }
+      // Short enough to show in full in the compact popup.
+      fits: boolean
+      detailsOpen: boolean
+    }
+  | { id: string; kind: 'finished' | 'error'; who: PopupWho; text: string }
+
+// The API the popup's preload exposes as window.myclaudPopup. Nothing else.
+export type MyClaudPopupApi = {
+  getState: () => Promise<PopupView | null>
+  onState: (callback: (view: PopupView | null) => void) => () => void
+  act: (id: string, action: PopupAction) => Promise<{ ok: boolean }>
+  // The pointer is over the card: finished and error popups wait.
+  hover: (isOver: boolean) => void
+  mascot: {
+    getActive: () => Promise<MascotsResult<{ mascot: ActiveMascotData }>>
+    onChanged: (callback: () => void) => () => void
+  }
+}
 
 // Agent files: Claude Code subagents in <project>/.claude/agents/ and the global folder.
 
@@ -446,5 +498,12 @@ export type MyClaudApi = {
     // null until I choose with the collapse button.
     getPartyPanel: () => Promise<PartyPanelMode | null>
     setPartyPanel: (mode: PartyPanelMode) => Promise<{ ok: boolean }>
+    // Popups on or off, kept in settings.json. On when never set.
+    getPopups: () => Promise<boolean>
+    setPopups: (on: boolean) => Promise<{ ok: boolean }>
+    // A sample finished popup for 6 seconds, even with popups off or the app in front.
+    testPopup: () => Promise<void>
+    // OPEN on a popup: the screen the main window should show.
+    onOpen: (callback: (target: PopupOpenTarget) => void) => () => void
   }
 }

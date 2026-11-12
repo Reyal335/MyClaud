@@ -96,3 +96,13 @@ export async function getPartyPanel(): Promise<PartyPanelMode | null> {
 export function setPartyPanel(mode: PartyPanelMode): Promise<void> {
   return updateSettings({ partyPanel: mode })
 }
+
+// Popups are on until I turn them off.
+export async function getPopups(): Promise<boolean> {
+  const { popups } = await readSettings()
+  return popups !== false
+}
+
+export function setPopups(on: boolean): Promise<void> {
+  return updateSettings({ popups: on })
+}

@@ -1,0 +1,193 @@
+/* The popup card from designs/5-popup-notifications.html. The window is 6px
+   wider and taller than the card for its hard shadow, and main sizes it per
+   state, so the card fills it. The mascot is drawn at 128px (scale 2), so the
+   card is taller than the mockup's. */
+.popup-card {
+  position: relative;
+  width: calc(100vw - 6px);
+  height: calc(100vh - 6px);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px;
+  background: var(--bg);
+  border: var(--border) solid var(--text);
+  box-shadow: var(--shadow-dialog);
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.popup-card--approval {
+  border-color: var(--waiting);
+}
+
+.popup-card--error {
+  border-color: var(--error);
+}
+
+/* Finished and error: the whole card opens the app, except the close button. */
+.popup-card__main {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  background: none;
+  border: 0;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.popup-card__top {
+  flex: none;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  height: 136px;
+}
+
+.popup-card__mascot {
+  flex: none;
+  display: block;
+  border: var(--border) solid var(--line);
+}
+
+.popup-card__bubble {
+  flex: 1;
+  min-width: 0;
+  max-height: 136px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px;
+  background: var(--panel);
+  border: var(--border) solid var(--line);
+}
+
+.popup-card__header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.popup-card__name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--font-pixel);
+  font-size: 8px;
+  line-height: 1.5;
+  color: var(--accent);
+}
+
+.popup-card__position {
+  flex: none;
+  margin-left: auto;
+  font-family: var(--font-pixel);
+  font-size: 8px;
+  line-height: 1.5;
+  color: var(--muted);
+}
+
+/* Plain text, at most three lines, cut with an ellipsis. */
+.popup-card__text {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+}
+
+.popup-card__status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-pixel);
+  font-size: 8px;
+  line-height: 1.5;
+  color: var(--muted);
+}
+
+.popup-card__status--error {
+  color: var(--error);
+}
+
+.popup-card__square {
+  width: 8px;
+  height: 8px;
+  background: currentColor;
+}
+
+.popup-card__close {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  background: var(--bg);
+  color: var(--muted);
+  border: var(--border-thin) solid var(--line);
+  border-radius: 0;
+  font-family: var(--font-pixel);
+  font-size: 8px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.popup-card__close:hover {
+  color: var(--text);
+  border-color: var(--text);
+}
+
+/* Step 3's details: short ones in full, or all of them behind DETAILS, scrolling here.
+   popupFit.ts counts on these sizes: 12px lines at 1.5, 20px of block padding and border. */
+.popup-card__details {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.popup-card .permission__path,
+.popup-card .permission__note {
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.popup-card .permission__block {
+  padding: 8px 6px;
+}
+
+.popup-card__actions {
+  flex: none;
+  display: flex;
+  gap: 8px;
+}
+
+.popup-card__actions .button {
+  flex: 1;
+  padding: 0 4px;
+  font-size: 8px;
+  box-shadow: none;
+}
+
+.popup-card__open,
+.popup-card__details-button {
+  background: var(--bg);
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+/* Room for the close button in the bubble's top-right corner. */
+.popup-card__main .popup-card__header {
+  padding-right: 16px;
+}

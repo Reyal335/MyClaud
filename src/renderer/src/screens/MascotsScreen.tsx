@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import type { MascotSummary } from '../../../shared/ipc'
 import { DEFAULT_MASCOT_ID } from '../../../shared/mascotRules'
 import { useMascots } from '../hooks/useMascots'
+import { usePopupsSetting } from '../hooks/usePopupsSetting'
 import { DEFAULT_MASCOT, withDefaultEdits } from '../mascots/defaultMascot'
 import MascotCard from '../components/MascotCard'
 import MascotDialog, { type MascotDialogTarget } from '../components/MascotDialog'
@@ -23,6 +24,7 @@ type ConfirmState =
 // built-in default first, and the upload dialog to add or edit a mascot.
 function MascotsScreen({ setLeaveGuard }: MascotsScreenProps): React.JSX.Element {
   const { mascots, defaultMascot, activeId, loaded, error, reload } = useMascots()
+  const popups = usePopupsSetting()
   // Broken edits are not shown: the bundled mascot is used until they are reset.
   const shownDefault = defaultMascot.problem
     ? DEFAULT_MASCOT
@@ -111,9 +113,29 @@ function MascotsScreen({ setLeaveGuard }: MascotsScreenProps): React.JSX.Element
 
   return (
     <section className="mascots" aria-labelledby="mascots-title">
-      <h1 id="mascots-title" ref={titleRef} tabIndex={-1} className="mascots__title">
-        MASCOTS
-      </h1>
+      <div className="mascots__head">
+        <h1 id="mascots-title" ref={titleRef} tabIndex={-1} className="mascots__title">
+          MASCOTS
+        </h1>
+        <div className="mascots__popups">
+          <button
+            type="button"
+            className="button button--small"
+            aria-pressed={popups.on}
+            disabled={!popups.loaded}
+            onClick={() => popups.toggle()}
+          >
+            POPUPS {popups.on ? 'ON' : 'OFF'}
+          </button>
+          <button
+            type="button"
+            className="button button--small button--secondary"
+            onClick={() => popups.test()}
+          >
+            TEST POPUP
+          </button>
+        </div>
+      </div>
       {error && (
         <p role="alert" className="mascots__error">
           {error}

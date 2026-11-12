@@ -83,8 +83,16 @@ type PartProps = {
   projectPath: string | null
 }
 
+type DetailsProps = {
+  name: string
+  // Only what is shown, so the popup can pass a request from its own view.
+  request: Pick<PermissionRequest, 'input' | 'truncated'>
+  projectPath: string | null
+}
+
 // What the agent wants to do: plain text blocks that scroll after about 12 lines.
-export function PermissionDetails({ name, request, projectPath }: PartProps): React.JSX.Element {
+// Also the popup's details, in the compact popup and behind DETAILS.
+export function PermissionDetails({ name, request, projectPath }: DetailsProps): React.JSX.Element {
   return (
     <div className="permission">
       <Details name={name} input={request.input} projectPath={projectPath} />

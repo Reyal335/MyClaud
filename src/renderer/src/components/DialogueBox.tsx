@@ -2,7 +2,7 @@ import { useEffect, useLayoutEffect, useRef, useState, type KeyboardEvent } from
 import type { PermissionDecision, TaskAgent } from '../../../shared/ipc'
 import type { ConversationItem } from '../hooks/useConversation'
 import { useTypewriter } from '../hooks/useTypewriter'
-import { errorText, STOPPED_TEXT } from '../conversation/noticeText'
+import { errorText, STOPPED_TEXT } from '../../../shared/noticeText'
 import AgentIcon from './AgentIcon'
 import { PermissionActions, PermissionDetails } from './PermissionRow'
 import type { ToolLabel } from '../../../shared/toolLabel'

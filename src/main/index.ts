@@ -3,6 +3,7 @@ import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import { appIcon, windowIconOptions } from './appIcon'
 import { stopRun } from './agent'
+import { closePopups, setupPopups } from './popupWindow'
 import { registerIpc } from './ipc'
 import { loadProject } from './settings'
 import { loadTasks } from './tasks'
@@ -10,7 +11,7 @@ import { loadTasks } from './tasks'
 // Matches --bg in the renderer tokens, so the window never flashes white on load.
 const WINDOW_BACKGROUND = '#0B132B'
 
-function createWindow(): void {
+function createWindow(): BrowserWindow {
   const mainWindow = new BrowserWindow({
     width: 1280,
     height: 800,
@@ -37,8 +38,10 @@ function createWindow(): void {
     mainWindow.show()
   })
 
-  // A run belongs to this window. Stop it when the window goes away.
+  // A run belongs to this window. Stop it when the window goes away. The popup
+  // goes with it, so a hidden popup never keeps the app running.
   mainWindow.on('closed', () => {
+    closePopups()
     stopRun()
   })
 
@@ -53,6 +56,7 @@ function createWindow(): void {
   } else {
     mainWindow.loadFile(join(__dirname, '../renderer/index.html'))
   }
+  return mainWindow
 }
 
 app.whenReady().then(async () => {
@@ -74,14 +78,15 @@ app.whenReady().then(async () => {
   // Tasks cut off when the app last closed become stopped before anything reads them.
   await loadTasks()
   registerIpc()
-  createWindow()
+  setupPopups(createWindow())
 
   app.on('activate', function () {
-    if (BrowserWindow.getAllWindows().length === 0) createWindow()
+    if (BrowserWindow.getAllWindows().length === 0) setupPopups(createWindow())
   })
 })
 
 app.on('before-quit', () => {
+  closePopups()
   stopRun()
 })
 

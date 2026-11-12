@@ -18,7 +18,8 @@ import {
   type ChatHistory,
   type PermissionDecision,
   type TaskAgent,
-  type TaskEndStatus
+  type TaskEndStatus,
+  type ToolInput
 } from '../shared/ipc'
 import { callBlock, hookBlock, winningAgent } from '../shared/agentGate'
 import { withCall } from '../shared/callAgent'
@@ -65,6 +66,8 @@ type Run = {
   // Tool calls made inside a task, and agent ids, to their task.
   toolTask: Map<string, string>
   agentTask: Map<string, string>
+  // The text of Claude's latest reply in the main conversation, for the finished popup.
+  reply: string
 }
 
 type PendingPermission = {
@@ -76,6 +79,49 @@ type PendingPermission = {
 }
 
 let activeRun: Run | null = null
+
+// What the popup needs to know about runs. Our own small shapes, never SDK messages.
+export type RunWatcher = {
+  requestOpened: (request: {
+    permissionId: string
+    runId: string
+    name: string
+    input: ToolInput
+    truncated: boolean
+    // The agent asking, or null when Claude itself asks.
+    agent: TaskAgent | null
+    cwd: string
+  }) => void
+  requestClosed: (permissionId: string) => void
+  taskEnded: (task: {
+    runId: string
+    taskId: string
+    status: TaskEndStatus
+    report: string
+    agent: TaskAgent
+  }) => void
+  runEnded: (run: {
+    runId: string
+    outcome: 'done' | 'stopped' | AgentError
+    reply: string
+  }) => void
+}
+
+let watcher: RunWatcher | null = null
+
+export function watchRuns(next: RunWatcher | null): void {
+  watcher = next
+}
+
+// A watcher's failure never touches the run.
+function notify(call: (watcher: RunWatcher) => void): void {
+  if (!watcher) return
+  try {
+    call(watcher)
+  } catch (err) {
+    console.error('[agent] A run watcher failed:', err)
+  }
+}
 
 // Permission requests waiting for the user, by permissionId. More than one can wait.
 const pendingPermissions = new Map<string, PendingPermission>()
@@ -170,6 +216,7 @@ function settlePermission(permissionId: string, decision: PermissionDecision): b
     permissionId,
     decision
   })
+  notify((w) => w.requestClosed(permissionId))
   return true
 }
 
@@ -230,7 +277,8 @@ export async function startRun(
     sessionId: null,
     openTasks: new Map(),
     toolTask: new Map(),
-    agentTask: new Map()
+    agentTask: new Map(),
+    reply: ''
   }
   activeRun = run
 
@@ -325,6 +373,18 @@ function permissionHandler(run: Run): CanUseTool {
         truncated: shown.truncated,
         taskId
       })
+      const agentName = taskId ? run.openTasks.get(taskId) : undefined
+      notify((w) =>
+        w.requestOpened({
+          permissionId,
+          runId: run.requestId,
+          name: toolName,
+          input: shown.input,
+          truncated: shown.truncated,
+          agent: agentName ? lookOf(run.agents, agentName) : null,
+          cwd: run.cwd
+        })
+      )
     })
 }
 
@@ -415,7 +475,9 @@ async function endRunTask(
   status: TaskEndStatus,
   report: string
 ): Promise<void> {
-  if (!run.openTasks.delete(taskId)) return
+  const agentName = run.openTasks.get(taskId)
+  if (agentName === undefined) return
+  run.openTasks.delete(taskId)
   const shown = report.length > 20_000
   emit(run, {
     requestId: run.requestId,
@@ -426,6 +488,15 @@ async function endRunTask(
     truncated: shown
   })
   await endTask(taskId, status, status === 'stopped' ? null : report)
+  notify((w) =>
+    w.taskEnded({
+      runId: run.requestId,
+      taskId,
+      status,
+      report,
+      agent: lookOf(run.agents, agentName)
+    })
+  )
 }
 
 // The saved session to resume, or null. A saved id whose session is gone is
@@ -555,7 +626,13 @@ async function execute(run: Run, prompt: string): Promise<void> {
             break
           }
           // The text deltas already covered this message's text. The complete
-          // message carries each tool call's full input.
+          // message carries each tool call's full input. Text followed by a tool
+          // call is not the final reply.
+          const said = message.message.content
+            .map((block) => (block.type === 'text' ? block.text : ''))
+            .join('')
+          if (said.trim() !== '') run.reply = said
+          if (message.message.content.some((block) => block.type === 'tool_use')) run.reply = ''
           for (const block of message.message.content) {
             if (block.type !== 'tool_use') continue
             const input = block.input as Record<string, unknown>
@@ -665,17 +742,23 @@ async function execute(run: Run, prompt: string): Promise<void> {
       activeRun = null
     }
 
+    let ended: 'done' | 'stopped' | AgentError
     if (run.failure) {
-      emit(run, { requestId: run.requestId, type: 'error', ...run.failure })
+      ended = run.failure
     } else if (run.abortController.signal.aborted) {
-      emit(run, { requestId: run.requestId, type: 'stopped' })
+      ended = 'stopped'
     } else if (outcome === 'done') {
-      emit(run, { requestId: run.requestId, type: 'done' })
+      ended = 'done'
     } else {
-      const error = outcome ??
+      ended = outcome ??
         assistantError ?? { code: 'sdk_error', message: 'The agent ended without a result.' }
-      emit(run, { requestId: run.requestId, type: 'error', ...error })
     }
+    if (ended === 'done' || ended === 'stopped') {
+      emit(run, { requestId: run.requestId, type: ended })
+    } else {
+      emit(run, { requestId: run.requestId, type: 'error', ...ended })
+    }
+    notify((w) => w.runEnded({ runId: run.requestId, outcome: ended, reply: run.reply }))
   }
 }
 

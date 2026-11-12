@@ -16,7 +16,7 @@ import { loopFor, type MascotStateName } from '../mascots/types'
 import { mascotState } from '../conversation/mascotState'
 import { useHeldMascotState } from '../conversation/useHeldMascotState'
 import { AGENT_NAME } from '../conversation/agentName'
-import { errorText, STOPPED_TEXT } from '../conversation/noticeText'
+import { errorText, STOPPED_TEXT } from '../../../shared/noticeText'
 import { partyWork, taskViews, type TaskView } from '../conversation/agentWork'
 import { callTargetOf } from '../conversation/callTarget'
 import AgentChip from '../components/AgentChip'
@@ -189,7 +189,7 @@ function ConversationScreen({
   const { items, status, running, send, stop, answerPermission, loadHistory, newChat } =
     conversation
   const reducedMotion = usePrefersReducedMotion()
-  const mascot = useActiveMascot()
+  const mascot = useActiveMascot(window.myclaud.mascots)
   const { agents, loaded: agentsLoaded } = useAgents(project.path)
   const { mode, toggle } = usePartyPanelMode()
   const [typing, setTyping] = useState(false)

@@ -1,5 +1,5 @@
 import { contextBridge, ipcRenderer, type IpcRendererEvent } from 'electron'
-import { IpcChannel, type AgentEvent, type MyClaudApi } from '../shared/ipc'
+import { IpcChannel, type AgentEvent, type MyClaudApi, type PopupOpenTarget } from '../shared/ipc'
 
 // The only API the renderer gets. ipcRenderer itself is never exposed.
 const api: MyClaudApi = {
@@ -72,7 +72,17 @@ const api: MyClaudApi = {
   },
   ui: {
     getPartyPanel: () => ipcRenderer.invoke(IpcChannel.UiGetPartyPanel),
-    setPartyPanel: (mode) => ipcRenderer.invoke(IpcChannel.UiSetPartyPanel, mode)
+    setPartyPanel: (mode) => ipcRenderer.invoke(IpcChannel.UiSetPartyPanel, mode),
+    getPopups: () => ipcRenderer.invoke(IpcChannel.UiGetPopups),
+    setPopups: (on) => ipcRenderer.invoke(IpcChannel.UiSetPopups, on),
+    testPopup: () => ipcRenderer.invoke(IpcChannel.UiTestPopup),
+    onOpen: (callback) => {
+      const listener = (_event: IpcRendererEvent, target: PopupOpenTarget): void => callback(target)
+      ipcRenderer.on(IpcChannel.UiOpen, listener)
+      return () => {
+        ipcRenderer.removeListener(IpcChannel.UiOpen, listener)
+      }
+    }
   }
 }
 
