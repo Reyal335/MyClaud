@@ -2,6 +2,9 @@ import type { PermissionDecision, TaskDetail as TaskDetailData } from '../../../
 import type { ToolItem } from '../hooks/useConversation'
 import { clockTime, durationLabel } from '../conversation/timeLabel'
 import AgentIcon from './AgentIcon'
+import HarnessNote from './HarnessNote'
+import Markdown from './Markdown'
+import { splitHarnessNote } from '../../../shared/plainText'
 import { PermissionActions, PermissionDetails } from './PermissionRow'
 import ToolCard from './ToolCard'
 import { TASK_STATUS_LABELS } from '../conversation/callTarget'
@@ -38,6 +41,8 @@ function TaskDetail({
 }: TaskDetailProps): React.JSX.Element {
   const request = pending[0] ?? null
   const ended = task.endedAt !== null
+  // A done report is the agent's Markdown. An error or stopped one is plain text.
+  const report = task.report && task.status === 'done' ? splitHarnessNote(task.report) : null
   const meta = [
     scopeText(task, projectName),
     `started ${clockTime(task.startedAt)}`,
@@ -86,7 +91,9 @@ function TaskDetail({
           TASK
         </h3>
         {task.description && <p className="task-detail__description">{task.description}</p>}
-        <pre className="task-detail__text">{task.prompt}</pre>
+        <div className="task-detail__text task-detail__text--markdown">
+          <Markdown source={task.prompt} measure />
+        </div>
         {task.promptTruncated && <p className="task-detail__note">Shown in part.</p>}
       </section>
 
@@ -113,7 +120,16 @@ function TaskDetail({
         <h3 id="task-detail-report" className="task-detail__label">
           REPORT
         </h3>
-        {task.report ? (
+        {report ? (
+          <>
+            {report.note !== null && <HarnessNote key={task.id} text={report.note} />}
+            {report.body.trim() !== '' && (
+              <div className="task-detail__text task-detail__text--markdown">
+                <Markdown source={report.body} measure />
+              </div>
+            )}
+          </>
+        ) : task.report ? (
           <pre className={`task-detail__text task-detail__text--${task.status}`}>{task.report}</pre>
         ) : (
           <p className="task-detail__note">

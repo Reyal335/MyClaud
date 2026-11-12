@@ -1,6 +1,7 @@
 import type { TaskStatus } from '../../../shared/ipc'
 import type { TaskView } from '../conversation/agentWork'
 import AgentIcon from './AgentIcon'
+import { toPlainText } from '../../../shared/plainText'
 import './AgentTaskCard.css'
 
 type AgentTaskCardProps = {
@@ -30,7 +31,10 @@ function AgentTaskCard({ view, onOpen }: AgentTaskCardProps): React.JSX.Element 
   } else if (state === 'working') {
     body = <p className="task-card__line">{activity ?? 'Starting...'}</p>
   } else {
-    body = item.report ? <p className="task-card__report">{item.report}</p> : null
+    // A done report is Markdown: its first lines show as plain text. An error or
+    // stopped report is the app's own text and shows as it is.
+    const report = item.report && item.status === 'done' ? toPlainText(item.report) : item.report
+    body = report ? <p className="task-card__report">{report}</p> : null
   }
 
   return (

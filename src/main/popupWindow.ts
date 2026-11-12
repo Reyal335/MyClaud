@@ -21,6 +21,7 @@ import {
 } from '../shared/ipc'
 import { errorText } from '../shared/noticeText'
 import { fitsPopup, popupDetailsHeight } from '../shared/popupFit'
+import { toPlainText } from '../shared/plainText'
 import { labelText, toolLabel } from '../shared/toolLabel'
 import { answerPermission, watchRuns } from './agent'
 import { getActiveMascot } from './mascots'
@@ -125,9 +126,10 @@ function whoOf(agent: TaskAgent | null): PopupWho {
   return agent ? { kind: 'agent', name: agent.name, icon: agent.icon } : { kind: 'speaker' }
 }
 
+// The first line of a reply or report, as plain text: no Markdown marks, no harness note.
 function firstLine(text: string): string {
   return (
-    text
+    toPlainText(text)
       .split(/\r?\n/)
       .map((line) => line.trim())
       .find((line) => line !== '') ?? DONE_TEXT

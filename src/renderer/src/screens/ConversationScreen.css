@@ -136,7 +136,11 @@
   border: var(--border) solid var(--accent);
 }
 
+/* Rendered Markdown: its own rules decide wrapping. A wide code block or table
+   scrolls inside itself, so the reply never grows past its max width. */
 .conversation__reply {
+  min-width: 0;
+  white-space: normal;
   padding: 12px 14px;
   background: var(--panel);
   border: var(--border) solid var(--line);

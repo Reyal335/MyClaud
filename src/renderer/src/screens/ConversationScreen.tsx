@@ -25,6 +25,8 @@ import Dialog from '../components/Dialog'
 import ToolCard from '../components/ToolCard'
 import Mascot from '../components/Mascot'
 import DialogueBox from '../components/DialogueBox'
+import Markdown from '../components/Markdown'
+import { toPlainText } from '../../../shared/plainText'
 import PartyPanel from '../components/PartyPanel'
 import './ConversationScreen.css'
 
@@ -109,9 +111,9 @@ function HistoryList({
             )
           case 'text':
             return (
-              <p key={item.id} className="conversation__reply">
-                {item.text}
-              </p>
+              <div key={item.id} className="conversation__reply">
+                <Markdown source={item.text} />
+              </div>
             )
           case 'task': {
             const view = views.get(item.taskId)
@@ -251,13 +253,15 @@ function ConversationScreen({
 
   // For screen readers: the latest reply text block that is complete. A block is
   // complete once something follows it or the run has ended.
-  const announce = useMemo(() => {
+  const announced = useMemo(() => {
     for (let i = items.length - 1; i >= 0; i--) {
       const item = items[i]
       if (item.kind === 'text' && (i < items.length - 1 || !running)) return item.text
     }
     return ''
   }, [items, running])
+  // Read as plain text, so no Markdown marks are read out.
+  const announce = useMemo(() => toPlainText(announced), [announced])
 
   // Keep the history scrolled to the bottom while it grows, unless the user scrolled up.
   useEffect(() => {

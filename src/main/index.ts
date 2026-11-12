@@ -11,6 +11,15 @@ import { loadTasks } from './tasks'
 // Matches --bg in the renderer tokens, so the window never flashes white on load.
 const WINDOW_BACKGROUND = '#0B132B'
 
+function isWebUrl(url: string): boolean {
+  try {
+    const { protocol } = new URL(url)
+    return protocol === 'http:' || protocol === 'https:'
+  } catch {
+    return false
+  }
+}
+
 function createWindow(): BrowserWindow {
   const mainWindow = new BrowserWindow({
     width: 1280,
@@ -45,9 +54,19 @@ function createWindow(): BrowserWindow {
     stopRun()
   })
 
+  // Links never open inside the app. An http or https link opens in the system
+  // browser; any other kind is dropped.
   mainWindow.webContents.setWindowOpenHandler((details) => {
-    shell.openExternal(details.url)
+    if (isWebUrl(details.url)) shell.openExternal(details.url)
     return { action: 'deny' }
+  })
+
+  // Nothing may navigate the app window away from the app. A reload of the same
+  // page (development) is allowed.
+  mainWindow.webContents.on('will-navigate', (event) => {
+    if (event.url === mainWindow.webContents.getURL()) return
+    event.preventDefault()
+    if (isWebUrl(event.url)) shell.openExternal(event.url)
   })
 
   // Load the dev server URL in development, the built file in production.

@@ -118,6 +118,12 @@
   overflow-wrap: anywhere;
 }
 
+/* Rendered Markdown: its own rules decide wrapping and scrolling. */
+.task-detail__text--markdown {
+  min-width: 0;
+  white-space: normal;
+}
+
 .task-detail__text--error {
   color: var(--error);
 }

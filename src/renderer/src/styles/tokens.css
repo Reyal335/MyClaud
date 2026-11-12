@@ -12,6 +12,7 @@
   --error: #f0706a;
   --shadow: #000000;
   --check: #26335a; /* checkerboard squares behind transparent pixels */
+  --raised: #26335a; /* slightly lighter than panel: inline code, table headers */
   --dim: rgb(11 19 43 / 62%); /* over unpicked cells in the sheet slicer */
 
   /* Type */

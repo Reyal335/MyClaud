@@ -4,6 +4,8 @@ import type { ConversationItem } from '../hooks/useConversation'
 import { useTypewriter } from '../hooks/useTypewriter'
 import { errorText, STOPPED_TEXT } from '../../../shared/noticeText'
 import AgentIcon from './AgentIcon'
+import Markdown from './Markdown'
+import { needsWholeParse, useMarkdownBlocks } from '../markdown/markdownTree'
 import { PermissionActions, PermissionDetails } from './PermissionRow'
 import type { ToolLabel } from '../../../shared/toolLabel'
 import './DialogueBox.css'
@@ -69,11 +71,14 @@ function DialogueBox({
   onAnswer,
   onTypingChange
 }: DialogueBoxProps): React.JSX.Element {
-  const { shown, typing, skip } = useTypewriter(
-    reply?.text ?? '',
-    reply?.id ?? null,
-    reducedMotion || Boolean(reply?.instant)
-  )
+  const instant = reducedMotion || Boolean(reply?.instant)
+  // While the run goes on the reply can still grow: only its last block is parsed
+  // again. When the run ends the blocks stay, unless the reply has definitions
+  // that cross blocks: then it is parsed whole, exactly as the history shows it.
+  const text = reply?.text ?? ''
+  const whole = instant || (!running && needsWholeParse(text))
+  const markdown = useMarkdownBlocks(text, reply?.id ?? null, whole)
+  const { shown, typing, skip } = useTypewriter(markdown.length, reply?.id ?? null, instant)
   const bodyRef = useRef<HTMLDivElement>(null)
   const position = useRequestPosition(pending)
 
@@ -130,13 +135,18 @@ function DialogueBox({
       break
     case 'reply':
       body = (
-        <>
-          <span aria-hidden="true">{shown}</span>
-          <span
-            className={`dialogue__cursor${typing ? '' : ' dialogue__cursor--blink'}`}
-            aria-hidden="true"
+        <div aria-hidden={typing ? true : undefined}>
+          <Markdown
+            blocks={markdown}
+            shown={shown}
+            cursor={
+              <span
+                className={`dialogue__cursor${typing ? '' : ' dialogue__cursor--blink'}`}
+                aria-hidden="true"
+              />
+            }
           />
-        </>
+        </div>
       )
       break
     case 'notice':

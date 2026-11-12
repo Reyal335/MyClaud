@@ -35,6 +35,7 @@ components in React and match these visually.
 | error | `#F0706A` | Error status and validation errors |
 | shadow | `#000000` | Hard drop shadows |
 | check | `#26335A` | Checkerboard squares behind transparent pixels (on panel) |
+| raised | `#26335A` | Slightly lighter than panel: inline code and table headers in Markdown |
 | dim | `#0B132B` at 62% | Overlay on unpicked cells in the sheet slicer |
 
 `#3A506B` is too dark for text on the navy backgrounds. Use it for borders only.
@@ -214,6 +215,120 @@ are hidden at zero.
   A running or waiting task cannot be deleted.
 - Empty: "Nothing here yet. Call an agent from the party panel on CHAT."
 - A task cut off when the app closed: "Interrupted when MyClaud closed."
+
+## Markdown
+
+Claude's replies and the agents' reports arrive as Markdown. The app renders
+them in its own look with one component (`components/Markdown.tsx` and
+`Markdown.css`). Every style sits under `.md` and uses the tokens only. The
+stored text never changes: tasks.json and the saved session keep the source.
+
+### Where it is rendered
+
+- CHAT: Claude's reply, in the dialogue box while it types and in the history,
+  including history loaded from a saved session.
+- INBOX task detail: TASK (what Claude asked the agent), and REPORT when the
+  task ended as done.
+
+### Where it is not
+
+These stay plain text, character for character:
+
+- My own messages.
+- Tool card labels and activity lines ("Finding **/*.{test,spec}.*" keeps its
+  asterisks).
+- Request details, on CHAT, in INBOX, and in the popup.
+- The report of a task that ended as error or stopped, error messages,
+  notices, and every text the app itself writes.
+- Agent descriptions in the party panel and on AGENTS, and the agent editor.
+
+### Previews
+
+`toPlainText` (src/shared/plainText.ts) turns Markdown into plain text with
+one line per block: no heading, bold, italic, code, list, quote, or table
+marks, a link's text and an image's alt text kept, and the harness note left
+out. It is used for the INBOX row preview of a done task (then cut at 80
+characters), the first three lines of a done report on the agent card, the
+popup's first lines, and the screen-reader announcement of a reply. Activity
+lines and "Waiting: <label>" are not Markdown and do not go through it.
+
+### Look
+
+- Body: IBM Plex Mono 13px, line height 1.6, 12px between blocks. In the
+  INBOX detail a line of text is at most about 78 characters; code boxes and
+  tables use the full width.
+- Headings: Press Start 2P in the accent color, never bigger than the
+  screen's section labels: levels 1 and 2 at 9px with a 2px line under them,
+  level 3 at 8px with no line. Levels 4 to 6 are the body font in bold. More
+  space above a heading (20px) than under it (8px).
+- A paragraph that is only one bold run ("**Summary**") is drawn as a level 3
+  heading.
+- Bold: weight 600 in the text color. Italic: italic. Strikethrough: a line
+  through, in muted.
+- Lists: a 6px accent square for bullets, accent numbers, 6px between items,
+  nested lists indented 20px. Task list items show a drawn pixel box, empty or
+  filled; it is not an input and cannot be clicked.
+- Inline code: the same font on raised, 1px line border, 4px side padding.
+  Long paths wrap anywhere.
+- Code blocks: a box with a 2px line border on bg. Lines do not wrap; the box
+  scrolls sideways inside itself. The language, when named, is a small muted
+  label at the top left. COPY at the top right copies exactly the code and
+  reads COPIED for 1.5 seconds (COPY FAILED if the clipboard refuses). No
+  syntax colors.
+- Quotes: a 4px line bar on the left and muted text.
+- Tables: 2px line borders on every cell, the header row bold on raised,
+  6px 10px cell padding, sideways scrolling inside the table's own wrapper.
+- A rule (---) is a 2px dashed line.
+- Links: accent, underlined, with the app's focus ring.
+- Nothing in the component is animated. At 960x600 nothing rendered makes the
+  screen scroll sideways.
+
+### Typing out
+
+- The dialogue box keeps its speed, skip, reduced motion, size, scrolling, and
+  the mascot's TALKING timing. It counts the visible characters of the
+  rendered text, not the source: Markdown marks never show while typing.
+- Structure appears with its first character: a bullet with the first letter
+  of its item, a heading already in its heading look, a code box with its
+  first character. A table appears whole. The cursor sits after the last
+  character shown.
+- While a reply streams, its last block can be unfinished: an unclosed code
+  fence shows as a growing code box, and an unclosed ** or backtick may show as
+  written until its closing mark arrives.
+- Finished blocks are parsed once. Only the last block is parsed again when
+  new text arrives, and a typing tick never parses. A reply with link
+  reference or footnote definitions is parsed whole once the run ends, so it
+  matches the history exactly.
+- Loaded history, TASK, and REPORT appear at once and never type.
+
+### Harness note
+
+Claude Code's harness can put a note in square brackets in front of an
+agent's report, for example "[harness: subagent output matched
+instruction-shaped pattern(s): ...]". It is not in the SDK's docs; it comes
+from the bundled Claude Code, which writes it as the report's own first block.
+
+- When a done report's first block starts with "[harness:" and ends with "]",
+  it is taken out of the body and shown above the report: the label HARNESS
+  NOTE in the waiting color and a SHOW button, which becomes HIDE. Opened, it
+  shows the whole note as plain text. It starts closed and is never dropped.
+- A first block of any other shape stays in the body.
+- Nothing the note describes is undone: "<\" stays "<\".
+
+### Safety
+
+The text comes from a model and can hold anything.
+
+- No raw HTML: HTML in the text shows as text. No HTML plugin, and never
+  `dangerouslySetInnerHTML`.
+- Only http and https become links; every other address (javascript:, file:,
+  relative links, file paths, in-page anchors) shows its text as plain text.
+  Each link shows its full address as its title and opens in the system
+  browser. Main stops any navigation of the app window and opens only http
+  and https outside.
+- Images are never loaded and no img element is made. An image with an http
+  or https address shows as a link reading "[image: <alt text>]"; any other
+  image shows its alt text.
 
 ## Agent icons
 
