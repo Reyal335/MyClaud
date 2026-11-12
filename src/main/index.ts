@@ -5,6 +5,7 @@ import { appIcon, windowIconOptions } from './appIcon'
 import { stopRun } from './agent'
 import { registerIpc } from './ipc'
 import { loadProject } from './settings'
+import { loadTasks } from './tasks'
 
 // Matches --bg in the renderer tokens, so the window never flashes white on load.
 const WINDOW_BACKGROUND = '#0B132B'
@@ -70,6 +71,8 @@ app.whenReady().then(async () => {
   })
 
   await loadProject()
+  // Tasks cut off when the app last closed become stopped before anything reads them.
+  await loadTasks()
   registerIpc()
   createWindow()
 

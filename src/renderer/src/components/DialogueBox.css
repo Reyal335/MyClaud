@@ -95,3 +95,13 @@
     animation: none;
   }
 }
+
+/* The agent behind a request: its icon and "<agent> asks". */
+.dialogue__asker {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 8px;
+  font-weight: 600;
+  color: var(--waiting);
+}

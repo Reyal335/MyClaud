@@ -1,2 +1,3 @@
-// The agent's display name. There are no agents yet; step 7 passes the real name.
+// The name the main conversation speaks under. Agents Claude brings in show
+// their own names on their cards, in the party panel, and in the inbox.
 export const AGENT_NAME = 'Claude'

@@ -170,6 +170,8 @@ function fromText(
     description: parsed.description ?? '',
     tools: parsed.tools,
     model: parsed.model,
+    permissionMode: parsed.permissionMode,
+    background: parsed.background,
     otherFields: parsed.otherFields,
     problem: parsed.problem
   }

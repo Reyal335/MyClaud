@@ -1,7 +1,7 @@
 import { app } from 'electron'
 import { readFile, stat } from 'fs/promises'
 import { basename, join } from 'path'
-import type { ProjectInfo } from '../shared/ipc'
+import type { PartyPanelMode, ProjectInfo } from '../shared/ipc'
 import { DEFAULT_MASCOT_ID } from '../shared/mascotRules'
 import { writeFileSafely } from './safeWrite'
 
@@ -84,4 +84,15 @@ export async function getActiveMascotId(): Promise<string> {
 
 export function setActiveMascotId(id: string): Promise<void> {
   return updateSettings({ activeMascotId: id })
+}
+
+// The party panel as I last left it with its collapse button, or null before I
+// have chosen.
+export async function getPartyPanel(): Promise<PartyPanelMode | null> {
+  const { partyPanel } = await readSettings()
+  return partyPanel === 'open' || partyPanel === 'rail' ? partyPanel : null
+}
+
+export function setPartyPanel(mode: PartyPanelMode): Promise<void> {
+  return updateSettings({ partyPanel: mode })
 }

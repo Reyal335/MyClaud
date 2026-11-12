@@ -1,6 +1,6 @@
 import type { PermissionDecision, ToolInput } from '../../../shared/ipc'
 import type { PermissionRequest } from '../hooks/useConversation'
-import { relativePath } from './toolLabel'
+import { relativePath } from '../../../shared/toolLabel'
 import './PermissionRow.css'
 
 // A waiting tool call, in two parts the dialogue box places separately: the

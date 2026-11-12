@@ -11,8 +11,17 @@ machine. It is not a product and it has no accounts of its own.
 
 ### Working now
 
-- **Chat with an agent.** Type a prompt, and the reply streams into the dialogue
-  box. The mascot's state follows the run.
+- **Chat with Claude.** The CHAT screen holds one conversation per project.
+  Replies stream into the dialogue box, the mascot's state follows the run, and
+  the conversation comes back after a restart. NEW CHAT starts over.
+- **The party.** Your agents show in a panel on the right of CHAT. Click one to
+  call it for your next message, or Claude brings one in by itself. While an
+  agent works, its row shows what it is doing and an agent card shows in the
+  conversation. The panel collapses to an icon rail.
+- **Inbox.** Every piece of work Claude hands to an agent is a task with a
+  status (RUNNING, WAITING, DONE, ERROR, STOPPED), its activity, and its full
+  report. A task waiting for your approval counts on the INBOX badge, and you can
+  approve it there.
 - **Tool cards.** Each tool call shows as a card with its name, its input, and a
   status: RUNNING, WAITING, DONE, FAILED, DENIED, or STOPPED.
 - **Approve or deny.** Reading files (`Read`, `Grep`, `Glob`) runs without asking.
@@ -24,16 +33,14 @@ machine. It is not a product and it has no accounts of its own.
   talking, working, or asking (waiting for you).
 - **Agent manager.** Create, edit, and delete agent files for the open project
   or for your whole machine. You can give an agent a 16x16 PNG icon and a short
-  role label.
+  role label. CALL on a card opens CHAT with that agent called.
+- **Mascot manager.** Upload your own mascots as spritesheets, with one loop per
+  state. Sheets in a grid are cut into a strip in the sheet slicer.
 
 ### Planned
 
 These are on the roadmap. They are not built yet.
 
-- **Mascot manager.** Upload your own mascots as spritesheets, with one loop per
-  state.
-- **Inbox with many threads.** Every agent conversation becomes a thread with a
-  status. Threads waiting for approval count as unread.
 - **Popup notifications.** A small always-on-top window with the mascot when a
   task finishes, needs approval, or fails.
 
@@ -148,7 +155,9 @@ normally under `%APPDATA%`.
 
 | File or folder | What it holds |
 | --- | --- |
-| `settings.json` | The path of the project you last opened, and the active mascot's id (`activeMascotId`, `"default"` for the built-in one) |
+| `settings.json` | The path of the project you last opened, the active mascot's id (`activeMascotId`, `"default"` for the built-in one), and the party panel's open or rail choice (`partyPanel`) once you press its button |
+| `chats.json` | The Claude Code session id of each project's main conversation. The session files stay where Claude Code keeps them |
+| `tasks.json` | The inbox: each agent task with its status, activity, and report. A bad file is kept aside as `tasks.json.bad` |
 | `agent-icons/` | The 16x16 PNG icons you chose for agents |
 | `agent-icons.json` | A map from each agent file path to its icon file |
 | `agent-roles.json` | A map from each agent file path to its role label |
@@ -199,7 +208,11 @@ Notes on agent fields:
 - `model` can be `inherit`, `sonnet`, `opus`, `haiku`, or `fable`.
 - The form lists these tools: `Read`, `Grep`, `Glob`, `Bash`, `Edit`, `Write`,
   `WebFetch`, and `WebSearch`. Chat runs enable only `Read`, `Grep`, `Glob`,
-  `Edit`, `Write`, and `Bash`. See [Current limits](#current-limits).
+  `Edit`, `Write`, and `Bash`, and an agent gets the ones it lists from that set
+  (all six when it lists none). See [Current limits](#current-limits).
+- MyClaud does not run an agent whose file sets `permissionMode` to
+  `acceptEdits`, `auto`, or `bypassPermissions`, or sets `background: true`.
+  Inside an agent, only `Read`, `Grep`, and `Glob` run without asking.
 - A **role** is an optional label of up to 40 characters, such as
   `code-reader`. MyClaud stores it in `agent-roles.json`, not in the agent file.
 - An **icon** is optional. It must be a PNG that is exactly 16x16 pixels. MyClaud
@@ -208,9 +221,8 @@ Notes on agent fields:
 
 ## Mascot spritesheets
 
-The mascot is drawn from a spritesheet. The mascot manager that uploads your own
-sheets is planned. Until then, the app shows its built-in mascot for every
-state.
+The mascot is drawn from a spritesheet, uploaded on the MASCOTS screen. A sheet
+in any other layout opens the sheet slicer, which cuts it into a strip.
 
 The sheet format, from `designs/DESIGN.md`:
 
@@ -224,12 +236,12 @@ The sheet format, from `designs/DESIGN.md`:
 
 ## Current limits
 
-- The mascot uses the built-in image for every state. Custom loops come with
-  the mascot manager.
-- The inbox shows one conversation at a time. Multiple threads come later.
+- There is one main conversation per project, and one run at a time. Agents run
+  inside that run, in the foreground, one level deep (an agent cannot start an
+  agent), at most three at once.
 - The agent form lists `WebFetch` and `WebSearch`, but chat runs do not enable
-  them yet.
-- The conversation is kept in memory only. Closing the app clears it.
+  them yet, for Claude or for agents.
+- Background agents and continuing a finished agent are not supported.
 
 ## Roadmap
 
@@ -239,8 +251,8 @@ The sheet format, from `designs/DESIGN.md`:
 4. Mascot with five states, driven by the stream. *Done*
 5. Agent manager: read, create, edit, and delete agent files, with icon upload.
    *Done*
-6. Mascot manager: spritesheet upload, validation, and per-state loops. *Planned*
-7. Multiple conversations and an inbox with statuses. *Planned*
+6. Mascot manager: spritesheet upload, validation, and per-state loops. *Done*
+7. The main chat, the party of agents, and the inbox of their tasks. *Done*
 8. Popup notification window. *Planned*
 
 The build order and design rules are in `CLAUDE.md` and `designs/DESIGN.md`.

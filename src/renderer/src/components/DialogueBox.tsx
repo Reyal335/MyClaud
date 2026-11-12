@@ -1,10 +1,11 @@
 import { useEffect, useLayoutEffect, useRef, useState, type KeyboardEvent } from 'react'
-import type { PermissionDecision } from '../../../shared/ipc'
+import type { PermissionDecision, TaskAgent } from '../../../shared/ipc'
 import type { ConversationItem } from '../hooks/useConversation'
 import { useTypewriter } from '../hooks/useTypewriter'
 import { errorText, STOPPED_TEXT } from '../conversation/noticeText'
+import AgentIcon from './AgentIcon'
 import { PermissionActions, PermissionDetails } from './PermissionRow'
-import type { ToolLabel } from './toolLabel'
+import type { ToolLabel } from '../../../shared/toolLabel'
 import './DialogueBox.css'
 
 type ToolItem = Extract<ConversationItem, { kind: 'tool' }>
@@ -12,12 +13,15 @@ type NoticeItem = Extract<ConversationItem, { kind: 'notice' }>
 
 type DialogueBoxProps = {
   agentName: string
-  // The last item when it is reply text. It types out here and is not in the history.
-  reply: { id: number; text: string } | null
+  // The last item when it is reply text. It types out here and is not in the history,
+  // unless it is `instant`: text loaded from a saved conversation shows at once.
+  reply: { id: number; text: string; instant: boolean } | null
   // The last item when it is a notice (stopped or error).
   notice: NoticeItem['notice'] | null
-  // Requests waiting for an answer, oldest first.
+  // Requests waiting for an answer, oldest first, from the main conversation and agents.
   pending: ToolItem[]
+  // The agent behind the oldest request, or null when Claude itself asks.
+  asker: Pick<TaskAgent, 'name' | 'icon'> | null
   // The label of the running tool card, if one is running.
   working: ToolLabel | null
   // A run is in progress.
@@ -55,6 +59,7 @@ function DialogueBox({
   reply,
   notice,
   pending,
+  asker,
   working,
   running,
   empty,
@@ -64,7 +69,11 @@ function DialogueBox({
   onAnswer,
   onTypingChange
 }: DialogueBoxProps): React.JSX.Element {
-  const { shown, typing, skip } = useTypewriter(reply?.text ?? '', reply?.id ?? null, reducedMotion)
+  const { shown, typing, skip } = useTypewriter(
+    reply?.text ?? '',
+    reply?.id ?? null,
+    reducedMotion || Boolean(reply?.instant)
+  )
   const bodyRef = useRef<HTMLDivElement>(null)
   const position = useRequestPosition(pending)
 
@@ -104,11 +113,19 @@ function DialogueBox({
   switch (kind) {
     case 'asking':
       body = (
-        <PermissionDetails
-          name={request!.name}
-          request={request!.permission!}
-          projectPath={projectPath}
-        />
+        <>
+          {asker && (
+            <p className="dialogue__asker">
+              <AgentIcon src={asker.icon} size={16} label="" />
+              {asker.name} asks
+            </p>
+          )}
+          <PermissionDetails
+            name={request!.name}
+            request={request!.permission!}
+            projectPath={projectPath}
+          />
+        </>
       )
       break
     case 'reply':
@@ -126,6 +143,8 @@ function DialogueBox({
       body =
         notice!.type === 'stopped' ? (
           <span className="dialogue__muted">{STOPPED_TEXT}</span>
+        ) : notice!.type === 'info' ? (
+          <span className="dialogue__muted">{notice!.text}</span>
         ) : (
           <span className="dialogue__error">{errorText(notice!.error)}</span>
         )

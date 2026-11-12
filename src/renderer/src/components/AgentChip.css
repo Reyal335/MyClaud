@@ -1,0 +1,53 @@
+/* The called agent: a small chip on my message, a larger one in the input row. */
+.agent-chip {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 2px 8px 2px 2px;
+  background: var(--bg);
+  border: var(--border-thin) solid var(--accent);
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+
+.agent-chip--input {
+  flex: none;
+  align-self: stretch;
+  max-width: 40%;
+  min-height: 48px;
+  padding: 0 0 0 8px;
+  background: var(--panel);
+  border: var(--border) solid var(--accent);
+  font-size: 14px;
+}
+
+.agent-chip__name {
+  min-width: 0;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.agent-chip__remove {
+  flex: none;
+  align-self: stretch;
+  width: 44px;
+  margin: 0;
+  padding: 0;
+  background: var(--panel);
+  color: var(--text);
+  border: 0;
+  border-left: var(--border-thin) solid var(--line);
+  border-radius: 0;
+  font-family: var(--font-pixel);
+  font-size: 10px;
+  cursor: pointer;
+}
+
+.agent-chip__remove:hover,
+.agent-chip__remove:focus-visible {
+  background: var(--bg);
+  color: var(--accent);
+}

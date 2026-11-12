@@ -11,7 +11,16 @@ export type MascotStateInput = {
 // What the mascot shows. The first rule that matches wins.
 export function mascotState({ items, status, typing }: MascotStateInput): MascotStateName {
   if (items.some((item) => item.kind === 'tool' && item.permission !== null)) return 'asking'
-  if (items.some((item) => item.kind === 'tool' && item.state === 'running')) return 'working'
+  // A running agent counts as a running tool.
+  if (
+    items.some(
+      (item) =>
+        (item.kind === 'tool' && item.state === 'running') ||
+        (item.kind === 'task' && item.status === 'running')
+    )
+  ) {
+    return 'working'
+  }
   if (typing) return 'talking'
   if (status === 'running' || status === 'waiting') return 'thinking'
   return 'idle'

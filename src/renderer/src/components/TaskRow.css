@@ -1,0 +1,160 @@
+/* An inbox row, from designs/1-inbox.html. */
+.task-row {
+  position: relative;
+  flex: none;
+}
+
+.task-row__open {
+  display: flex;
+  gap: 12px;
+  width: 100%;
+  margin: 0;
+  /* Room on the right for the delete button. */
+  padding: 12px 64px 12px 12px;
+  background: transparent;
+  color: var(--text);
+  border: var(--border) solid var(--line);
+  border-radius: 0;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.task-row__open:hover,
+.task-row__open:focus-visible {
+  border-color: var(--accent);
+}
+
+/* Selected or unread: text border with an accent shadow. */
+.task-row--unread .task-row__open,
+.task-row--selected .task-row__open {
+  background: var(--panel);
+  border-color: var(--text);
+  box-shadow: 4px 4px 0 var(--accent);
+}
+
+.task-row__text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.task-row__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.task-row__agent {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.task-row--unread .task-row__agent,
+.task-row--unread .task-row__label {
+  font-weight: 600;
+}
+
+.task-row__time {
+  flex: none;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.task-row__label {
+  overflow-wrap: anywhere;
+}
+
+.task-row__preview {
+  font-size: 13px;
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.task-row__tags {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.task-row__scope {
+  padding: 4px 6px;
+  font-family: var(--font-pixel);
+  font-size: 8px;
+  color: var(--muted);
+  border: var(--border-thin) solid var(--muted);
+}
+
+.task-row__scope--project {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+.task-row__status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-pixel);
+  font-size: 8px;
+  color: var(--muted);
+}
+
+.task-row__square {
+  width: 8px;
+  height: 8px;
+  background: currentColor;
+}
+
+.task-row__status--running {
+  color: var(--running);
+}
+
+.task-row__status--waiting {
+  color: var(--waiting);
+}
+
+.task-row__status--error {
+  color: var(--error);
+}
+
+.task-row__new {
+  padding: 4px 6px;
+  font-family: var(--font-pixel);
+  font-size: 8px;
+  background: var(--text);
+  color: var(--bg);
+}
+
+.task-row__delete {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 44px;
+  height: 44px;
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--muted);
+  border: var(--border-thin) solid var(--line);
+  border-radius: 0;
+  font-family: var(--font-pixel);
+  font-size: 9px;
+  cursor: pointer;
+}
+
+.task-row__delete:hover:not(:disabled),
+.task-row__delete:focus-visible {
+  color: var(--error);
+  border-color: var(--error);
+}
+
+.task-row__delete:disabled {
+  opacity: 0.45;
+  cursor: default;
+}

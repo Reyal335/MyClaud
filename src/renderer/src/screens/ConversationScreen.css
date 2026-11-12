@@ -1,6 +1,7 @@
-/* Conversation screen from designs/2-conversation.html. Rows: header, history (takes
-   the free space and scrolls), stage, input. The history gives up space first, so
-   the stage and input stay fully visible at the minimum window size. */
+/* The CHAT screen from designs/8-chat-party.html. Under the header, two columns:
+   the frame (history over the stage) with the input row under it, and the party
+   panel. The history takes the free space and scrolls; it gives up space first,
+   so the stage and input stay fully visible at the minimum window size. */
 .conversation {
   display: flex;
   flex-direction: column;
@@ -31,6 +32,16 @@
   font-size: 12px;
   font-weight: normal;
   line-height: 1.5;
+}
+
+.conversation__new {
+  flex: none;
+}
+
+.conversation__header-error {
+  flex-basis: 100%;
+  margin: 0;
+  color: var(--error);
 }
 
 .conversation__subtitle {
@@ -66,6 +77,34 @@
   color: var(--error);
 }
 
+/* Columns */
+.conversation__body {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  gap: 16px;
+}
+
+.conversation__main {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.conversation__frame {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 16px;
+  background: var(--bg);
+  border: var(--border) solid var(--line);
+}
+
 /* History */
 .conversation__history {
   flex: 1 1 auto;
@@ -88,6 +127,9 @@
 }
 
 .conversation__mine {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
   align-self: flex-end;
   padding: 12px 14px;
   background: var(--line);
@@ -100,8 +142,14 @@
   border: var(--border) solid var(--line);
 }
 
-.conversation__stopped {
+.conversation__stopped,
+.conversation__muted {
   color: var(--muted);
+}
+
+.conversation__muted {
+  margin: 0;
+  font-size: 12px;
 }
 
 .conversation__error {

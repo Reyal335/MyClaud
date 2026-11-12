@@ -1,7 +1,8 @@
 import { BrowserWindow, dialog, ipcMain } from 'electron'
-import { IpcChannel, type AgentSendResult, type ProjectInfo } from '../shared/ipc'
-import { answerPermission, clearSession, isRunning, startRun, stopRun } from './agent'
-import { getProject, setProject } from './settings'
+import { IpcChannel, type AgentSendResult, type ChatHistory, type ProjectInfo } from '../shared/ipc'
+import { answerPermission, isRunning, loadChatHistory, resetChat, startRun, stopRun } from './agent'
+import { getPartyPanel, getProject, setPartyPanel, setProject } from './settings'
+import { clearFinishedTasks, getTask, listTasks, markTaskSeen, removeTask } from './tasks'
 import { createAgent, listAgents, readAgent, removeAgent, updateAgent } from './agents'
 import { discardIcon, pickIcon } from './agentIcons'
 import {
@@ -22,7 +23,7 @@ export function registerIpc(): void {
   ipcMain.handle(IpcChannel.ProjectGet, (): ProjectInfo | null => getProject())
 
   ipcMain.handle(IpcChannel.ProjectOpen, async (event): Promise<ProjectInfo | null> => {
-    // Switching projects mid-run would clear the session under the run.
+    // The run belongs to the open project; it cannot change under it.
     if (isRunning()) return null
 
     const window = BrowserWindow.fromWebContents(event.sender)
@@ -35,26 +36,26 @@ export function registerIpc(): void {
       : await dialog.showOpenDialog(options)
     if (result.canceled || result.filePaths.length === 0 || isRunning()) return null
 
-    const path = result.filePaths[0]
-    if (path !== getProject()?.path) {
-      clearSession()
-    }
-    return setProject(path)
+    return setProject(result.filePaths[0])
   })
 
-  ipcMain.handle(IpcChannel.AgentSend, (event, prompt: unknown): AgentSendResult => {
-    if (typeof prompt !== 'string' || prompt.trim() === '') {
-      return {
-        ok: false,
-        error: { code: 'invalid_prompt', message: 'The prompt must be non-empty text.' }
+  // `call` is { scope, filePath } of an agent from the list; agent.ts checks it again.
+  ipcMain.handle(
+    IpcChannel.AgentSend,
+    async (event, prompt: unknown, call: unknown): Promise<AgentSendResult> => {
+      if (typeof prompt !== 'string' || prompt.trim() === '') {
+        return {
+          ok: false,
+          error: { code: 'invalid_prompt', message: 'The prompt must be non-empty text.' }
+        }
       }
+      const project = getProject()
+      if (!project) {
+        return { ok: false, error: { code: 'no_project', message: 'No project is open.' } }
+      }
+      return startRun(prompt, call, project.path, event.sender)
     }
-    const project = getProject()
-    if (!project) {
-      return { ok: false, error: { code: 'no_project', message: 'No project is open.' } }
-    }
-    return startRun(prompt, project.path, event.sender)
-  })
+  )
 
   ipcMain.handle(IpcChannel.AgentStop, (): void => {
     stopRun()
@@ -111,4 +112,43 @@ export function registerIpc(): void {
   ipcMain.handle(IpcChannel.MascotsRemove, (_event, id: unknown) => removeMascot(id))
   ipcMain.handle(IpcChannel.MascotsResetDefault, () => resetDefaultMascot())
   ipcMain.handle(IpcChannel.MascotsSetActive, (_event, id: unknown) => setActiveMascot(id))
+
+  // The open project's main conversation.
+  ipcMain.handle(IpcChannel.ChatHistory, async (): Promise<ChatHistory> => {
+    const project = getProject()
+    return project
+      ? loadChatHistory(project.path)
+      : { items: [], truncated: false, unavailable: false }
+  })
+  ipcMain.handle(IpcChannel.ChatReset, async () => {
+    const project = getProject()
+    if (!project) {
+      return { ok: false, error: { code: 'no_project', message: 'No project is open.' } }
+    }
+    return resetChat(project.path)
+  })
+
+  // Tasks. The renderer names a task by id only; tasks.ts checks it is one it knows.
+  ipcMain.handle(IpcChannel.TasksList, () => listTasks(getProject()?.path ?? null))
+  ipcMain.handle(IpcChannel.TasksGet, (_event, id: unknown) =>
+    getTask(id, getProject()?.path ?? null)
+  )
+  ipcMain.handle(IpcChannel.TasksMarkSeen, (_event, id: unknown) => markTaskSeen(id))
+  ipcMain.handle(IpcChannel.TasksRemove, (_event, id: unknown) => removeTask(id))
+  ipcMain.handle(IpcChannel.TasksClearFinished, () =>
+    clearFinishedTasks(getProject()?.path ?? null)
+  )
+
+  // The party panel's open or rail choice, kept in settings.json.
+  ipcMain.handle(IpcChannel.UiGetPartyPanel, () => getPartyPanel())
+  ipcMain.handle(IpcChannel.UiSetPartyPanel, async (_event, mode: unknown) => {
+    if (mode !== 'open' && mode !== 'rail') return { ok: false }
+    try {
+      await setPartyPanel(mode)
+      return { ok: true }
+    } catch (err) {
+      console.error('Could not save settings:', err instanceof Error ? err.message : err)
+      return { ok: false }
+    }
+  })
 }

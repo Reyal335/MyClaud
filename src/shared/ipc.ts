@@ -29,7 +29,18 @@ export const IpcChannel = {
   MascotsResetDefault: 'mascots:reset-default',
   MascotsSetActive: 'mascots:set-active',
   // Main to every window: the active mascot or its sheets changed.
-  MascotsChanged: 'mascots:changed'
+  MascotsChanged: 'mascots:changed',
+  ChatHistory: 'chat:history',
+  ChatReset: 'chat:reset',
+  TasksList: 'tasks:list',
+  TasksGet: 'tasks:get',
+  TasksMarkSeen: 'tasks:mark-seen',
+  TasksRemove: 'tasks:remove',
+  TasksClearFinished: 'tasks:clear-finished',
+  // Main to every window: a task started, changed, ended, or was removed.
+  TasksChanged: 'tasks:changed',
+  UiGetPartyPanel: 'ui:get-party-panel',
+  UiSetPartyPanel: 'ui:set-party-panel'
 } as const
 
 export type ProjectInfo = {
@@ -46,6 +57,7 @@ export type AgentErrorCode =
   | 'rate_limit'
   | 'overloaded'
   | 'billing'
+  | 'agent_unavailable'
   | 'sdk_error'
 
 export type AgentError = {
@@ -55,20 +67,57 @@ export type AgentError = {
 
 export type AgentSendResult = { ok: true; requestId: string } | { ok: false; error: AgentError }
 
+// An agent I call for my next message, as the step 5 list gives it. Main reads
+// the name from the file itself.
+export type AgentCallRef = { scope: AgentScope; filePath: string }
+
 // A tool call's input as the SDK gives it. String fields over the IPC size limit
 // are cut, and the event says so with `truncated`.
 export type ToolInput = Record<string, unknown>
 
 export type ToolEndState = 'done' | 'failed' | 'denied'
 
+export type ToolState = 'running' | 'waiting' | 'done' | 'failed' | 'denied' | 'stopped'
+
 export type PermissionDecision = 'approve' | 'deny'
 
+// The agent behind a task, as the party panel and the inbox show it. scope and
+// filePath are null for a built-in agent such as general-purpose.
+export type TaskAgent = {
+  name: string
+  scope: AgentScope | null
+  filePath: string | null
+  icon: string | null
+  role: string | null
+}
+
+export type TaskStatus = 'running' | 'waiting' | 'done' | 'error' | 'stopped'
+
+export type TaskEndStatus = 'done' | 'error' | 'stopped'
+
+// One tool call an agent made, labelled as step 3's tool cards are.
+export type TaskActivity = { toolId: string; verb: string; target: string | null; state: ToolState }
+
 // Main to renderer, on IpcChannel.AgentEvent. Every event carries the requestId.
+// taskId is the task a tool call belongs to, or null for the main conversation.
 export type AgentEvent =
   | { requestId: string; type: 'text'; text: string }
-  | { requestId: string; type: 'tool_start'; toolId: string; name: string }
-  | { requestId: string; type: 'tool_input'; toolId: string; input: ToolInput; truncated: boolean }
-  | { requestId: string; type: 'tool_end'; toolId: string; state: ToolEndState }
+  | { requestId: string; type: 'tool_start'; toolId: string; name: string; taskId: string | null }
+  | {
+      requestId: string
+      type: 'tool_input'
+      toolId: string
+      input: ToolInput
+      truncated: boolean
+      taskId: string | null
+    }
+  | {
+      requestId: string
+      type: 'tool_end'
+      toolId: string
+      state: ToolEndState
+      taskId: string | null
+    }
   | {
       requestId: string
       type: 'permission_request'
@@ -77,6 +126,7 @@ export type AgentEvent =
       name: string
       input: ToolInput
       truncated: boolean
+      taskId: string | null
     }
   | {
       requestId: string
@@ -84,9 +134,80 @@ export type AgentEvent =
       permissionId: string
       decision: PermissionDecision
     }
+  | { requestId: string; type: 'task_start'; taskId: string; agent: TaskAgent; description: string }
+  | {
+      requestId: string
+      type: 'task_end'
+      taskId: string
+      status: TaskEndStatus
+      report: string
+      truncated: boolean
+    }
+  // A line of information in the conversation, such as a lost saved conversation.
+  | { requestId: string; type: 'notice'; text: string }
   | { requestId: string; type: 'done' }
   | { requestId: string; type: 'stopped' }
   | { requestId: string; type: 'error'; code: AgentErrorCode; message: string }
+
+// Tasks: one Agent tool call each, kept in userData/tasks.json.
+
+export type TaskSummary = {
+  id: string
+  agent: TaskAgent
+  description: string
+  status: TaskStatus
+  // One line: the latest activity, "Waiting: ...", or the start of the report.
+  preview: string
+  startedAt: number
+  endedAt: number | null
+  seen: boolean
+}
+
+export type TaskDetail = TaskSummary & {
+  prompt: string
+  promptTruncated: boolean
+  report: string | null
+  reportTruncated: boolean
+  activity: TaskActivity[]
+}
+
+export type TasksError = { code: 'not_found' | 'invalid' | 'io_error'; message: string }
+
+export type TasksResult<T extends object = object> =
+  ({ ok: true } & T) | { ok: false; error: TasksError }
+
+// The main conversation as loaded from its session: the same item kinds the
+// conversation builds from events, without ids.
+export type HistoryItem =
+  | { kind: 'user'; text: string; call: TaskAgent | null }
+  | { kind: 'text'; text: string }
+  | {
+      kind: 'tool'
+      toolId: string
+      name: string
+      input: ToolInput | null
+      truncated: boolean
+      state: ToolState
+    }
+  | {
+      kind: 'task'
+      taskId: string
+      agent: TaskAgent
+      description: string
+      status: TaskStatus
+      activity: string | null
+      report: string | null
+    }
+
+export type ChatHistory = {
+  items: HistoryItem[]
+  // More than 200 messages: only the last 200 are in items.
+  truncated: boolean
+  // The saved conversation could not be read.
+  unavailable: boolean
+}
+
+export type PartyPanelMode = 'open' | 'rail'
 
 // Agent files: Claude Code subagents in <project>/.claude/agents/ and the global folder.
 
@@ -106,6 +227,9 @@ export type AgentSummary = {
   icon: string | null
   // A MyClaud label such as "code-reader", kept in userData, not in the file.
   role: string | null
+  // Read only, for the agent gate: the file's permissionMode and background fields.
+  permissionMode: string | null
+  background: boolean
   problem: string | null
 }
 
@@ -245,7 +369,8 @@ export type MyClaudApi = {
     open: () => Promise<ProjectInfo | null>
   }
   agent: {
-    send: (prompt: string) => Promise<AgentSendResult>
+    // `call` names an agent for this message. Main checks it and adds the sentence.
+    send: (prompt: string, call?: AgentCallRef | null) => Promise<AgentSendResult>
     stop: () => Promise<void>
     answerPermission: (
       permissionId: string,
@@ -299,5 +424,27 @@ export type MyClaudApi = {
     resetDefault: () => Promise<MascotsResult>
     setActive: (id: string) => Promise<MascotsResult>
     onChanged: (callback: () => void) => () => void
+  }
+  chat: {
+    // The open project's saved conversation, as items.
+    history: () => Promise<ChatHistory>
+    // NEW CHAT: forgets the open project's session id. Refused while a run is going.
+    reset: () => Promise<{ ok: true } | { ok: false; error: AgentError }>
+  }
+  tasks: {
+    // The open project's tasks, newest first.
+    list: () => Promise<TasksResult<{ tasks: TaskSummary[] }>>
+    get: (taskId: string) => Promise<TasksResult<{ task: TaskDetail }>>
+    markSeen: (taskId: string) => Promise<TasksResult>
+    // A running or waiting task cannot be removed.
+    remove: (taskId: string) => Promise<TasksResult>
+    // Removes the open project's done, error, and stopped tasks.
+    clearFinished: () => Promise<TasksResult>
+    onChanged: (callback: () => void) => () => void
+  }
+  ui: {
+    // null until I choose with the collapse button.
+    getPartyPanel: () => Promise<PartyPanelMode | null>
+    setPartyPanel: (mode: PartyPanelMode) => Promise<{ ok: boolean }>
   }
 }

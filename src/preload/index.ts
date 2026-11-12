@@ -8,7 +8,7 @@ const api: MyClaudApi = {
     open: () => ipcRenderer.invoke(IpcChannel.ProjectOpen)
   },
   agent: {
-    send: (prompt) => ipcRenderer.invoke(IpcChannel.AgentSend, prompt),
+    send: (prompt, call) => ipcRenderer.invoke(IpcChannel.AgentSend, prompt, call ?? null),
     stop: () => ipcRenderer.invoke(IpcChannel.AgentStop),
     answerPermission: (permissionId, decision) =>
       ipcRenderer.invoke(IpcChannel.AgentPermission, permissionId, decision),
@@ -51,6 +51,28 @@ const api: MyClaudApi = {
         ipcRenderer.removeListener(IpcChannel.MascotsChanged, listener)
       }
     }
+  },
+  chat: {
+    history: () => ipcRenderer.invoke(IpcChannel.ChatHistory),
+    reset: () => ipcRenderer.invoke(IpcChannel.ChatReset)
+  },
+  tasks: {
+    list: () => ipcRenderer.invoke(IpcChannel.TasksList),
+    get: (taskId) => ipcRenderer.invoke(IpcChannel.TasksGet, taskId),
+    markSeen: (taskId) => ipcRenderer.invoke(IpcChannel.TasksMarkSeen, taskId),
+    remove: (taskId) => ipcRenderer.invoke(IpcChannel.TasksRemove, taskId),
+    clearFinished: () => ipcRenderer.invoke(IpcChannel.TasksClearFinished),
+    onChanged: (callback) => {
+      const listener = (): void => callback()
+      ipcRenderer.on(IpcChannel.TasksChanged, listener)
+      return () => {
+        ipcRenderer.removeListener(IpcChannel.TasksChanged, listener)
+      }
+    }
+  },
+  ui: {
+    getPartyPanel: () => ipcRenderer.invoke(IpcChannel.UiGetPartyPanel),
+    setPartyPanel: (mode) => ipcRenderer.invoke(IpcChannel.UiSetPartyPanel, mode)
   }
 }
 

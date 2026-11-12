@@ -1,14 +1,12 @@
-import type { ToolState } from '../hooks/useConversation'
-import type { ToolInput } from '../../../shared/ipc'
-import { toolLabel } from './toolLabel'
+import type { ToolInput, ToolState } from '../../../shared/ipc'
+import { toolLabel, type ToolLabel } from '../../../shared/toolLabel'
 import './ToolCard.css'
 
-type ToolCardProps = {
-  name: string
-  input: ToolInput | null
-  state: ToolState
-  projectPath: string | null
-}
+type ToolCardProps = { state: ToolState } & (
+  | { name: string; input: ToolInput | null; projectPath: string | null }
+  // A label already made, as a task's saved activity keeps it.
+  | { label: ToolLabel }
+)
 
 const STATE_LABELS: Record<ToolState, string> = {
   running: 'RUNNING',
@@ -21,8 +19,10 @@ const STATE_LABELS: Record<ToolState, string> = {
 
 // One tool call. Not a button: it has no hover state and does nothing on click.
 // Approval details and buttons live in the dialogue box, not here.
-function ToolCard({ name, input, state, projectPath }: ToolCardProps): React.JSX.Element {
-  const { verb, target } = toolLabel(name, input, projectPath)
+function ToolCard(props: ToolCardProps): React.JSX.Element {
+  const { state } = props
+  const { verb, target } =
+    'label' in props ? props.label : toolLabel(props.name, props.input, props.projectPath)
 
   return (
     <div className={`tool-card tool-card--${state}`}>

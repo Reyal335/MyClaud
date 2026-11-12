@@ -7,6 +7,9 @@ type AgentCardProps = {
   selected: boolean
   onSelect: () => void
   onDelete: () => void
+  // CALL: opens CHAT with this agent called. callBlocked is the reason it cannot be.
+  onCall: () => void
+  callBlocked: string | null
 }
 
 function toolSummary(tools: string[] | null): string {
@@ -16,7 +19,14 @@ function toolSummary(tools: string[] | null): string {
 
 // One agent in the list, as in designs/3-agent-manager.html. An agent whose file
 // cannot be read shows the problem and can only be deleted.
-function AgentCard({ agent, selected, onSelect, onDelete }: AgentCardProps): React.JSX.Element {
+function AgentCard({
+  agent,
+  selected,
+  onSelect,
+  onDelete,
+  onCall,
+  callBlocked
+}: AgentCardProps): React.JSX.Element {
   if (agent.problem) {
     return (
       <div className="agent-card agent-card--problem">
@@ -37,27 +47,43 @@ function AgentCard({ agent, selected, onSelect, onDelete }: AgentCardProps): Rea
     )
   }
 
+  // The select button keeps the whole card; CALL sits beside it at the right edge,
+  // so neither click ever does the other's job.
   return (
-    <button
-      type="button"
-      className={`agent-card${selected ? ' agent-card--selected' : ''}`}
-      aria-pressed={selected}
-      onClick={onSelect}
-    >
-      <AgentIcon src={agent.icon} size={48} label={`${agent.name} icon`} />
-      <span className="agent-card__text">
-        {agent.role && <span className="agent-card__role">{agent.role}</span>}
-        <span className="agent-card__top">
-          <span className="agent-card__name">{agent.name}</span>
-          <span className="agent-card__model">{agent.model ?? 'default'}</span>
+    <div className="agent-card-wrap">
+      <button
+        type="button"
+        className={`agent-card agent-card--callable${selected ? ' agent-card--selected' : ''}`}
+        aria-pressed={selected}
+        onClick={onSelect}
+      >
+        <AgentIcon src={agent.icon} size={48} label={`${agent.name} icon`} />
+        <span className="agent-card__text">
+          {agent.role && <span className="agent-card__role">{agent.role}</span>}
+          <span className="agent-card__top">
+            <span className="agent-card__name">{agent.name}</span>
+            <span className="agent-card__model">{agent.model ?? 'default'}</span>
+          </span>
+          <span className="agent-card__description">{agent.description}</span>
+          <span className="agent-card__tools">
+            {toolSummary(agent.tools)}
+            {!agent.icon && <span className="agent-card__muted"> · no icon yet</span>}
+          </span>
         </span>
-        <span className="agent-card__description">{agent.description}</span>
-        <span className="agent-card__tools">
-          {toolSummary(agent.tools)}
-          {!agent.icon && <span className="agent-card__muted"> · no icon yet</span>}
-        </span>
-      </span>
-    </button>
+      </button>
+      <button
+        type="button"
+        className="button button--small agent-card__call"
+        aria-label={`Call ${agent.name} for your next message`}
+        aria-disabled={callBlocked ? true : undefined}
+        title={callBlocked ?? `Call ${agent.name} for your next message`}
+        onClick={() => {
+          if (!callBlocked) onCall()
+        }}
+      >
+        CALL
+      </button>
+    </div>
   )
 }
 

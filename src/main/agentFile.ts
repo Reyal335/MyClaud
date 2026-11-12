@@ -34,6 +34,9 @@ export type ParsedAgentFile = {
   description: string | null
   tools: string[] | null
   model: string | null
+  // Read only, for the agent gate. Never written by MyClaud.
+  permissionMode: string | null
+  background: boolean
   otherFields: string[]
   body: string
 }
@@ -98,6 +101,17 @@ function readModel(map: YAMLMap): string | null {
   return typeof value === 'string' || typeof value === 'number' ? String(value) : null
 }
 
+function readPermissionMode(map: YAMLMap): string | null {
+  const value = map.get('permissionMode') as unknown
+  return typeof value === 'string' && value.trim() !== '' ? value.trim() : null
+}
+
+// background: true, as YAML writes it. Anything else means no.
+function readBackground(map: YAMLMap): boolean {
+  const value = map.get('background') as unknown
+  return value === true || (typeof value === 'string' && value.trim().toLowerCase() === 'true')
+}
+
 function keyName(pair: Pair): string {
   return isScalar(pair.key) ? String(pair.key.value) : String(pair.key)
 }
@@ -121,6 +135,8 @@ const EMPTY_FIELDS = {
   description: null,
   tools: null,
   model: null,
+  permissionMode: null,
+  background: false,
   otherFields: [] as string[]
 }
 
@@ -154,6 +170,8 @@ export function readAgentFile(text: string): ParsedAgentFile {
     description,
     tools: readTools(map),
     model: readModel(map),
+    permissionMode: readPermissionMode(map),
+    background: readBackground(map),
     otherFields: map.items.map(keyName).filter((key) => !EDITED_KEYS.includes(key as EditedKey)),
     body
   }

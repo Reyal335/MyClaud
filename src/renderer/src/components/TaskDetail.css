@@ -1,0 +1,140 @@
+/* The task detail beside the inbox list, as the preview in designs/1-inbox.html. */
+.task-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.task-detail__header {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding-bottom: 16px;
+  border-bottom: var(--border) solid var(--line);
+}
+
+.task-detail__heading {
+  flex: 1;
+  min-width: 0;
+}
+
+.task-detail__title {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 0 0 8px;
+  font-family: var(--font-pixel);
+  font-size: 12px;
+  font-weight: normal;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.task-detail__role {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.task-detail__meta {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.task-detail__status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-pixel);
+  font-size: 9px;
+  color: var(--muted);
+}
+
+.task-detail__square {
+  width: 8px;
+  height: 8px;
+  background: currentColor;
+}
+
+.task-detail__status--running {
+  color: var(--running);
+}
+
+.task-detail__status--waiting {
+  color: var(--waiting);
+}
+
+.task-detail__status--error {
+  color: var(--error);
+}
+
+/* The request, in the mockup's PERMISSION REQUEST box. */
+.task-detail__request {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  background: var(--panel);
+  border: var(--border) solid var(--waiting);
+  box-shadow: var(--shadow-dialog);
+}
+
+.task-detail__request-title {
+  font-family: var(--font-pixel);
+  font-size: 10px;
+  color: var(--waiting);
+}
+
+.task-detail__section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.task-detail__label {
+  margin: 0;
+  font-family: var(--font-pixel);
+  font-size: 9px;
+  font-weight: normal;
+  color: var(--accent);
+}
+
+.task-detail__description {
+  margin: 0;
+  font-weight: 600;
+}
+
+.task-detail__text {
+  margin: 0;
+  padding: 12px 14px;
+  background: var(--panel);
+  border: var(--border-thin) solid var(--line);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.task-detail__text--error {
+  color: var(--error);
+}
+
+.task-detail__activity {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.task-detail__note {
+  margin: 0;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.task-detail__actions {
+  display: flex;
+  gap: 12px;
+}

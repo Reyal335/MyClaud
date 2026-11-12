@@ -1,5 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { AgentScope, AgentSummary, ProjectInfo } from '../../../shared/ipc'
+import { callBlock } from '../../../shared/agentGate'
+import type { CallTarget } from '../hooks/useConversation'
+import { callTargetOf } from '../conversation/callTarget'
 import { useAgents } from '../hooks/useAgents'
 import AgentCard from '../components/AgentCard'
 import AgentForm, { type FormTarget } from '../components/AgentForm'
@@ -11,6 +14,8 @@ type AgentsScreenProps = {
   project: ProjectInfo | null
   // Lets the app ask before leaving while the form has unsaved changes.
   setLeaveGuard: (guard: LeaveGuard | null) => void
+  // CALL on a card: opens CHAT with that agent called.
+  onCall: (call: CallTarget) => void
 }
 
 type Selection = { target: FormTarget; key: string }
@@ -25,7 +30,7 @@ function targetKey(target: FormTarget, nonce: number): string {
 
 // The AGENTS screen from designs/3-agent-manager.html: project and global agents,
 // and the form to create or edit one.
-function AgentsScreen({ project, setLeaveGuard }: AgentsScreenProps): React.JSX.Element {
+function AgentsScreen({ project, setLeaveGuard, onCall }: AgentsScreenProps): React.JSX.Element {
   const projectPath = project?.path ?? null
   const { agents, folders, loaded, error, reload } = useAgents(projectPath)
   const [selection, setSelection] = useState<Selection | null>(null)
@@ -144,6 +149,8 @@ function AgentsScreen({ project, setLeaveGuard }: AgentsScreenProps): React.JSX.
             onDelete={() =>
               setDialog({ kind: 'delete', filePath: agent.filePath, name: agent.name, busy: false })
             }
+            onCall={() => onCall(callTargetOf(agent))}
+            callBlocked={callBlock(agent, agents)?.message ?? null}
           />
         ))}
       </section>

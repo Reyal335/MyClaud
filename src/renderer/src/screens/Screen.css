@@ -14,3 +14,7 @@
   margin: 0;
   color: var(--muted);
 }
+
+.no-project__open {
+  margin-top: 16px;
+}

@@ -93,3 +93,23 @@
   align-self: flex-start;
   margin-top: 4px;
 }
+
+/* A card that can be called: CALL sits at its right edge, beside the select button. */
+.agent-card-wrap {
+  position: relative;
+}
+
+.agent-card--callable {
+  padding-right: 88px;
+}
+
+.agent-card__call {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+}
+
+.agent-card__call[aria-disabled='true'] {
+  opacity: 0.45;
+  cursor: default;
+}

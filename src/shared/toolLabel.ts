@@ -1,4 +1,4 @@
-import type { ToolInput } from '../../../shared/ipc'
+import type { ToolInput } from './ipc'
 
 // One line describing a tool call: a verb and, once the input is known, its target.
 export type ToolLabel = {
@@ -67,4 +67,9 @@ export function toolLabel(
   if (!input) return { verb: `${verb}...`, target: null }
   const target = targetOf(name, input, projectPath)
   return target ? { verb, target } : { verb: `${verb}...`, target: null }
+}
+
+// The label as one line of text, for previews and the party panel.
+export function labelText(label: ToolLabel): string {
+  return label.target === null ? label.verb : `${label.verb} ${label.target}`
 }
