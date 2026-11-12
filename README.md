@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="resources/icon.png" alt="MyClaud logo" width="256">
+</p>
+
 # MyClaud
 
 MyClaud is a personal desktop app that puts a custom 8-bit retro interface on
