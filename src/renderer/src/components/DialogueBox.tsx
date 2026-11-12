@@ -20,6 +20,9 @@ type DialogueBoxProps = {
   reply: { id: number; text: string; instant: boolean } | null
   // The last item when it is a notice (stopped or error).
   notice: NoticeItem['notice'] | null
+  // The reply's tag, "<MODEL> · <LEVEL>", shown beside the name while the reply is
+  // in the box. Empty when there is none.
+  tag: string
   // Requests waiting for an answer, oldest first, from the main conversation and agents.
   pending: ToolItem[]
   // The agent behind the oldest request, or null when Claude itself asks.
@@ -60,6 +63,7 @@ function DialogueBox({
   agentName,
   reply,
   notice,
+  tag,
   pending,
   asker,
   working,
@@ -188,7 +192,10 @@ function DialogueBox({
       onClick={skip}
       onKeyDown={handleKeyDown}
     >
-      <div className="dialogue__name">{agentName}</div>
+      <div className="dialogue__name">
+        {agentName}
+        {kind === 'reply' && tag !== '' && <span className="dialogue__tag">{tag}</span>}
+      </div>
       <div ref={bodyRef} className={`dialogue__body dialogue__body--${kind}`}>
         {body}
       </div>

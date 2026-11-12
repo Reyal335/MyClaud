@@ -2,6 +2,7 @@
 // Our own small types only: never raw Agent SDK messages.
 
 import type { MascotStateName } from './mascotRules'
+import type { ModelChoice, ModelLists } from './models'
 
 export const IpcChannel = {
   ProjectGet: 'project:get',
@@ -32,6 +33,9 @@ export const IpcChannel = {
   MascotsChanged: 'mascots:changed',
   ChatHistory: 'chat:history',
   ChatReset: 'chat:reset',
+  ChatGetModelChoice: 'chat:get-model-choice',
+  ChatSetModelChoice: 'chat:set-model-choice',
+  ModelsList: 'models:list',
   TasksList: 'tasks:list',
   TasksGet: 'tasks:get',
   TasksMarkSeen: 'tasks:mark-seen',
@@ -77,7 +81,14 @@ export type AgentError = {
   message: string
 }
 
-export type AgentSendResult = { ok: true; requestId: string } | { ok: false; error: AgentError }
+// `joined` is true when the message went into the run that was already going, and
+// false when it started a new run. The requestId is the run's, one per run.
+export type AgentSendResult =
+  { ok: true; requestId: string; joined: boolean } | { ok: false; error: AgentError }
+
+// Where a message I sent into a run that was already going stands. It is queued
+// until Claude Code takes it in; main reports the two ways that can end.
+export type MessageDelivery = 'queued' | 'received' | 'not_delivered'
 
 // An agent I call for my next message, as the step 5 list gives it. Main reads
 // the name from the file itself.
@@ -155,6 +166,19 @@ export type AgentEvent =
       report: string
       truncated: boolean
     }
+  // A message I sent while the run was going: Claude took it in, or the run ended
+  // first. Only for messages sent into a run already going, never the run's first.
+  | {
+      requestId: string
+      type: 'message_state'
+      messageId: string
+      state: Exclude<MessageDelivery, 'queued'>
+    }
+  // A reply of Claude's is starting: the exact model answering and the thinking
+  // level in force ('auto' or a level). Only for the main conversation.
+  | { requestId: string; type: 'reply_start'; model: string; level: string }
+  // Claude thought for `ms` milliseconds before answering. Only for the main conversation.
+  | { requestId: string; type: 'thought'; ms: number }
   // A line of information in the conversation, such as a lost saved conversation.
   | { requestId: string; type: 'notice'; text: string }
   | { requestId: string; type: 'done' }
@@ -192,7 +216,8 @@ export type TasksResult<T extends object = object> =
 // conversation builds from events, without ids.
 export type HistoryItem =
   | { kind: 'user'; text: string; call: TaskAgent | null }
-  | { kind: 'text'; text: string }
+  // `model` is the exact model that answered, from the saved session, or null.
+  | { kind: 'text'; text: string; model: string | null }
   | {
       kind: 'tool'
       toolId: string
@@ -220,6 +245,17 @@ export type ChatHistory = {
 }
 
 export type PartyPanelMode = 'open' | 'rail'
+
+// Model and thinking: the models the logged-in account can use (AUTO is not a row),
+// or why the list could not be loaded.
+export type ModelsResult = ({ ok: true } & ModelLists) | { ok: false; message: string }
+
+// The open chat's choice, made to fit what is available now, or why it failed.
+export type ModelChoiceResult =
+  { ok: true; choice: ModelChoice } | { ok: false; error: { message: string } }
+
+// A pick in the model picker. `asDefault` also saves it as the choice new chats start from.
+export type ModelChoiceChange = { model: string; effort: string; asDefault: boolean }
 
 // Popups: the small always-on-top window with the mascot (designs/5-popup-notifications.html).
 
@@ -422,7 +458,10 @@ export type MyClaudApi = {
   }
   agent: {
     // `call` names an agent for this message. Main checks it and adds the sentence.
-    send: (prompt: string, call?: AgentCallRef | null) => Promise<AgentSendResult>
+    // `messageId` is a lowercase UUID the window makes up: main sends it to Claude
+    // Code as the message's id and reports its delivery under it. While a run is
+    // going the message goes into that run; otherwise it starts one.
+    send: (prompt: string, call: AgentCallRef | null, messageId: string) => Promise<AgentSendResult>
     stop: () => Promise<void>
     answerPermission: (
       permissionId: string,
@@ -482,6 +521,15 @@ export type MyClaudApi = {
     history: () => Promise<ChatHistory>
     // NEW CHAT: forgets the open project's session id. Refused while a run is going.
     reset: () => Promise<{ ok: true } | { ok: false; error: AgentError }>
+    // The open project's chat: its model and thinking choice.
+    getModelChoice: () => Promise<ModelChoiceResult>
+    // Saves a pick for the chat (and for new chats too with asDefault). During a run
+    // it applies from the next message.
+    setModelChoice: (change: ModelChoiceChange) => Promise<ModelChoiceResult>
+  }
+  models: {
+    // Fetched once per project folder, in the order the SDK returns.
+    list: () => Promise<ModelsResult>
   }
   tasks: {
     // The open project's tasks, newest first.

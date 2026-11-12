@@ -9,6 +9,9 @@ import type {
   ToolItem
 } from '../hooks/useConversation'
 import { useAgents } from '../hooks/useAgents'
+import { useModelChoice } from '../hooks/useModelChoice'
+import { replyTag, type ModelLists } from '../../../shared/models'
+import ModelPicker from '../components/ModelPicker'
 import { usePartyPanelMode } from '../hooks/usePartyPanelMode'
 import { usePrefersReducedMotion } from '../hooks/usePrefersReducedMotion'
 import { useActiveMascot } from '../mascots/useActiveMascot'
@@ -67,6 +70,8 @@ type HistoryProps = {
   views: Map<string, TaskView>
   note: Conversation['historyNote']
   onOpenTask: (taskId: string) => void
+  // The models, to name the model on each reply's tag.
+  lists: ModelLists | null
 }
 
 function HistoryList({
@@ -74,7 +79,8 @@ function HistoryList({
   projectPath,
   views,
   note,
-  onOpenTask
+  onOpenTask,
+  lists
 }: HistoryProps): React.JSX.Element {
   return (
     <>
@@ -107,14 +113,23 @@ function HistoryList({
               <div key={item.id} className="conversation__mine">
                 {item.call && <AgentChip agent={item.call} />}
                 <span>{item.text}</span>
+                {item.delivery === 'queued' && (
+                  <span className="conversation__delivery">QUEUED</span>
+                )}
+                {item.delivery === 'not_delivered' && (
+                  <span className="conversation__undelivered">Not delivered. The run ended.</span>
+                )}
               </div>
             )
-          case 'text':
+          case 'text': {
+            const tag = item.meta ? replyTag(item.meta, lists) : ''
             return (
               <div key={item.id} className="conversation__reply">
+                {tag !== '' && <span className="conversation__tag">{tag}</span>}
                 <Markdown source={item.text} />
               </div>
             )
+          }
           case 'task': {
             const view = views.get(item.taskId)
             return view ? <AgentTaskCard key={item.id} view={view} onOpen={onOpenTask} /> : null
@@ -154,6 +169,7 @@ const History = memo(
     a.projectPath === b.projectPath &&
     a.note === b.note &&
     a.views === b.views &&
+    a.lists === b.lists &&
     a.onOpenTask === b.onOpenTask &&
     a.items.length === b.items.length &&
     a.items.every((item, i) => item === b.items[i])
@@ -177,6 +193,10 @@ const BADGES: Partial<Record<MascotStateName, string>> = {
 // How close to the bottom (px) still counts as "at the bottom" for auto-scroll.
 const STICK_THRESHOLD = 24
 
+// The most agents working at once. Main refuses a call past this, and Claude
+// Code's own limit is set to the same.
+const MAX_AGENTS = 3
+
 // The CHAT screen from designs/8-chat-party.html: the header, then the history
 // and the stage in one frame with the input row under it, and the party panel on
 // the right.
@@ -194,6 +214,7 @@ function ConversationScreen({
   const mascot = useActiveMascot(window.myclaud.mascots)
   const { agents, loaded: agentsLoaded } = useAgents(project.path)
   const { mode, toggle } = usePartyPanelMode()
+  const modelChoice = useModelChoice(project.path)
   const [typing, setTyping] = useState(false)
   const [input, setInput] = useState('')
   const [confirmNew, setConfirmNew] = useState(false)
@@ -223,6 +244,10 @@ function ConversationScreen({
   const last = items[items.length - 1]
   const boxItem = last && (last.kind === 'text' || last.kind === 'notice') ? last : null
   const historyItems = useMemo(() => (boxItem ? items.slice(0, -1) : items), [items, boxItem])
+  // The tag of the reply in the dialogue box: the model that answered and the level.
+  const boxTag =
+    boxItem?.kind === 'text' && boxItem.meta ? replyTag(boxItem.meta, modelChoice.lists) : ''
+  const hasReplies = items.some((item) => item.kind === 'text')
 
   // Requests from the main conversation and from agents together, oldest first.
   const pending = useMemo(
@@ -233,10 +258,18 @@ function ConversationScreen({
   const askingTask = pending[0]?.taskId ? views.get(pending[0].taskId) : undefined
   const asker = askingTask ? askingTask.item.agent : null
 
-  // An agent at work names itself: "<agent> is working: Reading src/auth.js".
+  // Agents working or waiting for me. At three, nobody else can be called.
+  const openAgents = [...views.values()].filter((view) => view.state !== 'ended').length
+  const full = openAgents >= MAX_AGENTS
+
+  // An agent at work names itself: "<agent> is working: Reading src/auth.js". With
+  // more than one at work: "2 agents are working".
   let working: ToolLabel | null = null
-  const busyTask = [...views.values()].reverse().find((view) => view.state === 'working')
-  if (busyTask) {
+  const busyTasks = [...views.values()].filter((view) => view.state === 'working')
+  const busyTask = busyTasks[busyTasks.length - 1]
+  if (busyTasks.length > 1) {
+    working = { verb: `${busyTasks.length} agents are working`, target: null }
+  } else if (busyTask) {
     const name = busyTask.item.agent.name
     working = busyTask.activity
       ? { verb: `${name} is working:`, target: busyTask.activity }
@@ -275,8 +308,10 @@ function ConversationScreen({
     stickToBottom.current = el.scrollHeight - el.scrollTop - el.clientHeight <= STICK_THRESHOLD
   }
 
+  // Sending works during a run too: main puts the message into the run, and Claude
+  // reads it once the agent that is working has finished.
   function submit(): void {
-    if (running || input.trim() === '') return
+    if (input.trim() === '') return
     stickToBottom.current = true
     send(input, call)
     setInput('')
@@ -295,12 +330,20 @@ function ConversationScreen({
     setConfirmNew(false)
     const error = await newChat()
     setNewChatError(error ? error.message : null)
-    if (!error) stickToBottom.current = true
+    if (!error) {
+      stickToBottom.current = true
+      // The new chat starts from the saved defaults, so the control changes with it.
+      modelChoice.reload()
+    }
   }
 
   const statusLabel = STATUS_LABELS[status]
   const badge = BADGES[shownState]
-  const placeholder = call ? `Message for ${call.agent.name}...` : `Message ${AGENT_NAME}...`
+  const placeholder = call
+    ? `Message for ${call.agent.name}...`
+    : running
+      ? `Message ${AGENT_NAME} or call an agent...`
+      : `Message ${AGENT_NAME}...`
 
   return (
     <section className="conversation" aria-labelledby="conversation-title">
@@ -347,6 +390,7 @@ function ConversationScreen({
                 views={views}
                 note={conversation.historyNote}
                 onOpenTask={onOpenTask}
+                lists={modelChoice.lists}
               />
             </div>
 
@@ -378,6 +422,7 @@ function ConversationScreen({
                     : null
                 }
                 notice={boxItem?.kind === 'notice' ? boxItem.notice : null}
+                tag={boxTag}
                 pending={pending}
                 asker={asker}
                 working={working}
@@ -399,6 +444,18 @@ function ConversationScreen({
               submit()
             }}
           >
+            <ModelPicker
+              lists={modelChoice.lists}
+              listFailed={modelChoice.listFailed}
+              choice={modelChoice.choice}
+              asDefault={modelChoice.asDefault}
+              onAsDefaultChange={modelChoice.setAsDefault}
+              onPick={modelChoice.pick}
+              hasReplies={hasReplies}
+              onOpen={() => {
+                if (modelChoice.listFailed) modelChoice.reload()
+              }}
+            />
             {call && <AgentChip agent={call.agent} onRemove={() => onCallChange(null)} />}
             <label htmlFor="conversation-input" className="visually-hidden">
               {call ? `Message for ${call.agent.name}` : `Message ${AGENT_NAME}`}
@@ -410,19 +467,17 @@ function ConversationScreen({
               rows={1}
               placeholder={placeholder}
               value={input}
-              disabled={running}
               onChange={(event) => setInput(event.target.value)}
               onKeyDown={handleKeyDown}
             />
-            {running ? (
+            {running && (
               <button type="button" className="button" onClick={stop}>
                 STOP
               </button>
-            ) : (
-              <button type="submit" className="button" disabled={input.trim() === ''}>
-                SEND
-              </button>
             )}
+            <button type="submit" className="button" disabled={input.trim() === ''}>
+              SEND
+            </button>
           </form>
         </div>
 
@@ -431,7 +486,7 @@ function ConversationScreen({
           loaded={agentsLoaded}
           call={call}
           onCall={(agent) => onCallChange(agent ? callTargetOf(agent) : null)}
-          busy={running}
+          full={full}
           work={work}
           mode={mode}
           onToggle={toggle}

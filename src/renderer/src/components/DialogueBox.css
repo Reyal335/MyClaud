@@ -18,6 +18,18 @@
   color: var(--accent);
 }
 
+/* The model and level that answered, beside the name. */
+.dialogue__tag {
+  display: inline-block;
+  margin-left: 10px;
+  padding: 4px 6px;
+  border: var(--border-thin) solid var(--line);
+  font-size: 8px;
+  line-height: 1;
+  color: var(--muted);
+  vertical-align: middle;
+}
+
 /* Fixed height range: about 3 lines at rest, at most about 7 before it scrolls. */
 .dialogue__body {
   min-height: calc(3 * 1.5em);

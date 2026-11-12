@@ -5,12 +5,14 @@ import type {
   AgentEvent,
   ChatHistory,
   HistoryItem,
+  MessageDelivery,
   PermissionDecision,
   TaskAgent,
   TaskStatus,
   ToolInput,
   ToolState
 } from '../../../shared/ipc'
+import type { ReplyMeta } from '../../../shared/models'
 
 export type { ToolState }
 
@@ -25,10 +27,20 @@ export type PermissionRequest = {
 }
 
 export type ConversationItem =
-  // `call` is the agent I called for this message, shown as a chip.
-  | { kind: 'user'; id: number; text: string; call: TaskAgent | null }
-  // `instant` text came from loaded history and never types out.
-  | { kind: 'text'; id: number; text: string; instant: boolean }
+  // `call` is the agent I called for this message, shown as a chip. `messageId` is
+  // the id main reports its delivery under (null for loaded history). `delivery` is
+  // queued only for a message sent while a run was going, until Claude takes it in.
+  | {
+      kind: 'user'
+      id: number
+      text: string
+      call: TaskAgent | null
+      messageId: string | null
+      delivery: MessageDelivery
+    }
+  // `instant` text came from loaded history and never types out. `meta` is what the
+  // reply was made with, for its tag: null when not known.
+  | { kind: 'text'; id: number; text: string; instant: boolean; meta: ReplyMeta | null }
   | {
       kind: 'tool'
       id: number
@@ -74,12 +86,21 @@ type State = {
   historyFor: string | null
   // A line at the top of the history: more than 200 messages, or none readable.
   historyNote: 'truncated' | 'unavailable' | null
+  // The model and level of the reply now starting, and the time spent thinking since
+  // the last reply text. The next reply text takes them for its tag.
+  reply: ReplyMeta | null
 }
 
 type Action =
-  | { type: 'start'; prompt: string; call: TaskAgent | null }
+  // `queued`: the message is sent while a run is going, so it waits for Claude.
+  | { type: 'start'; prompt: string; call: TaskAgent | null; messageId: string; queued: boolean }
+  // The send started a new run, so its message did not queue behind anything.
+  | { type: 'began'; messageId: string }
   | { type: 'event'; event: AgentEvent }
+  // Nothing was sent and no run is going.
   | { type: 'failed'; error: AgentError }
+  // Nothing was sent, but the run that was going goes on.
+  | { type: 'refused'; messageId: string; error: AgentError }
   | { type: 'answering'; permissionId: string; answering: boolean }
   | { type: 'loaded'; projectPath: string; history: ChatHistory }
   | { type: 'clear' }
@@ -89,7 +110,8 @@ const initialState: State = {
   status: 'idle',
   nextId: 1,
   historyFor: null,
-  historyNote: null
+  historyNote: null,
+  reply: null
 }
 
 type DistributiveOmit<T, K extends PropertyKey> = T extends unknown ? Omit<T, K> : never
@@ -122,6 +144,20 @@ function updateTask(state: State, taskId: string, change: (item: TaskItem) => Ta
     if (item.kind !== 'task' || item.taskId !== taskId) return item
     changed = true
     return change(item)
+  })
+  return changed ? { ...state, items } : state
+}
+
+function setDelivery(state: State, messageId: string, delivery: MessageDelivery): State {
+  let changed = false
+  const items = state.items.map((item) => {
+    if (item.kind !== 'user' || item.messageId !== messageId || item.delivery === delivery) {
+      return item
+    }
+    // A message that was taken in stays taken in, whatever arrives after.
+    if (item.delivery === 'received') return item
+    changed = true
+    return { ...item, delivery }
   })
   return changed ? { ...state, items } : state
 }
@@ -174,8 +210,33 @@ function applyEvent(state: State, event: AgentEvent): State {
         items.push({ ...last, text: last.text + event.text })
         return { ...state, items }
       }
-      return append(state, { kind: 'text', text: event.text, instant: false })
+      // A new reply text takes the tag made for it, and starts counting thinking again.
+      return {
+        ...append(state, {
+          kind: 'text',
+          text: event.text,
+          instant: false,
+          meta: state.reply
+        }),
+        reply: state.reply && { ...state.reply, thoughtMs: 0 }
+      }
     }
+
+    case 'reply_start':
+      return {
+        ...state,
+        reply: { model: event.model, level: event.level, thoughtMs: state.reply?.thoughtMs ?? 0 }
+      }
+
+    case 'thought':
+      return {
+        ...state,
+        reply: {
+          model: state.reply?.model ?? null,
+          level: state.reply?.level ?? null,
+          thoughtMs: (state.reply?.thoughtMs ?? 0) + event.ms
+        }
+      }
 
     case 'tool_start':
       return hasTool(state, event.toolId)
@@ -253,16 +314,20 @@ function applyEvent(state: State, event: AgentEvent): State {
         report: event.status === 'stopped' ? item.report : event.report
       }))
 
+    case 'message_state':
+      return setDelivery(state, event.messageId, event.state)
+
     case 'notice':
       return append(state, { kind: 'notice', notice: { type: 'info', text: event.text } })
 
     case 'done':
-      return { ...stopOpenWork(state), status: 'done' }
+      return { ...stopOpenWork(state), status: 'done', reply: null }
 
     case 'stopped':
       return {
         ...append(stopOpenWork(state), { kind: 'notice', notice: { type: 'stopped' } }),
-        status: 'idle'
+        status: 'idle',
+        reply: null
       }
 
     case 'error':
@@ -271,7 +336,8 @@ function applyEvent(state: State, event: AgentEvent): State {
           kind: 'notice',
           notice: { type: 'error', error: { code: event.code, message: event.message } }
         }),
-        status: 'error'
+        status: 'error',
+        reply: null
       }
   }
 }
@@ -279,9 +345,15 @@ function applyEvent(state: State, event: AgentEvent): State {
 function fromHistory(item: HistoryItem): DistributiveOmit<ConversationItem, 'id'> {
   switch (item.kind) {
     case 'user':
-      return item
+      return { ...item, messageId: null, delivery: 'received' }
     case 'text':
-      return { ...item, instant: true }
+      return {
+        kind: 'text',
+        text: item.text,
+        instant: true,
+        // The saved chat keeps the model, not the level or the thinking time.
+        meta: item.model ? { model: item.model, level: null, thoughtMs: 0 } : null
+      }
     case 'tool':
       return { ...item, permission: null, taskId: null }
     case 'task':
@@ -300,14 +372,32 @@ function reducer(state: State, action: Action): State {
   switch (action.type) {
     case 'start':
       return {
-        ...append(state, { kind: 'user', text: action.prompt, call: action.call }),
+        ...append(state, {
+          kind: 'user',
+          text: action.prompt,
+          call: action.call,
+          messageId: action.messageId,
+          delivery: action.queued ? 'queued' : 'received'
+        }),
         status: 'running'
       }
+    case 'began': {
+      // The message started its own run: it is not queued, and a run is going now
+      // even if the run it first looked like it joined has just ended.
+      const taken = setDelivery(state, action.messageId, 'received')
+      return taken.status === 'running' ? taken : { ...taken, status: 'running' }
+    }
     case 'failed':
       return {
         ...append(state, { kind: 'notice', notice: { type: 'error', error: action.error } }),
         status: 'error'
       }
+    case 'refused':
+      // The message was not sent, so it is not waiting for anything.
+      return append(setDelivery(state, action.messageId, 'received'), {
+        kind: 'notice',
+        notice: { type: 'error', error: action.error }
+      })
     case 'answering':
       return updateTool(
         state,
@@ -368,59 +458,85 @@ export type Conversation = {
 export function useConversation(): Conversation {
   const [state, dispatch] = useReducer(reducer, initialState)
 
-  // The run whose events we show. 'pending' while agent:send has not returned,
-  // in which case events are buffered until the requestId is known.
-  const currentRequest = useRef<string | 'pending' | null>(null)
-  const buffered = useRef<AgentEvent[]>([])
+  // The run whose events we show: its requestId, or null when none is going. A
+  // run ends with exactly one terminal event, which clears this.
+  const liveRun = useRef<string | null>(null)
+  // Sends whose answer has not come back. While any is out, events from a run we
+  // do not know yet are kept in `early`: the send may be about to start that run.
+  const sendsOut = useRef(0)
+  const early = useRef<AgentEvent[]>([])
   const historyRequested = useRef<string | null>(null)
 
   const apply = useCallback((event: AgentEvent): void => {
-    if (event.requestId !== currentRequest.current) return
+    if (event.requestId !== liveRun.current) return
     dispatch({ type: 'event', event })
-    if (isTerminal(event)) currentRequest.current = null
+    if (isTerminal(event)) liveRun.current = null
   }, [])
 
   useEffect(() => {
     return window.myclaud.agent.onEvent((event) => {
-      if (currentRequest.current === 'pending') {
-        buffered.current.push(event)
-      } else {
-        apply(event)
-      }
+      if (event.requestId === liveRun.current) apply(event)
+      else if (sendsOut.current > 0) early.current.push(event)
     })
   }, [apply])
 
+  // Called when a send comes back with the run its message is in.
+  const adoptRun = useCallback(
+    (requestId: string): void => {
+      if (liveRun.current === requestId) return
+      liveRun.current = requestId
+      const mine = early.current.filter((event) => event.requestId === requestId)
+      early.current = early.current.filter((event) => event.requestId !== requestId)
+      mine.forEach(apply)
+    },
+    [apply]
+  )
+
   const send = useCallback(
     (prompt: string, call?: CallTarget | null): void => {
-      if (prompt.trim() === '' || currentRequest.current !== null) return
+      if (prompt.trim() === '') return
 
-      currentRequest.current = 'pending'
-      buffered.current = []
-      dispatch({ type: 'start', prompt, call: call?.agent ?? null })
+      // A message sent while a run is going goes into that run. Main decides: if
+      // the run has just ended, the answer says the message started a new one.
+      const messageId = crypto.randomUUID()
+      const queued = liveRun.current !== null || sendsOut.current > 0
+      sendsOut.current++
+      dispatch({ type: 'start', prompt, call: call?.agent ?? null, messageId, queued })
+
+      const finish = (): void => {
+        sendsOut.current--
+        if (sendsOut.current === 0) early.current = []
+      }
+      const failed = (error: AgentError): void => {
+        // With a run going, only this message failed. Otherwise the send itself did.
+        const runGoes = liveRun.current !== null || sendsOut.current > 0
+        dispatch(runGoes ? { type: 'refused', messageId, error } : { type: 'failed', error })
+      }
 
       window.myclaud.agent
-        .send(prompt, call?.ref ?? null)
+        .send(prompt, call?.ref ?? null, messageId)
         .then((result) => {
-          const early = buffered.current
-          buffered.current = []
-          if (result.ok) {
-            currentRequest.current = result.requestId
-            early.forEach(apply)
-          } else {
-            currentRequest.current = null
-            dispatch({ type: 'failed', error: result.error })
+          if (!result.ok) {
+            finish()
+            failed(result.error)
+            return
           }
+          // A new run: its message is not queued, and the status is running even
+          // if the run this looked like joining ended in the meantime. This goes
+          // before the run's events are applied, so a very short run still ends.
+          if (!result.joined) dispatch({ type: 'began', messageId })
+          adoptRun(result.requestId)
+          finish()
         })
         .catch((err: unknown) => {
-          buffered.current = []
-          currentRequest.current = null
-          dispatch({
-            type: 'failed',
-            error: { code: 'sdk_error', message: err instanceof Error ? err.message : String(err) }
+          finish()
+          failed({
+            code: 'sdk_error',
+            message: err instanceof Error ? err.message : String(err)
           })
         })
     },
-    [apply]
+    [adoptRun]
   )
 
   const stop = useCallback((): void => {
@@ -459,13 +575,13 @@ export function useConversation(): Conversation {
   }, [])
 
   const clear = useCallback((): void => {
-    if (currentRequest.current !== null) return
+    if (liveRun.current !== null || sendsOut.current > 0) return
     historyRequested.current = null
     dispatch({ type: 'clear' })
   }, [])
 
   const newChat = useCallback(async (): Promise<AgentError | null> => {
-    if (currentRequest.current !== null) {
+    if (liveRun.current !== null || sendsOut.current > 0) {
       return { code: 'busy', message: 'A run is already in progress.' }
     }
     const result = await window.myclaud.chat.reset()

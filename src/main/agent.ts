@@ -1,12 +1,14 @@
-// The only module that uses the Claude Agent SDK. The renderer and preload never import it.
-import { randomUUID } from 'crypto'
+// Runs the conversation on the Claude Agent SDK. The renderer and preload never import it.
+import { randomUUID, type UUID } from 'crypto'
 import type { WebContents } from 'electron'
 import type {
   CanUseTool,
   HookCallback,
   Options,
   PermissionResult,
-  SDKAssistantMessageError
+  Query,
+  SDKAssistantMessageError,
+  SDKUserMessage
 } from '@anthropic-ai/claude-agent-sdk'
 import {
   IpcChannel,
@@ -25,9 +27,21 @@ import { callBlock, hookBlock, winningAgent } from '../shared/agentGate'
 import { withCall } from '../shared/callAgent'
 import { labelText, toolLabel } from '../shared/toolLabel'
 import { listAgents } from './agents'
-import { getChatSession, setChatSession } from './chats'
+import { getChatSession, setChatChoice, setChatSession } from './chats'
 import { historyItems, type RecordedMessage, type SavedTask } from './history'
 import { DENY_MESSAGE, forIpc, isAgentTool } from './ipcInput'
+import { choiceForRun } from './modelChoice'
+import { childEnv, loadSdk, type Sdk } from './sdk'
+import { getDefaultChoice } from './settings'
+import { AUTO, AUTO_CHOICE, isEffortLevel, type ModelChoice } from '../shared/models'
+import {
+  createInputQueue,
+  createMessageTracker,
+  pushToRun,
+  settleResult,
+  type InputQueue,
+  type MessageTracker
+} from './runInput'
 import {
   endTask,
   savedTasks,
@@ -48,11 +62,33 @@ const NOT_FOUND_NOTICE =
   'The saved conversation was not found. This reply starts from a fresh context.'
 const BACKGROUND_REPORT = 'This agent went to the background, which MyClaud does not support yet.'
 const HISTORY_LIMIT = 200
+// The most agents working at once. Claude Code's own limit is set to the same in childEnv.
+const MAX_AGENTS = 3
+const FULL_MESSAGE = 'Three agents are already working.'
+// The window makes up each message's id. Lowercase, so the id Claude Code echoes
+// back is the same string.
+const MESSAGE_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
 
 type Run = {
   requestId: string
   cwd: string
   sender: WebContents
+  // The messages into Claude Code. The run ends when main closes it.
+  input: InputQueue<SDKUserMessage>
+  // Messages sent into this run after its first, until Claude has taken them in.
+  messages: MessageTracker
+  // Settles true once the run's first message is queued, or false when the run
+  // could not start. A message sent while the run starts waits for this.
+  ready: Promise<boolean>
+  settleReady: (started: boolean) => void
+  // Settles once the run is over and its last event is sent.
+  done: Promise<void>
+  settleDone: () => void
+  // The model and thinking choice in force, as the run started with it or as the
+  // picker changed it since. Replies name the level from here.
+  choice: ModelChoice
+  // The live query, once it exists: a pick during the run is applied through it.
+  query: Query | null
   abortController: AbortController
   // Set when we abort the run ourselves for a reason that is an error, not a user stop.
   failure: AgentError | null
@@ -126,19 +162,6 @@ function notify(call: (watcher: RunWatcher) => void): void {
 // Permission requests waiting for the user, by permissionId. More than one can wait.
 const pendingPermissions = new Map<string, PendingPermission>()
 
-// The SDK is an ES module and the main bundle is CommonJS, so it is loaded
-// with a dynamic import on first use and kept external to the bundle.
-type Sdk = typeof import('@anthropic-ai/claude-agent-sdk')
-let sdkPromise: Promise<Sdk> | null = null
-
-function loadSdk(): Promise<Sdk> {
-  sdkPromise ??= import('@anthropic-ai/claude-agent-sdk').catch((err) => {
-    sdkPromise = null
-    throw err
-  })
-  return sdkPromise
-}
-
 const ASSISTANT_ERROR_CODES: Partial<Record<SDKAssistantMessageError, AgentErrorCode>> = {
   // The CLI reports a missing, expired, or revoked Claude Code login this way.
   authentication_failed: 'not_signed_in',
@@ -155,21 +178,6 @@ function fromAssistantError(error: SDKAssistantMessageError): AgentError {
 // failures all tell the user to run /login ("Not logged in · Please run /login").
 function fromResultText(text: string): AgentError {
   return { code: /\/login\b/.test(text) ? 'not_signed_in' : 'sdk_error', message: text }
-}
-
-// The app runs on the Claude Code login, never on an API key. `env` replaces the
-// child environment entirely, so pass a full copy minus the variables that would
-// switch Claude Code to API billing. Agents run in the foreground, one level deep,
-// at most three at once, and never as forks of the conversation.
-function childEnv(): Record<string, string | undefined> {
-  const env = { ...process.env }
-  delete env['ANTHROPIC_API_KEY']
-  delete env['ANTHROPIC_AUTH_TOKEN']
-  env['CLAUDE_CODE_DISABLE_BACKGROUND_TASKS'] = '1'
-  env['CLAUDE_CODE_FORK_SUBAGENT'] = '0'
-  env['CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH'] = '1'
-  env['CLAUDE_CODE_MAX_CONCURRENT_SUBAGENTS'] = '3'
-  return env
 }
 
 // apiKeySource on the init message is 'none' for a Claude account login. Every other
@@ -237,6 +245,9 @@ export function answerPermission(permissionId: string, decision: PermissionDecis
 // STOP, window close, and app quit. Abort first so the agent does not act on the
 // denials, then answer every waiting request with Deny.
 export function stopRun(): void {
+  // Nothing more goes into a run that is being stopped: a message sent now waits
+  // for the run to finish and starts a new one.
+  activeRun?.input.close()
   activeRun?.abortController.abort()
   denyAllPending()
 }
@@ -253,23 +264,48 @@ function readCall(raw: unknown): { scope: string; filePath: string } | null | 'i
   return { scope, filePath }
 }
 
-export async function startRun(
-  prompt: string,
-  rawCall: unknown,
-  cwd: string,
-  sender: WebContents
-): Promise<AgentSendResult> {
-  if (activeRun) {
-    return { ok: false, error: { code: 'busy', message: 'A run is already in progress.' } }
-  }
-  const call = readCall(rawCall)
-  if (call === 'invalid') return unavailable('That is not an agent from the list.')
+type CallCheck = { ok: true; name: string } | { ok: false; message: string }
 
-  // Claim the run before anything async, so a second send is refused as busy.
-  const run: Run = {
+// The agent I called, checked against the agent files as they are now: it must
+// still exist, be the one that wins under its name, and be allowed to run.
+function checkCall(
+  call: { scope: string; filePath: string },
+  listed: Awaited<ReturnType<typeof listAgents>>
+): CallCheck {
+  if (!listed.ok) return { ok: false, message: listed.error.message }
+  const agent = listed.agents.find(
+    (entry) => entry.filePath === call.filePath && entry.scope === call.scope
+  )
+  if (!agent) return { ok: false, message: 'This agent no longer exists.' }
+  const block = callBlock(agent, listed.agents)
+  if (block) return { ok: false, message: block.message }
+  return { ok: true, name: agent.name }
+}
+
+function userMessage(text: string, id: string): SDKUserMessage {
+  return {
+    type: 'user',
+    message: { role: 'user', content: text },
+    parent_tool_use_id: null,
+    uuid: id as UUID
+  }
+}
+
+function newRun(cwd: string, sender: WebContents): Run {
+  let settleReady: (started: boolean) => void = () => {}
+  let settleDone: () => void = () => {}
+  return {
     requestId: randomUUID(),
     cwd,
     sender,
+    input: createInputQueue<SDKUserMessage>(),
+    messages: createMessageTracker(),
+    ready: new Promise<boolean>((resolve) => (settleReady = resolve)),
+    settleReady: (started) => settleReady(started),
+    done: new Promise<void>((resolve) => (settleDone = resolve)),
+    settleDone: () => settleDone(),
+    choice: AUTO_CHOICE,
+    query: null,
     abortController: new AbortController(),
     failure: null,
     deniedToolIds: new Set(),
@@ -280,6 +316,83 @@ export async function startRun(
     agentTask: new Map(),
     reply: ''
   }
+}
+
+// A run that never got going: nothing was sent to Claude Code.
+function abandonRun(run: Run): void {
+  run.input.close()
+  if (activeRun === run) activeRun = null
+  run.settleReady(false)
+  run.settleDone()
+}
+
+// Send a message. While a run is going it goes into that run, and Claude Code
+// reads it at its next turn: after the agent that is working, if one is. When no
+// run is going it starts one. Only this module decides which.
+export async function sendMessage(
+  prompt: string,
+  rawCall: unknown,
+  rawMessageId: unknown,
+  cwd: string,
+  sender: WebContents
+): Promise<AgentSendResult> {
+  const call = readCall(rawCall)
+  if (call === 'invalid') return unavailable('That is not an agent from the list.')
+  if (typeof rawMessageId !== 'string' || !MESSAGE_ID.test(rawMessageId)) {
+    return {
+      ok: false,
+      error: { code: 'invalid_prompt', message: 'The message id must be a lowercase UUID.' }
+    }
+  }
+
+  for (;;) {
+    const run = activeRun
+    if (!run) return startRun(prompt, call, rawMessageId, cwd, sender)
+
+    // A run is going, or is starting and its first message is not in yet.
+    if (await run.ready) {
+      const joined = await joinRun(run, prompt, call, rawMessageId)
+      if (joined) return joined
+    }
+    // The run closed or failed before the message could go in. Wait for it to be
+    // over, then look again: a new run takes the message.
+    await run.done
+  }
+}
+
+// Puts the message into a run that is going. Null when the run closed before it could.
+async function joinRun(
+  run: Run,
+  prompt: string,
+  call: { scope: string; filePath: string } | null,
+  messageId: string
+): Promise<AgentSendResult | null> {
+  let text = prompt
+  if (call) {
+    if (run.openTasks.size >= MAX_AGENTS) return unavailable(FULL_MESSAGE)
+    const checked = checkCall(call, await listAgents())
+    if (!checked.ok) return unavailable(checked.message)
+    text = withCall(checked.name, prompt)
+  }
+
+  // Nothing async from here to the push, so the run cannot close in between: the
+  // message is in the run, or the run is closed and the caller starts a new one.
+  if (activeRun !== run || run.input.closed) return null
+  if (call && run.openTasks.size >= MAX_AGENTS) return unavailable(FULL_MESSAGE)
+  if (!pushToRun(run.input, run.messages, userMessage(text, messageId), messageId)) return null
+  return { ok: true, requestId: run.requestId, joined: true }
+}
+
+async function startRun(
+  prompt: string,
+  call: { scope: string; filePath: string } | null,
+  messageId: string,
+  cwd: string,
+  sender: WebContents
+): Promise<AgentSendResult> {
+  // Claim the run before anything async: a message sent meanwhile joins this run
+  // once its first message is in.
+  const run = newRun(cwd, sender)
   activeRun = run
 
   let text = prompt
@@ -287,31 +400,22 @@ export async function startRun(
     const listed = await listAgents()
     run.agents = listed.ok ? listed.agents : []
     if (call) {
-      if (!listed.ok) {
-        activeRun = null
-        return unavailable(listed.error.message)
+      const checked = checkCall(call, listed)
+      if (!checked.ok) {
+        abandonRun(run)
+        return unavailable(checked.message)
       }
-      const agent = run.agents.find(
-        (entry) => entry.filePath === call.filePath && entry.scope === call.scope
-      )
-      if (!agent) {
-        activeRun = null
-        return unavailable('This agent no longer exists.')
-      }
-      const block = callBlock(agent, run.agents)
-      if (block) {
-        activeRun = null
-        return unavailable(block.message)
-      }
-      text = withCall(agent.name, prompt)
+      text = withCall(checked.name, prompt)
     }
   } catch (err) {
-    activeRun = null
+    abandonRun(run)
     return { ok: false, error: { code: 'sdk_error', message: errorMessage(err) } }
   }
 
-  void execute(run, text)
-  return { ok: true, requestId: run.requestId }
+  run.input.push(userMessage(text, messageId))
+  run.settleReady(true)
+  void execute(run)
+  return { ok: true, requestId: run.requestId, joined: false }
 }
 
 // The task a tool call or permission request belongs to: by its tool call id, by
@@ -514,16 +618,50 @@ async function sessionToResume(sdk: Sdk, run: Run): Promise<string | null> {
   return null
 }
 
-async function execute(run: Run, prompt: string): Promise<void> {
+// Tells the window where a message sent into a running run stands.
+function reportMessage(run: Run, messageId: string, state: 'received' | 'not_delivered'): void {
+  emit(run, { requestId: run.requestId, type: 'message_state', messageId, state })
+}
+
+// Claude Code's `command_lifecycle` messages say what became of each message I
+// pushed: queued, started (taken into a turn, or into the turn in progress),
+// completed, or cancelled. The SDK's types do not list this message, so read it
+// defensively: an unknown shape changes nothing, and the result's own list of
+// answered messages still settles every message.
+function handleLifecycle(run: Run, raw: { command_uuid?: unknown; state?: unknown }): void {
+  const id = raw.command_uuid
+  if (typeof id !== 'string') return
+  if (raw.state === 'started') {
+    if (run.messages.started(id)) reportMessage(run, id, 'received')
+  } else if (raw.state === 'completed') {
+    for (const late of run.messages.answered([id])) reportMessage(run, late, 'received')
+  } else if (raw.state === 'cancelled') {
+    if (run.messages.cancelled(id)) reportMessage(run, id, 'not_delivered')
+  }
+}
+
+async function execute(run: Run): Promise<void> {
   // An `error` on an assistant message is held and reported when the run ends,
   // so each run ends with exactly one terminal event.
   let assistantError: AgentError | null = null
   let outcome: AgentError | 'done' | null = null
   let resumed: string | null = null
+  // Set when a result ends the run: nothing after it is forwarded.
+  let finished = false
+  // The thinking block in progress in Claude's own reply, to time it.
+  let thinking: { index: number; startedAt: number } | null = null
 
   try {
     const sdk = await loadSdk()
     resumed = await sessionToResume(sdk, run)
+
+    // The chat's model and thinking choice. AUTO means leave the option out, so
+    // Claude Code uses its own default. A saved choice that no longer fits is
+    // replaced, with a line saying so once.
+    const picked = await choiceForRun(run.cwd)
+    run.choice = picked.choice
+    for (const text of picked.notices) emit(run, { requestId: run.requestId, type: 'notice', text })
+    const { model, effort } = run.choice
 
     const options: Options = {
       cwd: run.cwd,
@@ -540,13 +678,24 @@ async function execute(run: Run, prompt: string): Promise<void> {
       settingSources: ['user', 'project', 'local'],
       abortController: run.abortController,
       env: childEnv(),
+      ...(model !== AUTO ? { model } : {}),
+      ...(isEffortLevel(effort) ? { effort } : {}),
       ...(resumed ? { resume: resumed } : {})
     }
 
-    for await (const message of sdk.query({ prompt, options })) {
+    // The run reads its messages from the input queue, so it stays open after a
+    // result until main closes the queue.
+    const query = sdk.query({ prompt: run.input.iterable, options })
+    run.query = query
+    for await (const message of query) {
       // Stopped by the user, or aborted below for an auth problem. The SDK can still
       // yield messages that were already in flight, so forward nothing more.
       if (run.abortController.signal.aborted) break
+
+      if ((message as { type: string }).type === 'command_lifecycle') {
+        handleLifecycle(run, message as unknown as { command_uuid?: unknown; state?: unknown })
+        continue
+      }
 
       switch (message.type) {
         case 'system':
@@ -561,11 +710,15 @@ async function execute(run: Run, prompt: string): Promise<void> {
               run.abortController.abort()
               break
             }
-            run.sessionId = message.session_id
-            if (resumed && message.session_id !== resumed) {
-              emit(run, { requestId: run.requestId, type: 'notice', text: NOT_FOUND_NOTICE })
+            // Every turn of the run starts with an init message: only the first
+            // one tells us the session.
+            if (run.sessionId === null) {
+              run.sessionId = message.session_id
+              if (resumed && message.session_id !== resumed) {
+                emit(run, { requestId: run.requestId, type: 'notice', text: NOT_FOUND_NOTICE })
+              }
+              await setChatSession(run.cwd, message.session_id)
             }
-            await setChatSession(run.cwd, message.session_id)
           }
           break
 
@@ -573,6 +726,37 @@ async function execute(run: Run, prompt: string): Promise<void> {
           // Only the main conversation. Agents' messages come whole, below.
           if (message.parent_tool_use_id !== null) break
           const { event } = message
+
+          // Which model is answering, and how long it thought: the reply's tag.
+          // While an agent works nothing here is Claude's reply (see below).
+          if (run.openTasks.size === 0) {
+            if (event.type === 'message_start') {
+              emit(run, {
+                requestId: run.requestId,
+                type: 'reply_start',
+                model: event.message.model,
+                level: run.choice.effort
+              })
+            } else if (
+              event.type === 'content_block_start' &&
+              (event.content_block.type === 'thinking' ||
+                event.content_block.type === 'redacted_thinking')
+            ) {
+              thinking = { index: event.index, startedAt: Date.now() }
+            } else if (
+              event.type === 'content_block_stop' &&
+              thinking !== null &&
+              thinking.index === event.index
+            ) {
+              emit(run, {
+                requestId: run.requestId,
+                type: 'thought',
+                ms: Date.now() - thinking.startedAt
+              })
+              thinking = null
+            }
+          }
+
           if (event.type === 'content_block_start' && event.content_block.type === 'tool_use') {
             // An agent call becomes a task once its input is known.
             if (isAgentTool(event.content_block.name)) break
@@ -709,7 +893,7 @@ async function execute(run: Run, prompt: string): Promise<void> {
           break
         }
 
-        case 'result':
+        case 'result': {
           if (assistantError) {
             outcome = assistantError
           } else if (message.subtype === 'success') {
@@ -719,14 +903,31 @@ async function execute(run: Run, prompt: string): Promise<void> {
           } else {
             outcome = fromResultText(message.errors.join('\n') || message.subtype)
           }
+          // The error belongs to this turn only.
+          assistantError = null
+
+          // One result per turn. It lists the messages of mine that the turn answered.
+          // The queue closes here, or stays open for a message still waiting.
+          const settled = settleResult(
+            run.input,
+            run.messages,
+            message.user_message_uuids ?? [],
+            outcome === 'done'
+          )
+          for (const late of settled.late) reportMessage(run, late, 'received')
+          if (settled.finished) finished = true
           break
+        }
       }
+      if (finished) break
     }
   } catch (err) {
     if (!run.abortController.signal.aborted) {
       outcome = assistantError ?? { code: 'sdk_error', message: errorMessage(err) }
     }
   } finally {
+    // Nothing more goes into this run, whatever ended it.
+    run.input.close()
     // Nothing may stay waiting after its run ends.
     denyAllPending()
     for (const taskId of [...run.openTasks.keys()]) {
@@ -741,6 +942,9 @@ async function execute(run: Run, prompt: string): Promise<void> {
     if (activeRun === run) {
       activeRun = null
     }
+    // A message Claude never took in is reported before the run's last event, and
+    // is not sent again.
+    for (const lost of run.messages.undelivered()) reportMessage(run, lost, 'not_delivered')
 
     let ended: 'done' | 'stopped' | AgentError
     if (run.failure) {
@@ -759,6 +963,8 @@ async function execute(run: Run, prompt: string): Promise<void> {
       emit(run, { requestId: run.requestId, type: 'error', ...ended })
     }
     notify((w) => w.runEnded({ runId: run.requestId, outcome: ended, reply: run.reply }))
+    // Last: a message waiting to start a new run goes ahead only after this run's events.
+    run.settleDone()
   }
 }
 
@@ -772,7 +978,36 @@ export async function resetChat(
     return { ok: false, error: { code: 'busy', message: 'A run is already in progress.' } }
   }
   await setChatSession(cwd, null)
+  // The new chat starts from the saved defaults. With "Use for new chats too" the
+  // defaults are the last pick, so it starts on the same choice.
+  await setChatChoice(cwd, await getDefaultChoice())
   return { ok: true }
+}
+
+// A pick in the model picker while a run is going. The model goes through
+// setModel (no argument is AUTO) and the thinking level through applyFlagSettings
+// (null is AUTO). Both take effect from the next message, the same moment a
+// message pushed into the run is read. A run that has not started its query yet
+// reads the choice when it does, and one that is finishing leaves it to the next run.
+export async function applyChoiceToRun(next: ModelChoice): Promise<void> {
+  const run = activeRun
+  if (!run) return
+  const previous = run.choice
+  run.choice = next
+  const query = run.query
+  if (!query || run.input.closed) return
+  try {
+    if (next.model !== previous.model) {
+      await query.setModel(next.model === AUTO ? undefined : next.model)
+    }
+    if (next.effort !== previous.effort) {
+      await query.applyFlagSettings({
+        effortLevel: isEffortLevel(next.effort) ? next.effort : null
+      })
+    }
+  } catch (err) {
+    console.error('[agent] Could not apply the model choice to the run:', errorMessage(err))
+  }
 }
 
 // The last 200 messages of the project's saved conversation, as items. Only the

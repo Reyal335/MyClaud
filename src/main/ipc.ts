@@ -1,6 +1,23 @@
 import { BrowserWindow, dialog, ipcMain } from 'electron'
-import { IpcChannel, type AgentSendResult, type ChatHistory, type ProjectInfo } from '../shared/ipc'
-import { answerPermission, isRunning, loadChatHistory, resetChat, startRun, stopRun } from './agent'
+import {
+  IpcChannel,
+  type AgentSendResult,
+  type ChatHistory,
+  type ModelChoiceResult,
+  type ModelsResult,
+  type ProjectInfo
+} from '../shared/ipc'
+import { chatChoice, listModels, saveChoice } from './modelChoice'
+import { prefetchModels } from './models'
+import {
+  answerPermission,
+  applyChoiceToRun,
+  isRunning,
+  loadChatHistory,
+  resetChat,
+  sendMessage,
+  stopRun
+} from './agent'
 import {
   getPartyPanel,
   getPopups,
@@ -44,13 +61,17 @@ export function registerIpc(): void {
       : await dialog.showOpenDialog(options)
     if (result.canceled || result.filePaths.length === 0 || isRunning()) return null
 
-    return setProject(result.filePaths[0])
+    const opened = await setProject(result.filePaths[0])
+    // The new folder's model list starts loading now.
+    prefetchModels(opened.path)
+    return opened
   })
 
   // `call` is { scope, filePath } of an agent from the list; agent.ts checks it again.
+  // `messageId` is the window's UUID for this message; agent.ts checks its shape.
   ipcMain.handle(
     IpcChannel.AgentSend,
-    async (event, prompt: unknown, call: unknown): Promise<AgentSendResult> => {
+    async (event, prompt: unknown, call: unknown, messageId: unknown): Promise<AgentSendResult> => {
       if (typeof prompt !== 'string' || prompt.trim() === '') {
         return {
           ok: false,
@@ -61,7 +82,7 @@ export function registerIpc(): void {
       if (!project) {
         return { ok: false, error: { code: 'no_project', message: 'No project is open.' } }
       }
-      return startRun(prompt, call, project.path, event.sender)
+      return sendMessage(prompt, call, messageId, project.path, event.sender)
     }
   )
 
@@ -134,6 +155,31 @@ export function registerIpc(): void {
       return { ok: false, error: { code: 'no_project', message: 'No project is open.' } }
     }
     return resetChat(project.path)
+  })
+
+  // The chat's model and thinking choice, and the models the account can use. The
+  // window names no folder: main uses the open project.
+  const noProject = { ok: false, error: { message: 'No project is open.' } } as const
+  ipcMain.handle(IpcChannel.ChatGetModelChoice, async (): Promise<ModelChoiceResult> => {
+    const project = getProject()
+    return project ? chatChoice(project.path) : noProject
+  })
+  ipcMain.handle(
+    IpcChannel.ChatSetModelChoice,
+    async (_event, change: unknown): Promise<ModelChoiceResult> => {
+      const project = getProject()
+      if (!project) return noProject
+      const saved = await saveChoice(project.path, change)
+      // During a run the pick applies from the next message.
+      if (saved.ok) await applyChoiceToRun(saved.choice)
+      return saved
+    }
+  )
+  ipcMain.handle(IpcChannel.ModelsList, async (): Promise<ModelsResult> => {
+    const project = getProject()
+    return project
+      ? listModels(project.path)
+      : { ok: false, message: "Couldn't load the model list." }
   })
 
   // Tasks. The renderer names a task by id only; tasks.ts checks it is one it knows.

@@ -8,7 +8,8 @@ const api: MyClaudApi = {
     open: () => ipcRenderer.invoke(IpcChannel.ProjectOpen)
   },
   agent: {
-    send: (prompt, call) => ipcRenderer.invoke(IpcChannel.AgentSend, prompt, call ?? null),
+    send: (prompt, call, messageId) =>
+      ipcRenderer.invoke(IpcChannel.AgentSend, prompt, call ?? null, messageId),
     stop: () => ipcRenderer.invoke(IpcChannel.AgentStop),
     answerPermission: (permissionId, decision) =>
       ipcRenderer.invoke(IpcChannel.AgentPermission, permissionId, decision),
@@ -54,7 +55,12 @@ const api: MyClaudApi = {
   },
   chat: {
     history: () => ipcRenderer.invoke(IpcChannel.ChatHistory),
-    reset: () => ipcRenderer.invoke(IpcChannel.ChatReset)
+    reset: () => ipcRenderer.invoke(IpcChannel.ChatReset),
+    getModelChoice: () => ipcRenderer.invoke(IpcChannel.ChatGetModelChoice),
+    setModelChoice: (change) => ipcRenderer.invoke(IpcChannel.ChatSetModelChoice, change)
+  },
+  models: {
+    list: () => ipcRenderer.invoke(IpcChannel.ModelsList)
   },
   tasks: {
     list: () => ipcRenderer.invoke(IpcChannel.TasksList),

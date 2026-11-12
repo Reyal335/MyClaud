@@ -3,6 +3,7 @@ import { readFile, stat } from 'fs/promises'
 import { basename, join } from 'path'
 import type { PartyPanelMode, ProjectInfo } from '../shared/ipc'
 import { DEFAULT_MASCOT_ID } from '../shared/mascotRules'
+import { AUTO, type ModelChoice } from '../shared/models'
 import { writeFileSafely } from './safeWrite'
 
 type RawSettings = Record<string, unknown>
@@ -95,6 +96,20 @@ export async function getPartyPanel(): Promise<PartyPanelMode | null> {
 
 export function setPartyPanel(mode: PartyPanelMode): Promise<void> {
   return updateSettings({ partyPanel: mode })
+}
+
+// The model and thinking choice a new chat starts from. AUTO and AUTO until I save
+// one with "Use for new chats too". A value that is not text reads as AUTO.
+export async function getDefaultChoice(): Promise<ModelChoice> {
+  const { defaultModel, defaultEffort } = await readSettings()
+  return {
+    model: typeof defaultModel === 'string' && defaultModel !== '' ? defaultModel : AUTO,
+    effort: typeof defaultEffort === 'string' && defaultEffort !== '' ? defaultEffort : AUTO
+  }
+}
+
+export function setDefaultChoice(choice: ModelChoice): Promise<void> {
+  return updateSettings({ defaultModel: choice.model, defaultEffort: choice.effort })
 }
 
 // Popups are on until I turn them off.

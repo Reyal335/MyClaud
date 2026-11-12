@@ -18,6 +18,7 @@ components in React and match these visually.
 | `8-chat-party.html` | CHAT with the party panel: the frame (history and stage), the input row with a called agent, the panel and its detail area |
 | `8b-party-states.html` | Every state of a party member: panel row, rail icon, the rail hover card, and the input row |
 | `8c-party-rail.html` | CHAT in a narrow window, with the party panel collapsed to a rail |
+| `10-model-picker.html` | CHAT with the model and thinking picker open above the input row, and a reply with its tag |
 | `mascot.png` | Default mascot image used in the mockups |
 
 ## Colors
@@ -122,6 +123,12 @@ cells; the slicer itself disables USE instead).
   error with X for a failed rule. Grid lines follow: accent, waiting, error.
 - The sheet is drawn on the checkerboard with `image-rendering: pixelated`, at
   a whole-number scale when it fits, scaled down to fit when it does not.
+- Columns and rows are number fields you can type in, with - and + buttons
+  beside them. A typed value that is not a whole number from 1 to 16 (empty,
+  partial, fractional, out of range) is never clamped: the grid keeps its last
+  good value, the field is marked invalid, the grid message above shows in the
+  status box, and USE is disabled. The field snaps back to the grid's value on
+  blur, and Enter does not submit the dialog.
 - Starting grid: width / 64 by height / 64 when both are whole and at most 16,
   otherwise 1 by 1. A reused sheet starts from the grid last confirmed for it.
 - When the grid changes, the picks reset: every cell in reading order if there
@@ -160,7 +167,9 @@ are hidden at zero.
   with reduced motion), WAITING FOR YOU (waiting border, "Needs your
   approval"), CANNOT BE CALLED (dashed border, dimmed icon, not a button).
 - Reasons an agent cannot be called: "Sets its own permission mode", "Runs in
-  the background", "File has a problem", "Hidden by a project agent".
+  the background", "File has a problem", "Hidden by a project agent", and
+  "Three agents are working" (on every row that is not itself working or
+  waiting, while three agents are going; a run going is not enough).
 - The rail is 72px with 48px icon buttons. Hovering or focusing one shows the
   hover card to its left: name, role, model, description, and "Click to call
   for your next message". The panel is open at 1200px and wider and a rail below
@@ -169,6 +178,12 @@ are hidden at zero.
 - With an agent called, the input row shows its chip (icon, name, and a remove
   button) and the placeholder "Message for <agent>...". Otherwise the
   placeholder is "Message Claude...".
+- The message box grows with its text, from 48px up to 12 lines or 40% of the
+  window height, then scrolls. SEND, STOP, and the chip stay at the bottom of
+  the row. The history keeps at least 96px, so the stage stays visible.
+- The input stays enabled during a run. SEND stays, and STOP is its own button
+  beside it, shown only while a run is going. With nobody called, the
+  placeholder during a run is "Message Claude or call an agent...".
 
 ### Agents at work
 
@@ -179,6 +194,17 @@ are hidden at zero.
 - The mascot is WORKING while an agent runs, and the dialogue box reads
   "<agent> is working: <latest activity>". A request from inside an agent has
   one extra line on top: the agent's icon and "<agent> asks".
+- Messages during a run: a message sent while a run is going goes into that
+  run, at the end of the history, with its chip if one was set. Claude reads it
+  after the agent that is working has finished, because Claude Code does not
+  read a message while an agent runs in the foreground. Until Claude takes it
+  in, the message shows a small QUEUED word; a message still unreceived when the
+  run ends shows "Not delivered. The run ended." and is not sent again. Calling
+  an agent this way starts that agent after the first one ends, so at most the
+  agents Claude itself runs in parallel can be working together; a call with
+  three agents already working is refused with "Three agents are already
+  working." and nothing is sent. With more than one agent working, the dialogue
+  box reads "<n> agents are working".
 - NEW CHAT asks "Start a new conversation? The current one is cleared from
   MyClaud."
 - Saved history: "Earlier messages are not shown." (more than 200 messages) and
@@ -215,6 +241,120 @@ are hidden at zero.
   A running or waiting task cannot be deleted.
 - Empty: "Nothing here yet. Call an agent from the party panel on CHAT."
 - A task cut off when the app closed: "Interrupted when MyClaud closed."
+
+## Model and thinking
+
+See `10-model-picker.html`. A control at the left of the CHAT input row picks
+the model and the thinking level for the main conversation, each one AUTO or a
+choice. The mockup's backdrop picture and its nav label are not part of the
+build.
+
+### What is saved
+
+- Each chat saves `{ model, effort }`. `model` is "auto" or a model value from
+  the account's model list. `effort` is "auto" or one of the levels that model
+  supports. A chat saved before the picker loads as auto and auto. A chat is the
+  open project's conversation.
+- settings.json keeps `defaultModel` and `defaultEffort`, both "auto" at first.
+  A new chat (NEW CHAT, or a chat with no choice yet) starts from them. With
+  "Use for new chats too" checked, a pick is saved as the defaults too, so NEW
+  CHAT starts on the same choice. Unchecked, NEW CHAT starts on the defaults
+  saved earlier.
+- AUTO means Claude Code's default, for both model and thinking. With AUTO the
+  app does not set the option at all. The app does not route messages between
+  models.
+- A pick applies at once. During a run the model goes through `setModel()` (no
+  argument for AUTO) and the level through `applyFlagSettings({ effortLevel })`
+  (null for AUTO). Both apply from the next message.
+- Party agents are not touched and their files are never written. An agent
+  whose file sets a model keeps it. An agent with no model line follows the
+  main model.
+
+### The model list
+
+- It comes from `supportedModels()`, fetched once per project folder in a
+  query opened with no message (nothing is sent to a model), kept in main, and
+  shown in the order the SDK returns. No model name is written in the code.
+  AUTO is the first row. The SDK's own "default" row is not a row of its own,
+  because AUTO is it: its levels are the levels AUTO offers.
+- The list scrolls inside the picker.
+- If the call fails, the list is AUTO only and the picker shows "Couldn't load
+  the model list."
+- POWER and SPEED bars come from a table keyed by family, matched on the
+  model's value or exact model: opus 3 and 1, sonnet 2 and 2, haiku 1 and 3. A
+  model of no listed family shows no bars. AUTO shows dotted bars.
+- A row's description is the table's line for the three families, and the
+  SDK's own description for any other model.
+- Levels: AUTO plus one button per level the selected model supports, in order
+  (LOW, MED, HIGH, XHIGH, MAX). If the SDK gives no effort fields for any
+  model, every model shows AUTO, LOW, MED, HIGH, MAX. If the SDK gives them for
+  other models but not this one, or says it takes none, only AUTO shows, with
+  "This model doesn't take a thinking level." The line under the buttons
+  describes the selected level.
+- The thinking meter has 4 blocks: LOW 1, MED 2, HIGH 3, XHIGH 4, MAX 4. AUTO
+  shows alternating blocks. The word, not the blocks, tells XHIGH from MAX.
+
+### A saved choice that no longer fits
+
+The chat falls back, saves the fallback, and shows one line in the
+conversation, once:
+
+- A saved model not in the list: "<Name> isn't available right now. Using AUTO."
+- A saved level the model does not take: it uses the nearest supported level
+  below, else AUTO: "<LEVEL> isn't available on <Name>. Using <LEVEL>."
+
+While the list cannot be loaded nothing is saved, so a failed fetch never costs
+the choice.
+
+### The control and the picker
+
+- The control reads "<MODEL> · THINK <LEVEL>" in the pixel font, with the
+  4-block meter before it and a caret after, at the left of the input row,
+  before the agent chip. It has `aria-expanded` and `aria-haspopup="dialog"`.
+- It opens the picker above the input row. Escape, DONE, and a click outside
+  close it. Focus moves onto the selected model when it opens, and back to the
+  control after Escape or DONE. Arrow keys move through the models (up and
+  down) and the levels (left and right); Tab moves through everything.
+- MODEL section: one row per model, AUTO first. The selected row has the accent
+  fill, dark text, and a text-colored border. POWER and SPEED bars sit on the
+  right. THINKING section: the level buttons and the line under them.
+- Footer: a "Use for new chats too" checkbox, checked by default, and DONE.
+  Under it, one muted line: "Changes apply from your next message. Party agents
+  you call keep the model set in their agent file."
+- When the model changes in a chat that already has replies, one more muted
+  line: "Switching models re-reads the whole chat, which uses more of your plan."
+  The change is not blocked.
+- Picking applies at once, and the control updates at once.
+
+### The reply tag
+
+- Each of Claude's replies shows a small tag above its text, and the dialogue
+  box shows the same tag beside "Claude": "<MODEL> · <LEVEL>", the model that
+  answered (the exact model the SDK reports on the reply) and the level in force
+  when the reply started. With AUTO the level reads AUTO.
+- When Claude thought for at least 1 second before replying, the tag adds " ·
+  THOUGHT <n>s". Thinking text is hidden by Claude Code by default, so only the
+  time is shown.
+- A reply loaded from a saved chat shows the model only: the saved chat keeps
+  the model, not the level or the thinking time.
+
+### Copy
+
+Models:
+
+- AUTO: "Claude Code's default model. Follows it when the default changes."
+- opus: "Strongest. For hard bugs and big refactors. Uses plan limits fastest."
+- sonnet: "Balanced. A good default for everyday coding."
+- haiku: "Fastest and lightest. Small edits and quick questions."
+
+Thinking:
+
+- AUTO: "Claude Code's default thinking for this model."
+- LOW: "Quick answers. Little thinking before it replies."
+- MED: "Thinks through a normal task before acting."
+- HIGH: "Plans carefully. Slower, better on tricky changes."
+- XHIGH: "Thinks longer than HIGH on hard problems."
+- MAX: "Thinks as long as it needs. Slowest and heaviest on limits."
 
 ## Markdown
 

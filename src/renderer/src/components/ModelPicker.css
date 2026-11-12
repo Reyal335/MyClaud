@@ -1,0 +1,306 @@
+/* The model and thinking picker from designs/10-model-picker.html. The control sits
+   at the left of the input row; the dialog opens above the row, anchored to it. */
+
+.model-picker__control {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 48px;
+  padding: 0 12px;
+  background: var(--panel);
+  color: var(--text);
+  border: var(--border) solid var(--line);
+  border-radius: 0;
+  font-family: var(--font-pixel);
+  font-size: 9px;
+  line-height: 1.5;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.model-picker__control--open {
+  border-color: var(--text);
+}
+
+.model-picker__dot {
+  color: var(--muted);
+}
+
+.model-picker__caret {
+  color: var(--accent);
+}
+
+/* The thinking meter: 4 blocks. Filled for the level, alternating for AUTO. */
+.meter {
+  display: flex;
+}
+
+.meter--small {
+  gap: 2px;
+}
+
+.meter--small .meter__block {
+  width: 4px;
+  height: 12px;
+}
+
+.meter--large {
+  gap: 3px;
+}
+
+.meter--large .meter__block {
+  width: 14px;
+  height: 14px;
+  border: var(--border-thin) solid var(--bg);
+}
+
+.meter__block--on {
+  background: var(--accent);
+}
+
+.meter__block--off {
+  background: var(--line);
+}
+
+.meter__block--dotted {
+  background: var(--muted);
+}
+
+/* The dialog. It scrolls when the window is short: the model list takes the give
+   first, down to about two rows, then the whole dialog scrolls. */
+.model-picker__dialog {
+  position: absolute;
+  left: 0;
+  bottom: calc(100% + 12px);
+  z-index: 2;
+  width: 460px;
+  max-width: 100%;
+  max-height: min(640px, calc(100vh - 180px));
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 16px;
+  background: var(--panel);
+  border: var(--border) solid var(--text);
+  box-shadow: var(--shadow-dialog);
+}
+
+.model-picker__dialog > * {
+  flex-shrink: 0;
+}
+
+.model-picker__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.model-picker__head--divided {
+  padding-top: 12px;
+  border-top: var(--border) solid var(--line);
+}
+
+.model-picker__title {
+  margin: 0;
+  font-family: var(--font-pixel);
+  font-size: 10px;
+  font-weight: normal;
+  color: var(--accent);
+}
+
+.model-picker__columns {
+  display: flex;
+  gap: 14px;
+  font-family: var(--font-pixel);
+  font-size: 7px;
+  color: var(--muted);
+}
+
+/* One row per model. The list scrolls inside the dialog. The padding leaves room
+   for the focus ring, which the scroll area would otherwise cut off. */
+.model-picker__models {
+  flex: 1 1 auto;
+  flex-shrink: 1;
+  min-height: 112px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 6px;
+  margin: -6px;
+}
+
+.model-picker__row {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 52px;
+  padding: 6px 10px;
+  background: var(--bg);
+  color: var(--text);
+  border: var(--border) solid var(--line);
+  border-radius: 0;
+  text-align: left;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1.5;
+  cursor: pointer;
+}
+
+.model-picker__row:hover {
+  border-color: var(--muted);
+}
+
+.model-picker__row--selected,
+.model-picker__row--selected:hover {
+  background: var(--accent);
+  color: var(--bg);
+  border-color: var(--text);
+}
+
+.model-picker__row-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.model-picker__row-name {
+  font-family: var(--font-pixel);
+  font-size: 9px;
+}
+
+.model-picker__row-description {
+  color: var(--muted);
+}
+
+.model-picker__row--selected .model-picker__row-description {
+  color: var(--bg);
+}
+
+/* POWER and SPEED: three blocks each. Amber for power, green for speed, muted for AUTO. */
+.bars {
+  flex: none;
+  display: flex;
+  gap: 2px;
+  width: 28px;
+}
+
+.bars__block {
+  width: 8px;
+  height: 12px;
+  background: var(--line);
+}
+
+.bars--power .bars__block--on {
+  background: var(--waiting);
+}
+
+.bars--speed .bars__block--on {
+  background: var(--running);
+}
+
+.bars__block--dotted.bars__block--on {
+  background: var(--muted);
+}
+
+.model-picker__row--selected .bars__block--on {
+  background: var(--bg);
+}
+
+.model-picker__error {
+  margin: 0;
+  font-size: 12px;
+  color: var(--error);
+}
+
+/* THINKING: AUTO and one button per level the model takes, side by side. */
+.model-picker__levels {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+}
+
+.model-picker__level {
+  min-height: 44px;
+  padding: 0;
+  background: var(--bg);
+  color: var(--text);
+  border: var(--border) solid var(--line);
+  border-radius: 0;
+  font-family: var(--font-pixel);
+  font-size: 8px;
+  cursor: pointer;
+}
+
+.model-picker__level + .model-picker__level {
+  margin-left: calc(var(--border) * -1);
+}
+
+.model-picker__level:hover {
+  border-color: var(--muted);
+}
+
+.model-picker__level--selected,
+.model-picker__level--selected:hover {
+  position: relative;
+  background: var(--accent);
+  color: var(--bg);
+  border-color: var(--text);
+}
+
+.model-picker__level-line {
+  margin: 0;
+  min-height: 36px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.model-picker__footer {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding-top: 12px;
+  border-top: var(--border) solid var(--line);
+}
+
+.model-picker__check {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 32px;
+  font-size: 12px;
+}
+
+.model-picker__check input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--accent);
+}
+
+.model-picker__done {
+  margin-left: auto;
+  min-height: 44px;
+  padding: 0 14px;
+  background: var(--accent);
+  color: var(--bg);
+  border: var(--border) solid var(--text);
+  border-radius: 0;
+  box-shadow: var(--shadow-hard);
+  font-family: var(--font-pixel);
+  font-size: 9px;
+  cursor: pointer;
+}
+
+.model-picker__note {
+  margin: 0;
+  font-size: 11px;
+  color: var(--muted);
+}
