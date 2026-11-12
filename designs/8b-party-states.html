@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MyClaud mockup 8b: party member states</title>
+<!--
+  MyClaud mockup 8b: party member states.
+  Every state of a party member, as a panel row and as a rail icon, plus the hover card and the input row.
+  Static mockup. Do not copy the markup into the app: build React components
+  and use the tokens from DESIGN.md.
+  The agent icons and the mascot are placeholders. The app shows each agent's
+  own 16x16 icon and the active mascot.
+-->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+body{margin:0;background:#0B132B}
+a{color:#5BC0BE}a:hover{color:#F2F4F8}
+@keyframes hop{0%,49%{transform:translateY(0)}50%,100%{transform:translateY(-2px)}}
+.hop{animation:hop .6s steps(1) infinite}
+@media (prefers-reduced-motion: reduce){.hop{animation:none}}
+</style>
+</head>
+<body>
+<div style="width: 820px; height: 720px; box-sizing: border-box; padding: 28px; background: #0B132B; color: #F2F4F8; font-family: 'IBM Plex Mono', monospace; font-size: 14px; line-height: 1.5; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 28px">
+
+<section aria-label="Panel row states" style="display: flex; flex-direction: column; gap: 12px">
+<h2 style="margin: 0; font-family: 'Press Start 2P', monospace; font-size: 10px; color: #5BC0BE">PANEL ROW</h2>
+<div style="padding: 12px; background: #1C2541; border: 4px solid #3A506B; display: flex; flex-direction: column; gap: 10px">
+
+<div style="display: flex; flex-direction: column; gap: 4px">
+<span style="font-family: 'Press Start 2P', monospace; font-size: 8px; color: #A9B6C6">IDLE</span>
+<button type="button" style="display: flex; align-items: center; gap: 10px; width: 100%; min-height: 56px; box-sizing: border-box; padding: 6px 8px; background: #1C2541; color: #F2F4F8; border: 4px solid #1C2541; text-align: left; font-family: 'IBM Plex Mono', monospace; font-size: 14px; cursor: pointer">
+<svg width="32" height="32" viewBox="0 0 16 16" shape-rendering="crispEdges" aria-hidden="true" style="flex: none; border: 2px solid #0B132B"><rect width="16" height="16" fill="#6FCF7F"></rect><path fill="#0B132B" d="M5 5h6v1H5zM3 6h2v1H3zM11 6h2v1h-2zM2 7h1v2H2zM13 7h1v2h-1zM3 9h2v1H3zM11 9h2v1h-2zM5 10h6v1H5zM7 6h2v4H7z"></path></svg>
+<span style="min-width: 0; display: flex; flex-direction: column"><span style="font-weight: 600">Ruan Mei</span><span style="font-size: 11px; color: #A9B6C6">code-reader</span></span>
+</button>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 4px">
+<span style="font-family: 'Press Start 2P', monospace; font-size: 8px; color: #A9B6C6">HOVER OR FOCUS</span>
+<button type="button" style="display: flex; align-items: center; gap: 10px; width: 100%; min-height: 56px; box-sizing: border-box; padding: 6px 8px; background: #0B132B; color: #F2F4F8; border: 4px solid #5BC0BE; text-align: left; font-family: 'IBM Plex Mono', monospace; font-size: 14px; cursor: pointer">
+<svg width="32" height="32" viewBox="0 0 16 16" shape-rendering="crispEdges" aria-hidden="true" style="flex: none; border: 2px solid #0B132B"><rect width="16" height="16" fill="#6FCF7F"></rect><path fill="#0B132B" d="M5 5h6v1H5zM3 6h2v1H3zM11 6h2v1h-2zM2 7h1v2H2zM13 7h1v2h-1zM3 9h2v1H3zM11 9h2v1h-2zM5 10h6v1H5zM7 6h2v4H7z"></path></svg>
+<span style="min-width: 0; display: flex; flex-direction: column"><span style="font-weight: 600">Ruan Mei</span><span style="font-size: 11px; color: #A9B6C6">code-reader</span></span>
+</button>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 4px">
+<span style="font-family: 'Press Start 2P', monospace; font-size: 8px; color: #A9B6C6">CALLING</span>
+<button type="button" aria-pressed="true" style="display: flex; align-items: center; gap: 10px; width: 100%; min-height: 56px; box-sizing: border-box; padding: 6px 8px; background: #5BC0BE; color: #0B132B; border: 4px solid #F2F4F8; box-shadow: 4px 4px 0 #000; text-align: left; font-family: 'IBM Plex Mono', monospace; font-size: 14px; cursor: pointer">
+<svg width="32" height="32" viewBox="0 0 16 16" shape-rendering="crispEdges" aria-hidden="true" style="flex: none; border: 2px solid #0B132B"><rect width="16" height="16" fill="#6FCF7F"></rect><path fill="#0B132B" d="M5 5h6v1H5zM3 6h2v1H3zM11 6h2v1h-2zM2 7h1v2H2zM13 7h1v2h-1zM3 9h2v1H3zM11 9h2v1h-2zM5 10h6v1H5zM7 6h2v4H7z"></path></svg>
+<span style="min-width: 0; display: flex; flex-direction: column"><span style="font-weight: 600">Ruan Mei</span><span style="font-size: 11px">code-reader</span></span>
+</button>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 4px">
+<span style="font-family: 'Press Start 2P', monospace; font-size: 8px; color: #A9B6C6">WORKING</span>
+<div style="display: flex; align-items: center; gap: 10px; min-height: 56px; box-sizing: border-box; padding: 6px 8px; background: #0B132B; border: 4px solid #3A506B">
+<svg class="hop" width="32" height="32" viewBox="0 0 16 16" shape-rendering="crispEdges" aria-hidden="true" style="flex: none; border: 2px solid #0B132B"><rect width="16" height="16" fill="#6FCF7F"></rect><path fill="#0B132B" d="M5 5h6v1H5zM3 6h2v1H3zM11 6h2v1h-2zM2 7h1v2H2zM13 7h1v2h-1zM3 9h2v1H3zM11 9h2v1h-2zM5 10h6v1H5zM7 6h2v4H7z"></path></svg>
+<span style="flex: 1; min-width: 0; display: flex; flex-direction: column"><span style="font-weight: 600">Ruan Mei</span><span style="font-size: 11px; color: #6FCF7F; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">Reading src/auth.js</span></span>
+<span aria-hidden="true" style="flex: none; width: 8px; height: 8px; background: #6FCF7F"></span>
+</div>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 4px">
+<span style="font-family: 'Press Start 2P', monospace; font-size: 8px; color: #A9B6C6">WAITING FOR YOU</span>
+<div style="display: flex; align-items: center; gap: 10px; min-height: 56px; box-sizing: border-box; padding: 6px 8px; background: #0B132B; border: 4px solid #F2B84B">
+<svg width="32" height="32" viewBox="0 0 16 16" shape-rendering="crispEdges" aria-hidden="true" style="flex: none; border: 2px solid #0B132B"><rect width="16" height="16" fill="#6FCF7F"></rect><path fill="#0B132B" d="M5 5h6v1H5zM3 6h2v1H3zM11 6h2v1h-2zM2 7h1v2H2zM13 7h1v2h-1zM3 9h2v1H3zM11 9h2v1h-2zM5 10h6v1H5zM7 6h2v4H7z"></path></svg>
+<span style="flex: 1; min-width: 0; display: flex; flex-direction: column"><span style="font-weight: 600">Ruan Mei</span><span style="font-size: 11px; color: #F2B84B">Needs your approval</span></span>
+<span aria-hidden="true" style="flex: none; width: 8px; height: 8px; background: #F2B84B"></span>
+</div>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 4px">
+<span style="font-family: 'Press Start 2P', monospace; font-size: 8px; color: #A9B6C6">CANNOT BE CALLED</span>
+<div style="display: flex; align-items: center; gap: 10px; min-height: 56px; box-sizing: border-box; padding: 6px 8px; background: #1C2541; border: 4px dashed #3A506B">
+<svg width="32" height="32" viewBox="0 0 16 16" shape-rendering="crispEdges" aria-hidden="true" style="flex: none; border: 2px solid #0B132B; opacity: 0.45"><rect width="16" height="16" fill="#6FCF7F"></rect><path fill="#0B132B" d="M5 5h6v1H5zM3 6h2v1H3zM11 6h2v1h-2zM2 7h1v2H2zM13 7h1v2h-1zM3 9h2v1H3zM11 9h2v1h-2zM5 10h6v1H5zM7 6h2v4H7z"></path></svg>
+<span style="flex: 1; min-width: 0; display: flex; flex-direction: column"><span style="font-weight: 600; color: #A9B6C6">Ruan Mei</span><span style="font-size: 11px; color: #A9B6C6">Sets its own permission mode</span></span>
+</div>
+</div>
+
+</div>
+</section>
+
+<div style="display: flex; flex-direction: column; gap: 24px">
+
+<section aria-label="Rail icon states" style="display: flex; flex-direction: column; gap: 12px">
+<h2 style="margin: 0; font-family: 'Press Start 2P', monospace; font-size: 10px; color: #5BC0BE">RAIL ICON</h2>
+<div style="padding: 14px 12px; background: #1C2541; border: 4px solid #3A506B; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; justify-items: center">
+<div style="display: flex; flex-direction: column; align-items: center; gap: 8px">
+<span style="width: 48px; height: 48px; box-sizing: border-box; display: flex; align-items: center; justify-content: center; border: 4px solid #1C2541"><svg width="32" height="32" viewBox="0 0 16 16" shape-rendering="crispEdges" aria-hidden="true" style="border: 2px solid #0B132B"><rect width="16" height="16" fill="#F0706A"></rect><path fill="#0B132B" d="M8 2h3v2H8zM7 4h3v2H7zM5 6h7v2H5zM7 8h3v2H7zM6 10h3v2H6zM5 12h3v2H5z"></path></svg></span>
+<span style="font-size: 11px; color: #A9B6C6">Idle</span>
+</div>
+<div style="display: flex; flex-direction: column; align-items: center; gap: 8px">
+<span style="width: 48px; height: 48px; box-sizing: border-box; display: flex; align-items: center; justify-content: center; background: #5BC0BE; border: 4px solid #F2F4F8; box-shadow: 4px 4px 0 #000"><svg width="32" height="32" viewBox="0 0 16 16" shape-rendering="crispEdges" aria-hidden="true" style="border: 2px solid #0B132B"><rect width="16" height="16" fill="#F0706A"></rect><path fill="#0B132B" d="M8 2h3v2H8zM7 4h3v2H7zM5 6h7v2H5zM7 8h3v2H7zM6 10h3v2H6zM5 12h3v2H5z"></path></svg></span>
+<span style="font-size: 11px; color: #A9B6C6">Calling</span>
+</div>
+<div style="display: flex; flex-direction: column; align-items: center; gap: 8px">
+<span style="position: relative; width: 48px; height: 48px; box-sizing: border-box; display: flex; align-items: center; justify-content: center; background: #0B132B; border: 4px solid #3A506B"><svg class="hop" width="32" height="32" viewBox="0 0 16 16" shape-rendering="crispEdges" aria-hidden="true" style="border: 2px solid #0B132B"><rect width="16" height="16" fill="#F0706A"></rect><path fill="#0B132B" d="M8 2h3v2H8zM7 4h3v2H7zM5 6h7v2H5zM7 8h3v2H7zM6 10h3v2H6zM5 12h3v2H5z"></path></svg><span aria-hidden="true" style="position: absolute; top: -6px; right: -6px; width: 8px; height: 8px; background: #6FCF7F; border: 2px solid #0B132B"></span></span>
+<span style="font-size: 11px; color: #A9B6C6">Working</span>
+</div>
+<div style="display: flex; flex-direction: column; align-items: center; gap: 8px">
+<span style="position: relative; width: 48px; height: 48px; box-sizing: border-box; display: flex; align-items: center; justify-content: center; background: #0B132B; border: 4px solid #F2B84B"><svg width="32" height="32" viewBox="0 0 16 16" shape-rendering="crispEdges" aria-hidden="true" style="border: 2px solid #0B132B"><rect width="16" height="16" fill="#F0706A"></rect><path fill="#0B132B" d="M8 2h3v2H8zM7 4h3v2H7zM5 6h7v2H5zM7 8h3v2H7zM6 10h3v2H6zM5 12h3v2H5z"></path></svg><span aria-hidden="true" style="position: absolute; top: -6px; right: -6px; width: 8px; height: 8px; background: #F2B84B; border: 2px solid #0B132B"></span></span>
+<span style="font-size: 11px; color: #A9B6C6">Waiting</span>
+</div>
+<div style="display: flex; flex-direction: column; align-items: center; gap: 8px">
+<span style="width: 48px; height: 48px; box-sizing: border-box; display: flex; align-items: center; justify-content: center; border: 4px dashed #3A506B"><svg width="32" height="32" viewBox="0 0 16 16" shape-rendering="crispEdges" aria-hidden="true" style="border: 2px solid #0B132B; opacity: 0.45"><rect width="16" height="16" fill="#F0706A"></rect><path fill="#0B132B" d="M8 2h3v2H8zM7 4h3v2H7zM5 6h7v2H5zM7 8h3v2H7zM6 10h3v2H6zM5 12h3v2H5z"></path></svg></span>
+<span style="font-size: 11px; color: #A9B6C6">Off</span>
+</div>
+</div>
+</section>
+
+<section aria-label="Rail hover card" style="display: flex; flex-direction: column; gap: 12px">
+<h2 style="margin: 0; font-family: 'Press Start 2P', monospace; font-size: 10px; color: #5BC0BE">RAIL HOVER CARD</h2>
+<div style="box-sizing: border-box; padding: 12px; background: #1C2541; border: 4px solid #F2F4F8; box-shadow: 6px 6px 0 #000; display: flex; flex-direction: column; gap: 6px">
+<div style="display: flex; align-items: center; gap: 8px"><span style="font-weight: 600">Silverwolf</span><span style="font-size: 11px; color: #A9B6C6">implementer</span><span style="margin-left: auto; font-size: 11px; padding: 1px 6px; border: 2px solid #3A506B; color: #A9B6C6">sonnet</span></div>
+<div style="font-size: 12px">Writes and edits code fast. Use for well-defined implementation tasks, small features, scripts, and quick fixes.</div>
+<div style="font-size: 11px; color: #A9B6C6">Click to call for your next message</div>
+</div>
+</section>
+
+<section aria-label="Input row" style="display: flex; flex-direction: column; gap: 12px">
+<h2 style="margin: 0; font-family: 'Press Start 2P', monospace; font-size: 10px; color: #5BC0BE">INPUT ROW</h2>
+<div style="display: flex; flex-direction: column; gap: 6px">
+<span style="font-family: 'Press Start 2P', monospace; font-size: 8px; color: #A9B6C6">NO ONE CALLED</span>
+<div style="display: flex; gap: 8px">
+<div style="flex: 1; min-width: 0; min-height: 48px; box-sizing: border-box; display: flex; align-items: center; padding: 0 14px; background: #0B132B; border: 4px solid #3A506B; color: #A9B6C6">Message Claude...</div>
+<span style="display: flex; align-items: center; min-height: 48px; box-sizing: border-box; padding: 0 12px; background: #1C2541; border: 4px solid #5BC0BE; font-family: 'Press Start 2P', monospace; font-size: 9px">SEND</span>
+</div>
+</div>
+<div style="display: flex; flex-direction: column; gap: 6px">
+<span style="font-family: 'Press Start 2P', monospace; font-size: 8px; color: #A9B6C6">CALLING SILVERWOLF</span>
+<div style="display: flex; gap: 8px">
+<div style="display: flex; align-items: center; gap: 8px; min-height: 48px; box-sizing: border-box; padding: 0 0 0 8px; background: #1C2541; border: 4px solid #5BC0BE">
+<svg width="24" height="24" viewBox="0 0 16 16" shape-rendering="crispEdges" aria-hidden="true" style="flex: none"><rect width="16" height="16" fill="#F0706A"></rect><path fill="#0B132B" d="M8 2h3v2H8zM7 4h3v2H7zM5 6h7v2H5zM7 8h3v2H7zM6 10h3v2H6zM5 12h3v2H5z"></path></svg>
+<span style="font-weight: 600">Silverwolf</span>
+<button type="button" aria-label="Stop calling Silverwolf" style="width: 44px; height: 40px; padding: 0; background: #1C2541; color: #F2F4F8; border: 0; border-left: 2px solid #3A506B; font-family: 'Press Start 2P', monospace; font-size: 10px; cursor: pointer">X</button>
+</div>
+<div style="flex: 1; min-width: 0; min-height: 48px; box-sizing: border-box; display: flex; align-items: center; padding: 0 14px; background: #0B132B; border: 4px solid #3A506B; color: #A9B6C6; white-space: nowrap; overflow: hidden">Message for Silverwolf...</div>
+</div>
+</div>
+</section>
+
+</div>
+</div>
+</body>
+</html>

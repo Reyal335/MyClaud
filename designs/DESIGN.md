@@ -15,6 +15,9 @@ components in React and match these visually.
 | `5-popup-notifications.html` | The three popup variants: finished, needs approval, error |
 | `6-mascot-states.html` | The five mascot states |
 | `7-sheet-slicer.html` | The sheet slicer in the mascot dialog: grid, picked frames, loop preview, REUSE SHEET |
+| `8-chat-party.html` | CHAT with the party panel: the frame (history and stage), the input row with a called agent, the panel and its detail area |
+| `8b-party-states.html` | Every state of a party member: panel row, rail icon, the rail hover card, and the input row |
+| `8c-party-rail.html` | CHAT in a narrow window, with the party panel collapsed to a rail |
 | `mascot.png` | Default mascot image used in the mockups |
 
 ## Colors
@@ -126,6 +129,91 @@ cells; the slicer itself disables USE instead).
 - Frames are scaled to 64x64 by nearest neighbour only: no smoothing, no
   blending.
 - SAVE MASCOT is disabled while a slicer is open.
+
+## Party and inbox
+
+See `8-chat-party.html`, `8b-party-states.html`, `8c-party-rail.html`, and
+`1-inbox.html`. The sidebar reads CHAT, INBOX, AGENTS, MASCOTS, and the app
+opens on CHAT. CHAT shows a count of 1 while a request from the main
+conversation itself is pending; INBOX shows the number of waiting tasks. Both
+are hidden at zero.
+
+### Party panel
+
+- 252px wide, as tall as the frame and the input row together. Header: PARTY,
+  the number of agents, and the collapse button.
+- Under the header: "Click a member to call them for your next message."
+  While an agent is called: "Calling <agent> for your next message."
+- One row per agent, project agents first, then global. A row is at least 56px
+  tall: the icon at 32px, the agent's name, and its role as the smaller line
+  (left out when it has none). Rows have no border until hovered, focused, or
+  called. When they do not fit, the list scrolls inside the panel.
+- The detail area is pinned to the bottom above a dividing line: the name, the
+  model as a small tag (left out when the file sets none), the description cut
+  to four lines, and the tools on one line, or "All tools". With nobody hovered,
+  focused, or called: "Hover a member to see what they do."
+- With no agents: "No agents yet. Make one on the AGENTS screen."
+- States, from `8b-party-states.html`: IDLE, HOVER OR FOCUS, CALLING (accent
+  fill, text border, hard shadow), WORKING (line border, the latest activity in
+  the running color, a running square; the icon hops 2px in hard steps, never
+  with reduced motion), WAITING FOR YOU (waiting border, "Needs your
+  approval"), CANNOT BE CALLED (dashed border, dimmed icon, not a button).
+- Reasons an agent cannot be called: "Sets its own permission mode", "Runs in
+  the background", "File has a problem", "Hidden by a project agent".
+- The rail is 72px with 48px icon buttons. Hovering or focusing one shows the
+  hover card to its left: name, role, model, description, and "Click to call
+  for your next message". The panel is open at 1200px and wider and a rail below
+  that, until the collapse button is pressed; that choice is kept in
+  settings.json.
+- With an agent called, the input row shows its chip (icon, name, and a remove
+  button) and the placeholder "Message for <agent>...". Otherwise the
+  placeholder is "Message Claude...".
+
+### Agents at work
+
+- In the history a task is an agent card: icon, name, role and task label, and
+  its status as a word. While it runs, its latest activity; when it ends, the
+  first three lines of the report and OPEN IN INBOX >.
+- A message sent with an agent called shows the agent's chip on top of the text.
+- The mascot is WORKING while an agent runs, and the dialogue box reads
+  "<agent> is working: <latest activity>". A request from inside an agent has
+  one extra line on top: the agent's icon and "<agent> asks".
+- NEW CHAT asks "Start a new conversation? The current one is cleared from
+  MyClaud."
+- Saved history: "Earlier messages are not shown." (more than 200 messages) and
+  "Earlier messages are not available." (the saved conversation cannot be
+  read). A lost session: "The saved conversation was not found. This reply
+  starts from a fresh context."
+
+### Agent messages
+
+- The sentence put in front of a message sent with an agent called: "Use the
+  <name> agent for this request."
+- "The agent <name> sets its own permission mode (<value>). MyClaud keeps
+  approvals on, so it does not run this agent."
+- "The agent <name> is set to run in the background. MyClaud runs agents in the
+  foreground."
+- "This agent went to the background, which MyClaud does not support yet."
+
+### Inbox
+
+- One row per task, newest first: icon, agent name, the PROJECT or GLOBAL tag
+  (none for a built-in agent), the task label, a one-line preview, the time,
+  and the status as a word: RUNNING (running), WAITING (waiting), DONE (muted),
+  ERROR (error), STOPPED (muted).
+- Preview: the latest activity while running, "Waiting: <the request's label>"
+  while waiting, then the start of the report.
+- A waiting task has the unread look (text border, accent shadow) and the NEW
+  tag. A finished task not yet opened shows NEW and does not count on the nav
+  badge.
+- The detail sits beside the list: the header (icon, name, tag, status, start
+  time, how long it took), TASK, ACTIVITY, and REPORT. Cut text says "Shown in
+  part." While the task waits, the request and APPROVE / DENY show at the top.
+  ASK AGAIN opens CHAT with that agent called.
+- CLEAR FINISHED removes done, error, and stopped tasks after one confirmation.
+  A running or waiting task cannot be deleted.
+- Empty: "Nothing here yet. Call an agent from the party panel on CHAT."
+- A task cut off when the app closed: "Interrupted when MyClaud closed."
 
 ## Agent icons
 
