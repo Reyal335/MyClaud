@@ -30,6 +30,18 @@
   overflow-y: auto;
 }
 
+/* The buttons stay in view while the body scrolls. The negative margin cancels the
+   bottom padding added here, so at rest the footer sits where it did. */
+.dialog--wide .dialog__actions {
+  position: sticky;
+  bottom: 0;
+  z-index: 1;
+  margin-bottom: -20px;
+  padding: 12px 0 20px;
+  background: var(--panel);
+  border-top: var(--border-thin) solid var(--line);
+}
+
 .dialog__title {
   margin: 0;
   font-family: var(--font-pixel);

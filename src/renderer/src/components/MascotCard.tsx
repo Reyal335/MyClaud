@@ -13,7 +13,8 @@ type MascotCardProps = {
   active: boolean
   // Turns the buttons off while a change is being saved.
   busy: boolean
-  // Each button shows only when its action is given. SET ACTIVE also hides on the active card.
+  // Each button is always there; one with no action given is disabled. So is
+  // SET ACTIVE on the active card. DELETE takes the last slot when given, else RESET.
   onSetActive?: () => void
   onEdit?: () => void
   onReset?: () => void
@@ -22,7 +23,7 @@ type MascotCardProps = {
 
 // One mascot in the gallery from designs/4-mascot-manager.html: its idle loop
 // playing, the name, how many loops it has, and what can be done with it.
-// CYCLE STATES plays every state's loop in turn, CYCLE_STEP_MS each.
+// CYCLE plays every state's loop in turn, CYCLE_STEP_MS each.
 function MascotCard({
   name,
   loops,
@@ -92,51 +93,37 @@ function MascotCard({
           {active && <span className="mascot-card__tag mascot-card__tag--active">ACTIVE</span>}
         </div>
       )}
+      {/* Four fixed slots in two columns. One that does not apply is disabled, not left out. */}
       <div className="mascot-card__actions">
-        {idle && (
-          <button
-            type="button"
-            className="button button--secondary button--small"
-            aria-label={cycle.state ? `Stop cycling ${name}` : `Cycle ${name} through every state`}
-            onClick={cycle.state ? cycle.stop : cycle.start}
-          >
-            {cycle.state ? 'STOP' : 'CYCLE STATES'}
-          </button>
-        )}
-        {onSetActive && !active && (
-          <button
-            type="button"
-            className="button button--secondary button--small"
-            disabled={busy}
-            aria-label={`Set active: ${name}`}
-            onClick={onSetActive}
-          >
-            SET ACTIVE
-          </button>
-        )}
-        {onEdit && (
-          <button
-            type="button"
-            className="button button--secondary button--small"
-            disabled={busy}
-            aria-label={`Edit ${name}`}
-            onClick={onEdit}
-          >
-            EDIT
-          </button>
-        )}
-        {onReset && (
-          <button
-            type="button"
-            className="button button--danger button--small"
-            disabled={busy}
-            aria-label={`Reset ${name} to the built-in version`}
-            onClick={onReset}
-          >
-            RESET
-          </button>
-        )}
-        {onDelete && (
+        <button
+          type="button"
+          className="button button--secondary button--small"
+          disabled={busy || !onSetActive || active}
+          aria-label={active ? `${name} is the active mascot` : `Set active: ${name}`}
+          onClick={onSetActive}
+        >
+          SET ACTIVE
+        </button>
+        <button
+          type="button"
+          className="button button--secondary button--small"
+          disabled={busy || !onEdit}
+          aria-label={`Edit ${name}`}
+          onClick={onEdit}
+        >
+          EDIT
+        </button>
+        <button
+          type="button"
+          className="button button--secondary button--small"
+          disabled={!idle}
+          aria-label={cycle.state ? `Stop cycling ${name}` : `Cycle ${name} through every state`}
+          onClick={cycle.state ? cycle.stop : cycle.start}
+        >
+          {cycle.state ? 'STOP' : 'CYCLE'}
+        </button>
+        {/* DELETE for a custom mascot, RESET for the built-in one. */}
+        {onDelete ? (
           <button
             type="button"
             className="button button--danger button--small"
@@ -145,6 +132,16 @@ function MascotCard({
             onClick={onDelete}
           >
             DELETE
+          </button>
+        ) : (
+          <button
+            type="button"
+            className="button button--danger button--small"
+            disabled={busy || !onReset}
+            aria-label={`Reset ${name} to the built-in version`}
+            onClick={onReset}
+          >
+            RESET
           </button>
         )}
       </div>

@@ -112,14 +112,16 @@
   color: var(--bg);
 }
 
+/* Two equal columns, fixed slots: SET ACTIVE and EDIT over CYCLE and DELETE or RESET. */
 .mascot-card__actions {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
+  align-self: stretch;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 10px;
   margin-top: auto;
 }
 
-.mascot-card__actions:empty {
-  display: none;
+.mascot-card__actions .button {
+  min-width: 0;
+  padding: 0 6px;
 }

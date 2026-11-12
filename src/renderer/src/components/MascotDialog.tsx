@@ -385,30 +385,36 @@ function MascotDialog({
           <span className={`sheet-row__state sheet-row__state--${state}`}>{label}</span>
           {state === 'idle' && <span className="sheet-row__required">required</span>}
           <span className="sheet-row__meta">{meta}</span>
+          {/* Always FPS, UPLOAD or REPLACE, REUSE SHEET, REMOVE, in this order. A control
+              that does not apply is disabled, so the buttons never move. */}
           <div className="sheet-row__controls">
-            {(slicer || sheet) && (
-              <label className="sheet-row__fps">
-                FPS
-                <input
-                  className="sheet-row__fps-input"
-                  type="number"
-                  inputMode="numeric"
-                  min={MIN_FPS}
-                  max={MAX_FPS}
-                  step={1}
-                  value={fpsText}
-                  disabled={oneFrame}
-                  aria-label={`${state} FPS`}
-                  aria-invalid={Boolean(fpsProblem)}
-                  title={oneFrame ? 'A one-frame sheet does not animate.' : undefined}
-                  onChange={(event) => {
-                    const value = event.target.value
-                    if (slicer) setSlicing((current) => current && { ...current, fps: value })
-                    else updateSlot(state, { fps: value })
-                  }}
-                />
-              </label>
-            )}
+            <label className="sheet-row__fps">
+              FPS
+              <input
+                className="sheet-row__fps-input"
+                type="number"
+                inputMode="numeric"
+                min={MIN_FPS}
+                max={MAX_FPS}
+                step={1}
+                value={slicer || sheet ? fpsText : ''}
+                disabled={!(slicer || sheet) || oneFrame}
+                aria-label={`${state} FPS`}
+                aria-invalid={Boolean(fpsProblem)}
+                title={
+                  oneFrame
+                    ? 'A one-frame sheet does not animate.'
+                    : !(slicer || sheet)
+                      ? 'No sheet yet.'
+                      : undefined
+                }
+                onChange={(event) => {
+                  const value = event.target.value
+                  if (slicer) setSlicing((current) => current && { ...current, fps: value })
+                  else updateSlot(state, { fps: value })
+                }}
+              />
+            </label>
             <button
               type="button"
               className="button button--small sheet-row__button"
@@ -417,34 +423,39 @@ function MascotDialog({
             >
               {sheet ? 'REPLACE' : 'UPLOAD'}
             </button>
-            {source && !slicer && (
-              <button
-                type="button"
-                className="button button--secondary button--small sheet-row__button"
-                aria-label={`Reuse sheet ${source.fileName} for ${state}`}
-                title={`Slice ${source.fileName} again for this state`}
-                onClick={() => openSlicer(state)}
-              >
-                REUSE SHEET
-              </button>
-            )}
+            <button
+              type="button"
+              className="button button--secondary button--small sheet-row__button sheet-row__button--wide"
+              disabled={!source || Boolean(slicer)}
+              aria-label={
+                source ? `Reuse sheet ${source.fileName} for ${state}` : `Reuse sheet for ${state}`
+              }
+              title={
+                source ? `Slice ${source.fileName} again for this state` : 'No sheet loaded yet.'
+              }
+              onClick={() => openSlicer(state)}
+            >
+              REUSE SHEET
+            </button>
             {/* The default's idle row can drop an uploaded sheet: the built-in one comes back. */}
-            {!slicer && (state !== 'idle' || isDefault) && (
-              <button
-                type="button"
-                className="button button--secondary button--small sheet-row__button"
-                disabled={!sheet || sheet.builtIn}
-                aria-label={`Remove ${state} sheet`}
-                title={
-                  isDefault && state === 'idle'
+            <button
+              type="button"
+              className="button button--secondary button--small sheet-row__button"
+              disabled={
+                Boolean(slicer) || !sheet || sheet.builtIn || (state === 'idle' && !isDefault)
+              }
+              aria-label={`Remove ${state} sheet`}
+              title={
+                state === 'idle'
+                  ? isDefault
                     ? 'Goes back to the built-in idle sheet.'
-                    : undefined
-                }
-                onClick={() => remove(state)}
-              >
-                REMOVE
-              </button>
-            )}
+                    : 'Idle is required'
+                  : undefined
+              }
+              onClick={() => remove(state)}
+            >
+              REMOVE
+            </button>
           </div>
         </div>
 

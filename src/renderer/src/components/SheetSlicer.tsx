@@ -1,5 +1,5 @@
 import { useEffect, useState, type CSSProperties } from 'react'
-import { checkSlice, defaultPicks, MAX_GRID } from '../../../shared/sliceRules'
+import { checkSlice, defaultPicks, MAX_GRID, SLICE_GRID_MESSAGE } from '../../../shared/sliceRules'
 import { usePrefersReducedMotion } from '../hooks/usePrefersReducedMotion'
 import './SheetSlicer.css'
 
@@ -50,6 +50,14 @@ function formatSize(value: number): string {
   return String(Math.round(value * 10) / 10)
 }
 
+// What a typed columns or rows field holds: a whole number from 1 to MAX_GRID,
+// or null for anything else (empty, partial, fractional, out of range).
+function parseGridSize(text: string): number | null {
+  if (text.trim() === '') return null
+  const value = Number(text)
+  return Number.isInteger(value) && value >= 1 && value <= MAX_GRID ? value : null
+}
+
 // The sheet slicer from designs/7-sheet-slicer.html: set the grid, click cells
 // in play order, watch the loop, and USE the picked frames as a 64x64 strip.
 function SheetSlicer({
@@ -61,6 +69,12 @@ function SheetSlicer({
 }: SheetSlicerProps): React.JSX.Element {
   const reducedMotion = usePrefersReducedMotion()
   const [grid, setGrid] = useState(initialGrid)
+  // What the two number fields show. It follows the grid, except while the text
+  // typed is not a valid size: then the grid keeps its last good value.
+  const [draft, setDraft] = useState({
+    columns: String(initialGrid.columns),
+    rows: String(initialGrid.rows)
+  })
   const [picks, setPicks] = useState(() => defaultPicks(initialGrid.columns, initialGrid.rows))
   const [playing, setPlaying] = useState(false)
   const [frame, setFrame] = useState(0)
@@ -68,8 +82,10 @@ function SheetSlicer({
   const [busy, setBusy] = useState(false)
 
   const status = checkSlice(source.width, source.height, grid.columns, grid.rows, picks)
-  const level = useError ? 'error' : status.level
-  const message = useError ?? status.message
+  const draftInvalid = parseGridSize(draft.columns) === null || parseGridSize(draft.rows) === null
+  const level = draftInvalid || useError ? 'error' : status.level
+  const message = draftInvalid ? SLICE_GRID_MESSAGE : (useError ?? status.message)
+  const canUse = status.canUse && !draftInvalid
   const cellCount = grid.columns * grid.rows
   const canPlay = picks.length > 0
   const animating = playing && !reducedMotion && picks.length > 1 && fps !== null
@@ -89,6 +105,7 @@ function SheetSlicer({
   }
 
   function changeGrid(next: SliceGrid): void {
+    if (!Number.isInteger(next.columns) || !Number.isInteger(next.rows)) return
     const columns = Math.min(MAX_GRID, Math.max(1, next.columns))
     const rows = Math.min(MAX_GRID, Math.max(1, next.rows))
     setGrid({ columns, rows })
@@ -101,7 +118,7 @@ function SheetSlicer({
   }
 
   async function use(): Promise<void> {
-    if (!status.canUse || busy) return
+    if (!canUse || busy) return
     setBusy(true)
     const error = await onUse(grid, picks)
     // On success the slicer closes; on failure it stays open with the message.
@@ -125,6 +142,10 @@ function SheetSlicer({
 
   const stepper = (name: 'Columns' | 'Rows', key: keyof SliceGrid): React.JSX.Element => {
     const value = grid[key]
+    const step = (to: number): void => {
+      changeGrid({ ...grid, [key]: to })
+      setDraft((current) => ({ ...current, [key]: String(to) }))
+    }
     return (
       <div className="slicer__stepper-group" role="group" aria-label={name}>
         <span className="slicer__label">{name.toUpperCase()}</span>
@@ -133,16 +154,37 @@ function SheetSlicer({
             type="button"
             aria-label={`Fewer ${name.toLowerCase()}`}
             disabled={value <= 1}
-            onClick={() => changeGrid({ ...grid, [key]: value - 1 })}
+            onClick={() => step(value - 1)}
           >
             -
           </button>
-          <output aria-live="polite">{value}</output>
+          <input
+            type="number"
+            inputMode="numeric"
+            min={1}
+            max={MAX_GRID}
+            step={1}
+            value={draft[key]}
+            aria-label={name}
+            aria-invalid={parseGridSize(draft[key]) === null}
+            onChange={(event) => {
+              const text = event.target.value
+              setDraft((current) => ({ ...current, [key]: text }))
+              const typed = parseGridSize(text)
+              // Only a real change resets the picks; anything else keeps the grid.
+              if (typed !== null && typed !== value) changeGrid({ ...grid, [key]: typed })
+            }}
+            onBlur={() => setDraft((current) => ({ ...current, [key]: String(value) }))}
+            onKeyDown={(event) => {
+              // The slicer sits inside the dialog's form: Enter must not submit it.
+              if (event.key === 'Enter') event.preventDefault()
+            }}
+          />
           <button
             type="button"
             aria-label={`More ${name.toLowerCase()}`}
             disabled={value >= MAX_GRID}
-            onClick={() => changeGrid({ ...grid, [key]: value + 1 })}
+            onClick={() => step(value + 1)}
           >
             +
           </button>
@@ -299,7 +341,7 @@ function SheetSlicer({
         <button
           type="button"
           className="button button--primary"
-          disabled={!status.canUse || busy}
+          disabled={!canUse || busy}
           onClick={() => void use()}
         >
           USE {framesText(picks.length)}
