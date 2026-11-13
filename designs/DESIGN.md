@@ -74,6 +74,13 @@ Conversations waiting for approval count as unread in the inbox.
 
 - A mascot has five states: idle, thinking, talking, working, asking.
 - Each state has its own spritesheet and its own FPS.
+- A loop can reverse at the end (REVERSE AT END, off by default). It plays the frames
+  forward, then back down to the second frame, then starts again: 1, 2, ... n, n-1,
+  ... 2, 1, 2, ... The two end frames each show once, so there is no pause at the
+  turn. It needs at least 3 frames, and with fewer it does nothing. It is saved with the
+  state in the mascot's `manifest.json` as `"reverse": true`, and the field is left
+  out when it is off. The strip itself is not changed, so the 16-frame limit still
+  holds.
 - Spritesheet format: PNG, horizontal strip of 64x64 frames. Height exactly
   64px, width a multiple of 64, at most 16 frames. A sheet in any other
   layout opens the sheet slicer, which cuts it into such a strip (see Sheet
@@ -135,6 +142,15 @@ cells; the slicer itself disables USE instead).
 - When the grid changes, the picks reset: every cell in reading order if there
   are 16 or fewer, none if there are more.
 - Picked cells show their place in the loop; unpicked cells are dimmed.
+- REVERSE AT END is a checkbox in the LOOP FRAMES header, between the count and PICK
+  ALL, off by default (it starts from the row's setting when the row already has an
+  upload). It is disabled with fewer than 3 picked frames, with the title "Needs three or
+  more frames.". When it is on, a line under the header reads "Plays 1 to <n>, back
+  down to 2, then starts again.", the preview plays in that order, and its frame note
+  adds " · back" on the way down. USE keeps the setting with the strip.
+- A filled row (not slicing, 3 or more frames) shows the same checkbox under its loop,
+  with the note "Plays forward, then back.", so the setting can be changed without
+  slicing again. Replacing a sheet keeps it, like FPS. REMOVE clears it.
 - Frames are scaled to 64x64 by nearest neighbour only: no smoothing, no
   blending.
 - SAVE MASCOT is disabled while a slicer is open.

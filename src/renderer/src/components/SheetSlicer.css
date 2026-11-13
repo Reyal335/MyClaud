@@ -268,6 +268,36 @@
   align-items: center;
 }
 
+/* REVERSE AT END: a checkbox in the loop header, as tall as the buttons beside it. */
+.slicer__check {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  font-family: var(--font-pixel);
+  font-size: 8px;
+  line-height: 1.5;
+  cursor: pointer;
+}
+
+.slicer__check input {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  accent-color: var(--accent);
+}
+
+.slicer__check:has(:focus-visible) {
+  outline: var(--border-thin) solid var(--text);
+  outline-offset: 2px;
+}
+
+.slicer__check--off {
+  color: var(--muted);
+  cursor: not-allowed;
+}
+
 .slicer__push {
   margin-left: auto;
 }

@@ -54,6 +54,7 @@ function MascotCard({
             src={shown.src}
             frames={shown.frames}
             fps={shown.fps}
+            reverse={shown.reverse}
             scale={2}
             label={`${name}, ${shownState} loop`}
           />

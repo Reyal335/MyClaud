@@ -1,4 +1,5 @@
 import { useEffect, useState, type CSSProperties } from 'react'
+import { canReverse, loopOrder } from '../../../shared/mascotRules'
 import { checkSlice, defaultPicks, MAX_GRID, SLICE_GRID_MESSAGE } from '../../../shared/sliceRules'
 import { usePrefersReducedMotion } from '../hooks/usePrefersReducedMotion'
 import './SheetSlicer.css'
@@ -17,10 +18,12 @@ export type SliceGrid = { columns: number; rows: number }
 type SheetSlicerProps = {
   source: SliceSource
   initialGrid: SliceGrid
+  // Whether the loop starts with REVERSE AT END on.
+  initialReverse: boolean
   // The row's fps, or null while the field is not a valid number.
   fps: number | null
   // Makes the strip. Resolves to an error message, or null when it worked.
-  onUse: (grid: SliceGrid, cells: number[]) => Promise<string | null>
+  onUse: (grid: SliceGrid, cells: number[], reverse: boolean) => Promise<string | null>
   onCancel: () => void
 }
 
@@ -63,6 +66,7 @@ function parseGridSize(text: string): number | null {
 function SheetSlicer({
   source,
   initialGrid,
+  initialReverse,
   fps,
   onUse,
   onCancel
@@ -76,6 +80,9 @@ function SheetSlicer({
     rows: String(initialGrid.rows)
   })
   const [picks, setPicks] = useState(() => defaultPicks(initialGrid.columns, initialGrid.rows))
+  // REVERSE AT END: after the last frame the loop plays back to the second, then
+  // starts again.
+  const [reverse, setReverse] = useState(initialReverse)
   const [playing, setPlaying] = useState(false)
   const [frame, setFrame] = useState(0)
   const [useError, setUseError] = useState<string | null>(null)
@@ -89,7 +96,14 @@ function SheetSlicer({
   const cellCount = grid.columns * grid.rows
   const canPlay = picks.length > 0
   const animating = playing && !reducedMotion && picks.length > 1 && fps !== null
-  const shown = picks.length > 0 ? frame % picks.length : 0
+  const reversible = canReverse(picks.length)
+  const reversing = reverse && reversible
+  // The order the preview plays: picks 0..n-1, then back down to 1 when reversing.
+  const order = loopOrder(picks.length, reversing)
+  const place = order.length > 0 ? frame % order.length : 0
+  const shown = order.length > 0 ? order[place] : 0
+  // On the way back, after the last frame.
+  const goingBack = reversing && place >= picks.length
 
   useEffect(() => {
     if (!animating || fps === null) return
@@ -120,7 +134,7 @@ function SheetSlicer({
   async function use(): Promise<void> {
     if (!canUse || busy) return
     setBusy(true)
-    const error = await onUse(grid, picks)
+    const error = await onUse(grid, picks, reversing)
     // On success the slicer closes; on failure it stays open with the message.
     if (error) {
       setUseError(error)
@@ -273,7 +287,7 @@ function SheetSlicer({
             <div className="slicer__stack">
               <span className="slicer__note">
                 {canPlay
-                  ? `Frame ${shown + 1} of ${picks.length} at ${fps ?? '-'} fps`
+                  ? `Frame ${shown + 1} of ${picks.length} at ${fps ?? '-'} fps${goingBack ? ' · back' : ''}`
                   : 'Nothing to play'}
               </span>
               <button
@@ -301,6 +315,21 @@ function SheetSlicer({
           <span className="slicer__note">
             {picks.length} of {cellCount} cells picked
           </span>
+          <label
+            className={`slicer__check${reversible ? '' : ' slicer__check--off'}`}
+            title={reversible ? undefined : 'Needs three or more frames.'}
+          >
+            <input
+              type="checkbox"
+              checked={reversing}
+              disabled={!reversible}
+              onChange={(event) => {
+                setReverse(event.target.checked)
+                setFrame(0)
+              }}
+            />
+            REVERSE AT END
+          </label>
           <button
             type="button"
             className="button button--secondary button--small slicer__button slicer__push"
@@ -316,6 +345,11 @@ function SheetSlicer({
             CLEAR
           </button>
         </div>
+        {reversing && (
+          <span className="slicer__note">
+            Plays 1 to {picks.length}, back down to 2, then starts again.
+          </span>
+        )}
         {picks.length > 0 ? (
           <ol className="slicer__frames">
             {picks.map((cell, k) => (

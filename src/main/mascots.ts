@@ -19,6 +19,7 @@ import {
 import { checkSlice, SLICE_EMPTY_MESSAGE } from '../shared/sliceRules'
 import { cutFrames } from './sheetSlice'
 import {
+  canReverse,
   DEFAULT_MASCOT_ID,
   FRAME_SIZE,
   isMascotState,
@@ -310,7 +311,9 @@ export function sliceSheet(
 
 // --- Reading mascots -----------------------------------------------------
 
-type ManifestEntry = { file: string; frames: number; fps: number }
+// `reverse` is only written when it is on, so a manifest from before the option (or
+// one with it off) has no such field and reads as off.
+type ManifestEntry = { file: string; frames: number; fps: number; reverse: boolean }
 type ManifestStates = Partial<Record<MascotStateName, ManifestEntry>>
 
 type ParsedManifest =
@@ -347,11 +350,17 @@ function parseManifest(text: string, idleRequired: boolean): ParsedManifest {
       !isObject(value) ||
       value.file !== sheetFile(key) ||
       typeof value.frames !== 'number' ||
-      !isValidFps(value.fps)
+      !isValidFps(value.fps) ||
+      (value.reverse !== undefined && typeof value.reverse !== 'boolean')
     ) {
       return broken(`manifest.json has a broken entry for ${key}.`)
     }
-    states[key] = { file: value.file, frames: value.frames, fps: value.fps }
+    states[key] = {
+      file: value.file,
+      frames: value.frames,
+      fps: value.fps,
+      reverse: value.reverse === true
+    }
   }
   if (idleRequired && !states.idle) return broken('This mascot has no idle sheet.')
   return { ok: true, name, states }
@@ -407,7 +416,13 @@ async function readMascotFolder(id: string, idleRequired: boolean): Promise<Fold
     const sheet = await loadSheet(folder, entry.file)
     if (!sheet.ok) return problem(manifest.name, sheet.problem)
     // The image decides the frame count, whatever the manifest says.
-    loops[state] = { src: stripUrl(sheet.bytes), frames: sheet.frames, fps: entry.fps }
+    loops[state] = {
+      src: stripUrl(sheet.bytes),
+      frames: sheet.frames,
+      fps: entry.fps,
+      // It only means something with three or more frames, whatever the manifest says.
+      reverse: entry.reverse && canReverse(sheet.frames)
+    }
   }
   return { ok: true, name: manifest.name, loops }
 }
@@ -502,7 +517,7 @@ export function getActiveMascot(): Promise<MascotsResult<{ mascot: ActiveMascotD
 
 type CleanDraft = {
   name: string
-  states: Record<MascotStateName, { fps: number; sheet: MascotSheetChange }>
+  states: Record<MascotStateName, { fps: number; reverse: boolean; sheet: MascotSheetChange }>
 }
 
 function readSheetChange(raw: unknown): MascotSheetChange | null {
@@ -532,12 +547,13 @@ function readDraft(raw: unknown): CleanDraft {
     if (!isValidFps(entry.fps)) {
       invalid(`FPS for ${state} must be a whole number from ${MIN_FPS} to ${MAX_FPS}.`)
     }
+    if (typeof entry.reverse !== 'boolean') invalid(`The ${state} reverse setting is not valid.`)
     const sheet = readSheetChange(entry.sheet)
     if (!sheet) invalid(`The ${state} sheet change is not valid.`)
     if (sheet.type === 'token' && !pendingSheets.has(sheet.token)) {
       invalid(`The ${state} sheet is no longer available. Upload it again.`)
     }
-    states[state] = { fps: entry.fps, sheet }
+    states[state] = { fps: entry.fps, reverse: entry.reverse, sheet }
   }
   return { name: raw.name.trim(), states }
 }
@@ -558,7 +574,7 @@ function planSave(
 ): SavePlan {
   const plan: SavePlan = { states: {}, writes: [], removals: [], tokens: [] }
   for (const state of MASCOT_STATES) {
-    const { fps, sheet } = draft.states[state]
+    const { fps, reverse, sheet } = draft.states[state]
     const current = existing?.[state]
     const file = sheetFile(state)
     if (sheet.type === 'token') {
@@ -568,9 +584,19 @@ function planSave(
       if (!check.ok) invalid(`${state}: ${check.message}`)
       plan.writes.push({ state, bytes })
       plan.tokens.push(sheet.token)
-      plan.states[state] = { file, frames: check.frames, fps }
+      plan.states[state] = {
+        file,
+        frames: check.frames,
+        fps,
+        reverse: reverse && canReverse(check.frames)
+      }
     } else if (sheet.type === 'keep' && current) {
-      plan.states[state] = { file, frames: current.frames, fps }
+      plan.states[state] = {
+        file,
+        frames: current.frames,
+        fps,
+        reverse: reverse && canReverse(current.frames)
+      }
     } else if (sheet.type === 'remove' && current) {
       plan.removals.push(state)
     }
@@ -613,10 +639,18 @@ async function writeExistingFolder(folder: string, name: string, plan: SavePlan)
   }
 }
 
+// What is written for a state: `reverse` is left out when it is off.
+type StoredEntry = Omit<ManifestEntry, 'reverse'> & { reverse?: true }
+
 function manifestText(name: string, states: ManifestStates): string {
-  // States in the dialog's order.
-  const ordered: ManifestStates = {}
-  for (const state of MASCOT_STATES) if (states[state]) ordered[state] = states[state]
+  // States in the dialog's order. `reverse` is written only when it is on.
+  const ordered: Partial<Record<MascotStateName, StoredEntry>> = {}
+  for (const state of MASCOT_STATES) {
+    const entry = states[state]
+    if (!entry) continue
+    const { reverse, ...rest } = entry
+    ordered[state] = reverse ? { ...rest, reverse: true } : rest
+  }
   return `${JSON.stringify({ version: MANIFEST_VERSION, name, states: ordered }, null, 2)}\n`
 }
 

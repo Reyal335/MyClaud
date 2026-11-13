@@ -24,6 +24,26 @@ export function sourceTooLargeMessage(width: number, height: number): string {
   return `Sheet must be at most ${MAX_SOURCE_SIDE} pixels on each side. This one is ${width}x${height}.`
 }
 
+// A loop can run forward and then back ("reverse at the end"). With one or two frames
+// that is the same as looping, so it needs at least three.
+export const MIN_REVERSE_FRAMES = 3
+
+export function canReverse(frames: number): boolean {
+  return frames >= MIN_REVERSE_FRAMES
+}
+
+// The frames of a loop in the order they play, as 0-based places in the strip. A loop
+// that reverses at the end runs to the last frame, then back down to the second, then
+// starts again: 0, 1, ..., n-1, n-2, ..., 1. The two end frames are each shown once, so
+// the turn-around has no pause.
+export function loopOrder(frames: number, reverse: boolean): number[] {
+  const order = Array.from({ length: frames }, (_, i) => i)
+  if (reverse && canReverse(frames)) {
+    for (let i = frames - 2; i >= 1; i--) order.push(i)
+  }
+  return order
+}
+
 export const MIN_FPS = 1
 export const MAX_FPS = 30
 export const DEFAULT_FPS = 8

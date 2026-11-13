@@ -7,7 +7,7 @@ import type { Mascot } from './types'
 export const DEFAULT_MASCOT: Mascot = {
   name: 'Default',
   loops: {
-    idle: { src: mascotSheet, frames: 1, fps: 1 }
+    idle: { src: mascotSheet, frames: 1, fps: 1, reverse: false }
   }
 }
 

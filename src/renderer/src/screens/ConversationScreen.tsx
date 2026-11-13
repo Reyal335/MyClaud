@@ -426,6 +426,7 @@ function ConversationScreen({
                     fps={loop.fps}
                     scale={2}
                     label={`Mascot, ${shownState}`}
+                    reverse={loop.reverse}
                   />
                   {badge && (
                     <span className={`stage__badge stage__badge--${shownState}`} aria-hidden="true">

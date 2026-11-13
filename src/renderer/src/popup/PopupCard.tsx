@@ -74,6 +74,7 @@ function PopupCard({ view, mascot, api }: PopupCardProps): React.JSX.Element {
         src={loop.src}
         frames={loop.frames}
         fps={loop.fps}
+        reverse={loop.reverse}
         scale={2}
         label={`${mascot.name}, ${MASCOT_LABELS[view.kind]}`}
       />

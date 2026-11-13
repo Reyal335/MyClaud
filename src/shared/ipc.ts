@@ -402,11 +402,14 @@ export type PickIconResult =
 // uploaded ones in userData/mascots/<uuid>/.
 
 // One spritesheet: a horizontal strip of 64x64 frames, played at `fps`. `src`
-// is a data URL. The frame count always comes from the image width.
+// is a data URL. The frame count always comes from the image width. With `reverse`
+// the loop plays forward, then back, then forward again (see loopOrder); it only
+// takes effect with three or more frames.
 export type MascotLoop = {
   src: string
   frames: number
   fps: number
+  reverse: boolean
 }
 
 export type MascotLoops = { idle: MascotLoop } & Partial<
@@ -447,7 +450,7 @@ export type MascotDraft = {
   name: string
   // Every state, in any order. `keep` on a state without a sheet leaves it empty.
   // For the default, an empty idle means the bundled idle sheet.
-  states: Record<MascotStateName, { fps: number; sheet: MascotSheetChange }>
+  states: Record<MascotStateName, { fps: number; reverse: boolean; sheet: MascotSheetChange }>
 }
 
 export type MascotsErrorCode = 'invalid' | 'invalid_slice' | 'not_found' | 'no_idle' | 'io_error'

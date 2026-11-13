@@ -228,6 +228,39 @@
   border: var(--border) solid var(--text);
 }
 
+/* REVERSE AT END on a filled row: the same checkbox as in the slicer. */
+.sheet-row__reverse {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-height: 44px;
+  font-family: var(--font-pixel);
+  font-size: 8px;
+  line-height: 1.5;
+  cursor: pointer;
+}
+
+.sheet-row__reverse input {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  accent-color: var(--accent);
+}
+
+.sheet-row__reverse:has(:focus-visible) {
+  outline: var(--border-thin) solid var(--text);
+  outline-offset: 2px;
+}
+
+.sheet-row__reverse-note {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--muted);
+}
+
 .sheet-row__placeholder {
   padding: 14px;
   border: var(--border) dashed var(--line);
