@@ -31,7 +31,7 @@ import { getChatSession, setChatChoice, setChatSession, setChatTheme } from './c
 import { historyItems, type RecordedMessage, type SavedTask } from './history'
 import { DENY_MESSAGE, forIpc, isAgentTool } from './ipcInput'
 import { choiceForRun } from './modelChoice'
-import { childEnv, loadSdk, type Sdk } from './sdk'
+import { childEnv, claudeExecutable, loadSdk, type Sdk } from './sdk'
 import { getDefaultChoice } from './settings'
 import { AUTO, AUTO_CHOICE, isEffortLevel, type ModelChoice } from '../shared/models'
 import {
@@ -679,6 +679,7 @@ async function execute(run: Run): Promise<void> {
       abortController: run.abortController,
       env: childEnv(),
       ...(model !== AUTO ? { model } : {}),
+      ...claudeExecutable(),
       ...(isEffortLevel(effort) ? { effort } : {}),
       ...(resumed ? { resume: resumed } : {})
     }

@@ -1,7 +1,7 @@
 import type { Options, SDKUserMessage } from '@anthropic-ai/claude-agent-sdk'
 import { modelLists, type ModelLists } from '../shared/models'
 import { createInputQueue } from './runInput'
-import { childEnv, loadSdk } from './sdk'
+import { childEnv, claudeExecutable, loadSdk } from './sdk'
 
 // The models the logged-in account can use, from the SDK's supportedModels(). It
 // belongs to a query, so a query is opened with no message in it: Claude Code
@@ -32,7 +32,8 @@ async function fetchModels(cwd: string): Promise<ModelsLoad> {
       settingSources: ['user', 'project', 'local'],
       persistSession: false,
       abortController,
-      env: childEnv()
+      env: childEnv(),
+      ...claudeExecutable()
     }
     const query = sdk.query({ prompt: input.iterable, options })
     try {
