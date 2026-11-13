@@ -1,5 +1,11 @@
 import { contextBridge, ipcRenderer, type IpcRendererEvent } from 'electron'
-import { IpcChannel, type AgentEvent, type MyClaudApi, type PopupOpenTarget } from '../shared/ipc'
+import {
+  IpcChannel,
+  type AgentEvent,
+  type MyClaudApi,
+  type PopupOpenTarget,
+  type WindowState
+} from '../shared/ipc'
 
 // The only API the renderer gets. ipcRenderer itself is never exposed.
 const api: MyClaudApi = {
@@ -81,6 +87,19 @@ const api: MyClaudApi = {
       ipcRenderer.on(IpcChannel.TasksChanged, listener)
       return () => {
         ipcRenderer.removeListener(IpcChannel.TasksChanged, listener)
+      }
+    }
+  },
+  window: {
+    minimize: () => ipcRenderer.invoke(IpcChannel.WindowMinimize),
+    toggleMaximize: (source) => ipcRenderer.invoke(IpcChannel.WindowToggleMaximize, source),
+    close: () => ipcRenderer.invoke(IpcChannel.WindowClose),
+    getState: () => ipcRenderer.invoke(IpcChannel.WindowGetState),
+    onState: (callback) => {
+      const listener = (_event: IpcRendererEvent, state: WindowState): void => callback(state)
+      ipcRenderer.on(IpcChannel.WindowState, listener)
+      return () => {
+        ipcRenderer.removeListener(IpcChannel.WindowState, listener)
       }
     }
   },

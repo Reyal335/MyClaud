@@ -19,6 +19,10 @@
   --font-pixel: 'Press Start 2P', monospace;
   --font-mono: 'IBM Plex Mono', monospace;
 
+  /* The title bar: 36px plus its 4px line. Dialogs and anything sized to the window
+     start below it. */
+  --titlebar-height: 40px;
+
   /* Borders */
   --border: 4px;
   --border-thin: 2px;

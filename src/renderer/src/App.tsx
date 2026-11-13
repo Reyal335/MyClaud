@@ -2,13 +2,18 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import AppShell from './components/AppShell'
 import NoProject from './components/NoProject'
 import Sidebar from './components/Sidebar'
+import TitleBar from './components/TitleBar'
+import { titleBarCrumb } from './components/titleBarCrumb'
+import { speakerName } from './conversation/agentName'
 import ConversationScreen from './screens/ConversationScreen'
 import InboxScreen from './screens/InboxScreen'
 import AgentsScreen from './screens/AgentsScreen'
 import MascotsScreen from './screens/MascotsScreen'
+import { useActiveMascot } from './mascots/useActiveMascot'
 import { useConversation, type CallTarget } from './hooks/useConversation'
 import { useProject } from './hooks/useProject'
 import { useTasks } from './hooks/useTasks'
+import { useWaitingAlert } from './hooks/useWaitingAlert'
 import type { LeaveGuard, Screen } from './screens/types'
 
 function App(): React.JSX.Element {
@@ -18,6 +23,10 @@ function App(): React.JSX.Element {
   // events, so CHAT and INBOX always agree and leaving CHAT loses nothing.
   const conversation = useConversation()
   const tasks = useTasks(project?.path ?? null)
+  // The title bar's counts, the amber WAITING fill, and the breadcrumb all read what is
+  // already here: the tasks, the screen, the project, and the mascot the chat speaks as.
+  const mascot = useActiveMascot(window.myclaud.mascots)
+  const waitingAlert = useWaitingAlert(tasks.tasks, tasks.loaded, screen === 'inbox')
   const { clear } = conversation
   // The agent called for my next message, and the task open in INBOX.
   const [call, setCall] = useState<CallTarget | null>(null)
@@ -89,12 +98,25 @@ function App(): React.JSX.Element {
     [confirmLeave, openTask]
   )
 
+  const openTaskSummary = tasks.tasks.find((task) => task.id === selectedTaskId) ?? null
+  const crumb = titleBarCrumb(screen, speakerName(mascot), project, openTaskSummary)
+
   const mainWaiting = conversation.items.some(
     (item) => item.kind === 'tool' && item.permission !== null && item.taskId === null
   )
 
   return (
     <AppShell
+      titleBar={
+        <TitleBar
+          crumb={crumb}
+          running={tasks.runningCount}
+          waiting={tasks.waitingCount}
+          waitingAlert={waitingAlert}
+          // A pill opens INBOX. INBOX has no status filter, so it opens as it is.
+          onOpenInbox={() => handleNavigate('inbox')}
+        />
+      }
       sidebar={
         <Sidebar
           screen={screen}

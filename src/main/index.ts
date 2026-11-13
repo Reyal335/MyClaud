@@ -8,9 +8,16 @@ import { registerIpc } from './ipc'
 import { prefetchModels } from './models'
 import { getProject, loadProject } from './settings'
 import { loadTasks } from './tasks'
+import { watchWindow } from './windowControls'
 
 // Matches --bg in the renderer tokens, so the window never flashes white on load.
 const WINDOW_BACKGROUND = '#0B132B'
+
+// The window's frame. The page draws its own title bar (TitleBar): on Windows and Linux
+// there is no system frame and the bar has its own window buttons; on macOS the traffic
+// lights stay, inset into the bar.
+const frameOptions: Electron.BrowserWindowConstructorOptions =
+  process.platform === 'darwin' ? { titleBarStyle: 'hiddenInset' } : { frame: false }
 
 function isWebUrl(url: string): boolean {
   try {
@@ -30,6 +37,7 @@ function createWindow(): BrowserWindow {
     title: 'MyClaud',
     backgroundColor: WINDOW_BACKGROUND,
     show: false,
+    ...frameOptions,
     ...windowIconOptions,
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
@@ -43,6 +51,9 @@ function createWindow(): BrowserWindow {
   if (process.platform !== 'darwin') {
     mainWindow.setMenuBarVisibility(false)
   }
+
+  // The title bar redraws when the window is maximized, restored, focused, or blurred.
+  watchWindow(mainWindow)
 
   mainWindow.on('ready-to-show', () => {
     mainWindow.show()

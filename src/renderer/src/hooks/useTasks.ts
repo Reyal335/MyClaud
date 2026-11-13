@@ -7,6 +7,8 @@ export type TasksStore = {
   error: string | null
   // Tasks waiting for my approval: the INBOX nav count.
   waitingCount: number
+  // Tasks running: the title bar's RUNNING count.
+  runningCount: number
   reload: () => void
 }
 
@@ -46,5 +48,6 @@ export function useTasks(projectPath: string | null): TasksStore {
   }, [reload, projectPath])
 
   const waitingCount = tasks.filter((task) => task.status === 'waiting').length
-  return { tasks, loaded, error, waitingCount, reload }
+  const runningCount = tasks.filter((task) => task.status === 'running').length
+  return { tasks, loaded, error, waitingCount, runningCount, reload }
 }

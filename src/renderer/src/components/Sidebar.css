@@ -9,13 +9,6 @@
   border-right: var(--border) solid var(--line);
 }
 
-.sidebar__wordmark {
-  padding: 4px 8px 16px;
-  font-family: var(--font-pixel);
-  font-size: 13px;
-  color: var(--accent);
-}
-
 .sidebar__footer {
   margin-top: auto;
   padding: 8px;

@@ -50,6 +50,15 @@ export const IpcChannel = {
   TasksClearFinished: 'tasks:clear-finished',
   // Main to every window: a task started, changed, ended, or was removed.
   TasksChanged: 'tasks:changed',
+  // The main window's own buttons, for the custom title bar. Each acts on the window
+  // that sent it.
+  WindowMinimize: 'window:minimize',
+  WindowToggleMaximize: 'window:toggle-maximize',
+  WindowClose: 'window:close',
+  WindowGetState: 'window:get-state',
+  // Main to the main window: it was maximized, restored, put in or taken out of full
+  // screen, focused, or blurred.
+  WindowState: 'window:state',
   UiGetPartyPanel: 'ui:get-party-panel',
   UiSetPartyPanel: 'ui:set-party-panel',
   UiGetPopups: 'ui:get-popups',
@@ -260,6 +269,17 @@ export type ModelsResult = ({ ok: true } & ModelLists) | { ok: false; message: s
 // The open chat's choice, made to fit what is available now, or why it failed.
 export type ModelChoiceResult =
   { ok: true; choice: ModelChoice } | { ok: false; error: { message: string } }
+
+// The main window, for the custom title bar. `platform` decides whether the bar draws
+// its own window buttons (win32, linux) or leaves room for the native ones (darwin).
+export type WindowPlatform = 'win32' | 'darwin' | 'linux'
+
+export type WindowState = {
+  // Maximized or in full screen: the button then offers Restore.
+  maximized: boolean
+  focused: boolean
+  platform: WindowPlatform
+}
 
 // Chat themes: uploaded pictures behind the CHAT history and stage (the built-in Tokyo
 // Night is bundled with the window), and the choice of which one and how faded.
@@ -595,6 +615,16 @@ export type MyClaudApi = {
     // Removes the open project's done, error, and stopped tasks.
     clearFinished: () => Promise<TasksResult>
     onChanged: (callback: () => void) => () => void
+  }
+  window: {
+    minimize: () => Promise<void>
+    // Maximizes, or restores a maximized or full-screen window. 'doubleClick' marks a
+    // double-click on the bar: main ignores it when the system has just done the same.
+    toggleMaximize: (source?: 'doubleClick') => Promise<void>
+    // Closes the window the way closing it any other way does.
+    close: () => Promise<void>
+    getState: () => Promise<WindowState>
+    onState: (callback: (state: WindowState) => void) => () => void
   }
   ui: {
     // null until I choose with the collapse button.

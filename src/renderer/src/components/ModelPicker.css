@@ -76,7 +76,7 @@
   z-index: 2;
   width: 460px;
   max-width: 100%;
-  max-height: min(640px, calc(100vh - 180px));
+  max-height: min(640px, calc(100vh - var(--titlebar-height) - 180px));
   overflow-y: auto;
   display: flex;
   flex-direction: column;

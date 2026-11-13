@@ -9,6 +9,7 @@ import {
 } from '../shared/ipc'
 import { chatChoice, listModels, saveChoice } from './modelChoice'
 import { prefetchModels } from './models'
+import { registerWindowIpc } from './windowControls'
 import {
   addTheme,
   listThemes,
@@ -53,6 +54,8 @@ import {
 } from './mascots'
 
 export function registerIpc(): void {
+  registerWindowIpc()
+
   ipcMain.handle(IpcChannel.ProjectGet, (): ProjectInfo | null => getProject())
 
   ipcMain.handle(IpcChannel.ProjectOpen, async (event): Promise<ProjectInfo | null> => {

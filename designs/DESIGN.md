@@ -20,6 +20,7 @@ components in React and match these visually.
 | `8c-party-rail.html` | CHAT in a narrow window, with the party panel collapsed to a rail |
 | `10-model-picker.html` | CHAT with the model and thinking picker open above the input row, and a reply with its tag |
 | `11-chat-themes.html` | The chat theme picker: the tiles, the preview, the fade slider, and APPLY TO |
+| `12-title-bar.html` | The custom title bar: where I am, RUNNING and WAITING pills, window buttons, and its states |
 | `mascot.png` | Default mascot image used in the mockups |
 
 ## Colors
@@ -496,6 +497,98 @@ A modal dialog over CHAT.
 - Focus moves into the dialog on open, stays inside while it is open, and returns to
   the THEME button on close. At the minimum window size (960x600) the whole dialog fits,
   and the grid scrolls if needed.
+
+## Title bar
+
+See `12-title-bar.html`. The main window has no system title bar. The app draws its own,
+once, at the very top of the app shell across the full width, above the sidebar and the
+screens. The rest of the app fills the space below it, and nothing scrolls under it. The
+popup notification window is not changed.
+
+### Platforms
+
+- Windows and Linux: the window is frameless (`frame: false`), still resizable, with its
+  minimum size (960x600) unchanged. The bar draws three window buttons. The trade-off is
+  that Windows 11's Snap Layouts menu (hovering Maximize) is gone. Win+Z, Win+arrows, and
+  dragging to a screen edge still work. Windows resizes a frameless window from its outer
+  edge, just outside the visible border.
+- macOS: `titleBarStyle: 'hiddenInset'`. Apple's red, yellow, and green buttons stay. The
+  bar leaves 78px clear at its left for them and does not draw its three buttons.
+- The window's buttons act through a window IPC group: minimize, toggleMaximize, close,
+  getState, and a state event. Each command acts only on the window that sent it. Close
+  calls `win.close()`, so it does exactly what closing the window does anywhere else.
+  Main sends the state on maximize, unmaximize, enter and leave full screen, focus, and
+  blur.
+
+### The bar
+
+- 36px tall plus a 4px `--line` bottom border (40px in all). Fill `--panel`.
+- Left to right: the app icon, the app name, a 4x16 `--line` divider, the breadcrumb, an
+  empty flexible gap, the status pills, then the window buttons.
+- App icon: the pixel icon (the cloud with a face), 16x12 at 1x with crisp edges. It is
+  drawn from the same grid as `scripts/make-icon.mjs`; keep the two the same. Decorative:
+  `aria-hidden`.
+- App name: MYCLAUD, Press Start 2P, 10px, `--accent`.
+- Breadcrumb: 12px, `--muted`, one line, an ellipsis when it does not fit. The screen name
+  in capitals, then " / " and the item in view in `--text`. On CHAT: "<chat title> in
+  <project>", with only the title in `--text`: the same title (the speaker name) and project
+  the CHAT header shows. On INBOX with a thread open: that thread's title, the heading its
+  detail shows. Anywhere else the screen name alone.
+- Below 1100px of window width: the breadcrumb shows only the item in view (or the screen
+  name), and the pills show only their counts.
+- Text in the bar cannot be selected.
+
+### Window not focused
+
+The bar's fill is `--bg`, and every text, icon, glyph, and pill turns `--muted` (pill
+borders `--line`, as in the mockup). A filled WAITING pill dims with the rest.
+
+### Status pills
+
+- RUNNING counts the threads (tasks) with status running, WAITING the threads waiting for
+  approval, both read from the inbox. The main conversation's own run or approval is not
+  counted: CHAT shows that itself. A pill shows only when its count is above 0.
+- 24px tall, a 2px border in the status color (`--running` or `--waiting`), `--bg` fill,
+  an 8x8 dot in the status color, and "<n> RUNNING" or "<n> WAITING" in Press Start 2P 8px.
+  Compact pills (see above) keep an aria-label such as "2 waiting".
+- WAITING is filled (`--waiting` fill, `--bg` text and dot) while any thread started
+  waiting after the last time INBOX was opened: a thread that was in another status in the
+  previous list, or one that started after the app began watching. Opening INBOX clears it,
+  and a thread that starts waiting while INBOX is open does not fill it. The first list,
+  and threads that were already there (after switching project), never fill it. It is kept
+  in memory only: after a restart it starts unfilled.
+- Clicking a pill opens INBOX. INBOX has no status filter, so it opens as it is.
+
+### Window buttons (Windows and Linux)
+
+- Three real buttons, 46x36, with aria-labels "Minimize", "Maximize" or "Restore", and
+  "Close". Maximize shows the restore glyph and label while the window is maximized or full
+  screen.
+- Glyphs are 12x12 inline SVGs with 2px strokes, `shape-rendering: crispEdges`, filled with
+  `currentColor`. No anti-aliasing.
+- Rest: no fill, `--text` glyph. Hover: `--line` fill; Close uses `--error` fill and a
+  `--bg` glyph. Pressed: Minimize and Maximize use `--bg` fill and an `--accent` glyph,
+  Close keeps the red; the glyph moves down 2px. Keyboard focus: a 2px `--accent` outline,
+  inset 6px.
+- No transitions and no rounded corners.
+
+### Dragging
+
+- The bar is a drag region (`-webkit-app-region: drag`). The pills and the window buttons
+  are `no-drag`, and so is anything else clickable that is added to the bar.
+- Double-clicking an empty part of the bar maximizes or restores the window. Windows does
+  this by itself for a drag region. Linux may not, so there the bar asks main to do it
+  (`toggleMaximize` from a double-click), and main ignores the request if the window
+  changed size in the last 400ms, so a system that already did it is not undone.
+
+### Dialogs and the sidebar
+
+- A dialog's backdrop starts below the bar, so the window buttons stay usable while a
+  dialog is open. Sizes that follow the window height subtract the bar's height
+  (`--titlebar-height`).
+- The sidebar no longer shows the app name, since the bar does. Its nav order and focus
+  order are unchanged. Tab reaches the bar's pills and buttons first, as it would an
+  operating system title bar.
 
 ## Markdown
 
