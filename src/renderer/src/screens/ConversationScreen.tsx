@@ -21,7 +21,7 @@ import { useActiveMascot } from '../mascots/useActiveMascot'
 import { loopFor, type MascotStateName } from '../mascots/types'
 import { mascotState } from '../conversation/mascotState'
 import { useHeldMascotState } from '../conversation/useHeldMascotState'
-import { AGENT_NAME } from '../conversation/agentName'
+import { speakerName } from '../conversation/agentName'
 import { errorText, STOPPED_TEXT } from '../../../shared/noticeText'
 import { partyWork, taskViews, type TaskView } from '../conversation/agentWork'
 import { callTargetOf } from '../conversation/callTarget'
@@ -215,6 +215,8 @@ function ConversationScreen({
     conversation
   const reducedMotion = usePrefersReducedMotion()
   const mascot = useActiveMascot(window.myclaud.mascots)
+  // The name the conversation speaks under: the mascot's.
+  const speaker = speakerName(mascot)
   const { agents, loaded: agentsLoaded } = useAgents(project.path)
   const { mode, toggle } = usePartyPanelMode()
   const modelChoice = useModelChoice(project.path)
@@ -349,15 +351,15 @@ function ConversationScreen({
   const placeholder = call
     ? `Message for ${call.agent.name}...`
     : running
-      ? `Message ${AGENT_NAME} or call an agent...`
-      : `Message ${AGENT_NAME}...`
+      ? `Message ${speaker} or call an agent...`
+      : `Message ${speaker}...`
 
   return (
     <section className="conversation" aria-labelledby="conversation-title">
       <header className="conversation__header">
         <div className="conversation__heading">
           <h1 id="conversation-title" className="conversation__title">
-            {AGENT_NAME}
+            {speaker}
           </h1>
           <div className="conversation__subtitle">In {project.name}</div>
         </div>
@@ -424,9 +426,9 @@ function ConversationScreen({
                     src={loop.src}
                     frames={loop.frames}
                     fps={loop.fps}
+                    reverse={loop.reverse}
                     scale={2}
                     label={`Mascot, ${shownState}`}
-                    reverse={loop.reverse}
                   />
                   {badge && (
                     <span className={`stage__badge stage__badge--${shownState}`} aria-hidden="true">
@@ -439,7 +441,7 @@ function ConversationScreen({
                 </div>
               </div>
               <DialogueBox
-                agentName={AGENT_NAME}
+                agentName={speaker}
                 reply={
                   boxItem?.kind === 'text'
                     ? { id: boxItem.id, text: boxItem.text, instant: boxItem.instant }
@@ -482,7 +484,7 @@ function ConversationScreen({
             />
             {call && <AgentChip agent={call.agent} onRemove={() => onCallChange(null)} />}
             <label htmlFor="conversation-input" className="visually-hidden">
-              {call ? `Message for ${call.agent.name}` : `Message ${AGENT_NAME}`}
+              {call ? `Message for ${call.agent.name}` : `Message ${speaker}`}
             </label>
             <textarea
               ref={inputRef}

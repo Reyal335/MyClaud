@@ -194,13 +194,23 @@ are hidden at zero.
   settings.json.
 - With an agent called, the input row shows its chip (icon, name, and a remove
   button) and the placeholder "Message for <agent>...". Otherwise the
-  placeholder is "Message Claude...".
+  placeholder is "Message <name>...", where <name> is the speaker name below.
 - The message box grows with its text, from 48px up to 12 lines or 40% of the
   window height, then scrolls. SEND, STOP, and the chip stay at the bottom of
   the row. The history keeps at least 96px, so the stage stays visible.
 - The input stays enabled during a run. SEND stays, and STOP is its own button
   beside it, shown only while a run is going. With nobody called, the
-  placeholder during a run is "Message Claude or call an agent...".
+  placeholder during a run is "Message <name> or call an agent...".
+
+### The speaker name
+
+The main conversation speaks under the active mascot's name, not "Claude". It shows
+as the name in the dialogue box (and its "<name> says" label), as the title at the top
+of CHAT, and in the input placeholder and its hidden label. It follows the mascot
+chosen on the MASCOTS screen. The built-in default mascot has no name of its own until
+it is renamed ("Default" is only a placeholder), so until then the name stays
+"Claude". Agents Claude brings in keep their own names, and the popups and the
+inbox are not changed.
 
 ### Agents at work
 
@@ -346,7 +356,7 @@ the choice.
 ### The reply tag
 
 - Each of Claude's replies shows a small tag above its text, and the dialogue
-  box shows the same tag beside "Claude": "<MODEL> · <LEVEL>", the model that
+  box shows the same tag beside the speaker name: "<MODEL> · <LEVEL>", the model that
   answered (the exact model the SDK reports on the reply) and the level in force
   when the reply started. With AUTO the level reads AUTO.
 - When Claude thought for at least 1 second before replying, the tag adds " ·

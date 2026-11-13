@@ -8,7 +8,7 @@ function toMascot(data: ActiveMascotData): Mascot {
   if (data.id === DEFAULT_MASCOT_ID) return withDefaultEdits(data.name, data.loops)
   const { idle } = data.loops
   return data.name !== null && idle
-    ? { name: data.name, loops: { ...data.loops, idle } }
+    ? { name: data.name, named: true, loops: { ...data.loops, idle } }
     : DEFAULT_MASCOT
 }
 
