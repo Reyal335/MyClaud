@@ -17,15 +17,26 @@ machine. It is not a product and it has no accounts of its own.
 
 - **Chat with Claude.** The CHAT screen holds one conversation per project.
   Replies stream into the dialogue box, the mascot's state follows the run, and
-  the conversation comes back after a restart. NEW CHAT starts over.
+  the conversation comes back after a restart. NEW CHAT starts over. During a
+  run, your next message queues behind the current work.
+- **Model and thinking picker.** Pick which Claude model (Sonnet, Opus, Haiku, or
+  Fable) runs your next message. Thinking is available as an option. You can
+  change the model or toggle thinking mid-run.
+- **Chat themes.** Customize the colors and fade effect of the dialogue box from
+  built-in themes.
+- **Custom title bar.** A styled title bar that fits the 8-bit retro aesthetic.
 - **The party.** Your agents show in a panel on the right of CHAT. Click one to
   call it for your next message, or Claude brings one in by itself. While an
   agent works, its row shows what it is doing and an agent card shows in the
-  conversation. The panel collapses to an icon rail.
+  conversation. The panel collapses to an icon rail. Up to three agents can run
+  at once.
 - **Inbox.** Every piece of work Claude hands to an agent is a task with a
   status (RUNNING, WAITING, DONE, ERROR, STOPPED), its activity, and its full
   report. A task waiting for your approval counts on the INBOX badge, and you can
   approve it there.
+- **Popup notifications.** A small always-on-top window with the mascot appears
+  when a task finishes (visible for 6 seconds), needs approval, or fails (visible
+  for 10 seconds).
 - **Tool cards.** Each tool call shows as a card with its name, its input, and a
   status: RUNNING, WAITING, DONE, FAILED, DENIED, or STOPPED.
 - **Approve or deny.** Reading files (`Read`, `Grep`, `Glob`) runs without asking.
@@ -40,13 +51,6 @@ machine. It is not a product and it has no accounts of its own.
   role label. CALL on a card opens CHAT with that agent called.
 - **Mascot manager.** Upload your own mascots as spritesheets, with one loop per
   state. Sheets in a grid are cut into a strip in the sheet slicer.
-
-### Planned
-
-These are on the roadmap. They are not built yet.
-
-- **Popup notifications.** A small always-on-top window with the mascot when a
-  task finishes, needs approval, or fails.
 
 ## Tech stack
 
@@ -257,7 +261,7 @@ The sheet format, from `designs/DESIGN.md`:
    *Done*
 6. Mascot manager: spritesheet upload, validation, and per-state loops. *Done*
 7. The main chat, the party of agents, and the inbox of their tasks. *Done*
-8. Popup notification window. *Planned*
+8. Popup notification window. *Done*
 
 The build order and design rules are in `CLAUDE.md` and `designs/DESIGN.md`.
 
