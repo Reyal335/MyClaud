@@ -92,6 +92,62 @@ Conversations waiting for approval count as unread in the inbox.
 - Idle is required. A state with no sheet plays the idle loop.
 - Display at 1x, 2x, or 3x only.
 
+## Mascot voice
+
+An optional `voice` field in the mascot's `manifest.json` shapes Claude's tone in the main
+conversation, changing how Claude speaks and how often it uses emoji. The field is
+`{ text: string; emoji: 'off' | 'some' | 'lots' }`, where `text` is the voice description
+and `emoji` sets the emoji level.
+
+### Voice text
+
+Text is free prose from 1 to 1000 characters, trimmed, allowing newlines. No control
+characters (ASCII 0–31 except tab and newline). It goes into the system prompt and is
+never sent to agents or affects tool behavior; it shapes the tone of Claude's own replies only.
+
+Example: "Draco Malfoid speaks with a dry, smug wit. Sarcastic, clever observations.
+Short sentences with bite."
+
+### Emoji levels
+
+- `off`: Claude does not use emoji in its replies.
+- `some`: Claude uses emoji occasionally, about 1–2 per reply where they fit naturally.
+- `lots`: Claude uses emoji freely in conversational replies, as many as it wants.
+
+Emoji never appear in code blocks, inline code, file paths, diffs, or any non-prose text.
+
+### Rendering
+
+- Emoji render in full color. Segoe UI is the fallback font for graphemes the main font
+  does not cover.
+- ZWJ sequences (emoji with modifiers, like skin tones or gendered forms) are supported
+  and render as graphemes, never split.
+- The typewriter handles grapheme boundaries correctly.
+
+### Default mascot
+
+The built-in default mascot has no voice by default, so Claude speaks plainly with no
+emoji. A voice only applies when the mascot is explicitly named. An unnamed mascot (the
+placeholder "Default" name) uses the system prompt without a voice field.
+
+### Validation
+
+Voice is validated strictly. A mascot with an invalid voice field is marked as broken.
+Show the exact error:
+
+- Text exceeds 1000 characters: "Voice text must be 1000 characters or fewer. This one is
+  1247."
+- Invalid emoji level (not 'off', 'some', or 'lots'): "Emoji level must be 'off', 'some',
+  or 'lots'. Got 'lots2'."
+- Control characters (ASCII 0–31 except tab and newline) in text: "Voice text must not
+  contain control characters."
+
+### Prompt injection safeguard
+
+Voice text is user-written and trusted. It runs in the system prompt of the main
+conversation only, not agents. If mascot sharing is added later, voice fields must be
+reviewed before sharing.
+
 ## Sheet slicer
 
 See `7-sheet-slicer.html`. A picked sheet that is already a legal strip is used

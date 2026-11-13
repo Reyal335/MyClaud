@@ -31,9 +31,11 @@ import { listAgents } from './agents'
 import { getChatSession, setChatChoice, setChatSession, setChatTheme } from './chats'
 import { historyItems, type RecordedMessage, type SavedTask } from './history'
 import { DENY_MESSAGE, forIpc, isAgentTool } from './ipcInput'
+import { getActiveVoice } from './mascots'
 import { choiceForRun } from './modelChoice'
 import { childEnv, claudeExecutable, loadSdk, type Sdk } from './sdk'
 import { getDefaultChoice } from './settings'
+import { voiceAppend } from './voice'
 import { AUTO, AUTO_CHOICE, isEffortLevel, type ModelChoice } from '../shared/models'
 import {
   createInputQueue,
@@ -664,6 +666,17 @@ async function execute(run: Run): Promise<void> {
     for (const text of picked.notices) emit(run, { requestId: run.requestId, type: 'notice', text })
     const { model, effort } = run.choice
 
+    // The active mascot's voice, as a system-prompt append. A broken lookup
+    // never blocks or fails the run: it just runs with no voice.
+    let voice: Awaited<ReturnType<typeof getActiveVoice>>
+    try {
+      voice = await getActiveVoice()
+    } catch (err) {
+      console.error('[agent] Could not read the active mascot voice:', errorMessage(err))
+      voice = { name: null, voice: null }
+    }
+    const append = voiceAppend(voice.name, voice.voice)
+
     const options: Options = {
       cwd: run.cwd,
       includePartialMessages: true,
@@ -675,7 +688,10 @@ async function execute(run: Run): Promise<void> {
       // Ignore MCP servers from user and project config, so no tools beyond the
       // built-ins above are available.
       strictMcpConfig: true,
-      systemPrompt: { type: 'preset', preset: 'claude_code' },
+      systemPrompt:
+        append !== null
+          ? { type: 'preset', preset: 'claude_code', append }
+          : { type: 'preset', preset: 'claude_code' },
       settingSources: ['user', 'project', 'local'],
       abortController: run.abortController,
       env: childEnv(),

@@ -167,7 +167,8 @@ function MascotsScreen({ setLeaveGuard }: MascotsScreenProps): React.JSX.Element
                   openEditor({
                     kind: 'default',
                     name: shownDefault.name,
-                    uploaded: defaultMascot.loops
+                    uploaded: defaultMascot.loops,
+                    voice: defaultMascot.voice
                   })
           }
           onReset={

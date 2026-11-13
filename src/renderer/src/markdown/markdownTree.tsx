@@ -134,9 +134,34 @@ function isAtomic(element: AnyElement): boolean {
   return element.type === 'table' || element.props.node?.tagName === 'table'
 }
 
+// One grapheme cluster (what a user would call "one character") is the unit
+// the typing counts and cuts by, so an emoji or a ZWJ sequence never gets cut
+// in the middle and shown as a broken glyph for one frame.
+const graphemeSegmenter = new Intl.Segmenter(undefined, { granularity: 'grapheme' })
+
+// Text nodes are whole strings held in the cached element tree, so the same
+// string comes through here every tick of the same reveal. Caching its split
+// means it is segmented once per text, not once per frame.
+const GRAPHEME_CACHE_SIZE = 200
+const graphemeCache = new Map<string, string[]>()
+
+function graphemesOf(text: string): string[] {
+  const hit = graphemeCache.get(text)
+  if (hit) {
+    graphemeCache.delete(text)
+    graphemeCache.set(text, hit)
+    return hit
+  }
+  const clusters = Array.from(graphemeSegmenter.segment(text), (part) => part.segment)
+  graphemeCache.set(text, clusters)
+  if (graphemeCache.size > GRAPHEME_CACHE_SIZE)
+    graphemeCache.delete(graphemeCache.keys().next().value!)
+  return clusters
+}
+
 // Line breaks between blocks are not visible and do not count.
 function countOf(text: string): number {
-  return /^\n*$/.test(text) ? 0 : text.length
+  return /^\n*$/.test(text) ? 0 : graphemesOf(text).length
 }
 
 const lengths = new WeakMap<object, number>()
@@ -200,7 +225,7 @@ function cut(node: ReactNode, state: CutState): ReactNode {
       state.left -= count
       return text
     }
-    const part = text.slice(0, state.left)
+    const part = graphemesOf(text).slice(0, state.left).join('')
     state.left = 0
     return part
   }

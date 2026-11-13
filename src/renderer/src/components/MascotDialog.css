@@ -45,6 +45,88 @@
   color: var(--muted);
 }
 
+/* VOICE: a textarea with its character count beside the label. */
+.mascot-form__voice-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.mascot-form__count--over {
+  color: var(--error);
+}
+
+.mascot-form__input--voice {
+  min-height: 72px;
+  padding: 10px 12px;
+  resize: vertical;
+}
+
+/* EMOJI: three equal choices, like APPLY TO in the theme picker. */
+.mascot-form__emoji {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.mascot-form__emoji-row {
+  display: flex;
+  gap: 8px;
+}
+
+.mascot-emoji {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 8px;
+  background: var(--bg);
+  color: var(--text);
+  border: var(--border) solid var(--line);
+  font-family: var(--font-pixel);
+  font-size: 9px;
+  cursor: pointer;
+}
+
+.mascot-emoji:hover {
+  border-color: var(--muted);
+}
+
+.mascot-emoji:has(:focus-visible) {
+  outline: var(--border-thin) solid var(--text);
+  outline-offset: 4px;
+}
+
+.mascot-emoji:has(:disabled) {
+  color: var(--muted);
+  cursor: not-allowed;
+}
+
+.mascot-emoji--selected,
+.mascot-emoji--selected:hover {
+  background: var(--accent);
+  color: var(--bg);
+  border-color: var(--text);
+}
+
+.mascot-emoji--selected input {
+  accent-color: var(--bg);
+}
+
+.mascot-emoji input {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  accent-color: var(--accent);
+}
+
 .mascot-form__format {
   padding: 10px 12px;
   background: var(--bg);
