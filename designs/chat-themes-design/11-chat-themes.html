@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mya Chat themes</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+body{margin:0;background:#0B132B}
+a{color:#5BC0BE}a:hover{color:#F2F4F8}
+</style>
+</head>
+<body>
+<div style="width: 920px; height: 640px; box-sizing: border-box; padding: 28px; background: #0B132B; color: #F2F4F8; font-family: 'IBM Plex Mono', monospace; font-size: 14px; line-height: 1.5">
+<form aria-label="Chat theme" style="height: 100%; box-sizing: border-box; margin: 0; padding: 20px; background: #1C2541; border: 4px solid #F2F4F8; box-shadow: 6px 6px 0 #000; display: flex; flex-direction: column; gap: 16px">
+<div style="display: flex; align-items: center; justify-content: space-between; gap: 12px">
+<h1 style="margin: 0; font-family: 'Press Start 2P', monospace; font-size: 12px; color: #5BC0BE">CHAT THEME</h1>
+<span style="font-size: 12px; color: #A9B6C6">Background shown behind a conversation</span>
+</div>
+
+<div style="flex: 1; min-height: 0; display: flex; gap: 20px">
+
+<div style="flex: none; width: 376px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; align-content: start">
+
+<label style="display: flex; flex-direction: column; gap: 8px; padding: 8px; background: #0B132B; border: 4px solid #3A506B; cursor: pointer">
+<span style="display: block; height: 100px; background: #0B132B; border: 2px solid #3A506B"></span>
+<span style="display: flex; align-items: center; gap: 8px"><input type="radio" name="theme" style="accent-color: #5BC0BE">None</span>
+<span style="font-size: 12px; color: #A9B6C6">Plain navy</span>
+</label>
+
+<label style="display: flex; flex-direction: column; gap: 8px; padding: 8px; background: #0B132B; border: 4px solid #F2F4F8; box-shadow: 4px 4px 0 #5BC0BE; cursor: pointer">
+<img src="tokyo-night.png" alt="Tokyo Night theme: a city skyline at night with lit windows, a red and white tower and a passing train" style="display: block; width: 160px; height: 100px; image-rendering: pixelated">
+<span style="display: flex; align-items: center; gap: 8px"><input type="radio" name="theme" checked style="accent-color: #5BC0BE">Tokyo Night</span>
+<span style="display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 12px; color: #A9B6C6">Built-in<span style="font-family: 'Press Start 2P', monospace; font-size: 8px; padding: 4px 6px; background: #5BC0BE; color: #0B132B">ACTIVE</span></span>
+</label>
+
+<button type="button" style="grid-column: span 2; min-height: 88px; background: #0B132B; color: #5BC0BE; border: 4px dashed #5BC0BE; display: flex; align-items: center; justify-content: center; gap: 12px; font-family: 'Press Start 2P', monospace; font-size: 10px; cursor: pointer"><span style="font-size: 20px">+</span>ADD THEME</button>
+
+<div style="grid-column: span 2; padding: 10px 12px; border: 4px solid #5BC0BE; background: #0B132B; font-size: 13px"><span style="font-family: 'Press Start 2P', monospace; font-size: 9px; color: #5BC0BE">FORMAT</span><br>PNG or JPG, 160x100 to 6000x6000, up to 5 MB, any shape. Small pixel art keeps crisp pixels; bigger pictures scale smoothly. Anchored to the bottom edge.</div>
+
+</div>
+
+<div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 14px">
+<span style="font-family: 'Press Start 2P', monospace; font-size: 9px">PREVIEW</span>
+<div style="position: relative; flex: 1; min-height: 0; border: 4px solid #3A506B; background: #0B132B; overflow: hidden">
+<img src="tokyo-night.png" alt="" aria-hidden="true" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; object-position: center bottom; image-rendering: pixelated">
+<div aria-hidden="true" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(to bottom, rgba(11,19,43,0.9) 0 14%, rgba(11,19,43,0.8) 14% 28%, rgba(11,19,43,0.7) 28% 42%, rgba(11,19,43,0.6) 42% 56%, rgba(11,19,43,0.55) 56% 100%)"></div>
+<div style="position: relative; display: flex; flex-direction: column; gap: 10px; padding: 12px; font-size: 13px">
+<div style="align-self: flex-end; max-width: 78%; padding: 8px 10px; background: #3A506B; border: 4px solid #5BC0BE">Review the auth changes.</div>
+<div style="max-width: 78%; padding: 8px 10px; background: #1C2541; border: 4px solid #3A506B">I found 2 issues in src/auth.js.</div>
+</div>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 6px">
+<label for="t-dim" style="display: flex; justify-content: space-between; font-family: 'Press Start 2P', monospace; font-size: 9px"><span>FADE STRENGTH</span><span style="color: #5BC0BE">60%</span></label>
+<input id="t-dim" type="range" min="0" max="100" step="10" value="60" style="width: 100%; min-height: 32px; accent-color: #5BC0BE">
+</div>
+
+<fieldset style="margin: 0; padding: 0; border: 0; display: flex; flex-direction: column; gap: 6px">
+<legend style="padding: 0 0 6px; font-family: 'Press Start 2P', monospace; font-size: 9px">APPLY TO</legend>
+<div style="display: flex">
+<label style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; box-sizing: border-box; background: #0B132B; color: #F2F4F8; border: 4px solid #3A506B; font-family: 'Press Start 2P', monospace; font-size: 9px"><input type="radio" name="scope" style="accent-color: #5BC0BE">THIS CHAT</label>
+<label style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; box-sizing: border-box; background: #5BC0BE; color: #0B132B; border: 4px solid #F2F4F8; font-family: 'Press Start 2P', monospace; font-size: 9px"><input type="radio" name="scope" checked style="accent-color: #0B132B">ALL CHATS</label>
+</div>
+</fieldset>
+</div>
+
+</div>
+
+<div style="display: flex; gap: 12px">
+<button type="button" style="min-height: 44px; padding: 0 16px; background: #5BC0BE; color: #0B132B; border: 4px solid #F2F4F8; box-shadow: 4px 4px 0 #000; font-family: 'Press Start 2P', monospace; font-size: 10px; cursor: pointer">APPLY</button>
+<a href="8-chat-party.html" style="display: inline-flex; align-items: center; min-height: 44px; box-sizing: border-box; padding: 0 16px; background: #0B132B; color: #F2F4F8; border: 4px solid #3A506B; box-shadow: 4px 4px 0 #000; font-family: 'Press Start 2P', monospace; font-size: 10px; text-decoration: none">CANCEL</a>
+</div>
+</form>
+</div>
+</body>
+</html>
