@@ -9,9 +9,12 @@ import type {
   ToolItem
 } from '../hooks/useConversation'
 import { useAgents } from '../hooks/useAgents'
+import { useChatTheme } from '../hooks/useChatTheme'
 import { useModelChoice } from '../hooks/useModelChoice'
 import { replyTag, type ModelLists } from '../../../shared/models'
 import ModelPicker from '../components/ModelPicker'
+import ThemeBackdrop from '../components/ThemeBackdrop'
+import ThemePicker from '../components/ThemePicker'
 import { usePartyPanelMode } from '../hooks/usePartyPanelMode'
 import { usePrefersReducedMotion } from '../hooks/usePrefersReducedMotion'
 import { useActiveMascot } from '../mascots/useActiveMascot'
@@ -215,6 +218,8 @@ function ConversationScreen({
   const { agents, loaded: agentsLoaded } = useAgents(project.path)
   const { mode, toggle } = usePartyPanelMode()
   const modelChoice = useModelChoice(project.path)
+  const chatTheme = useChatTheme(project.path)
+  const [themeOpen, setThemeOpen] = useState(false)
   const [typing, setTyping] = useState(false)
   const [input, setInput] = useState('')
   const [confirmNew, setConfirmNew] = useState(false)
@@ -334,6 +339,8 @@ function ConversationScreen({
       stickToBottom.current = true
       // The new chat starts from the saved defaults, so the control changes with it.
       modelChoice.reload()
+      // And with no theme of its own: it shows the default theme.
+      chatTheme.reload()
     }
   }
 
@@ -360,6 +367,20 @@ function ConversationScreen({
             {statusLabel}
           </span>
         )}
+        {/* Works during a run: a theme never touches the agent. */}
+        <button
+          type="button"
+          className="button button--secondary conversation__theme"
+          aria-haspopup="dialog"
+          disabled={chatTheme.active === null}
+          onClick={() => setThemeOpen(true)}
+        >
+          <span
+            aria-hidden="true"
+            className={`conversation__swatch${chatTheme.entry.kind === 'none' ? ' conversation__swatch--none' : ''}`}
+          />
+          THEME: {chatTheme.entry.name.toUpperCase()}
+        </button>
         <button
           type="button"
           className="button button--secondary button--small conversation__new"
@@ -378,6 +399,8 @@ function ConversationScreen({
       <div className="conversation__body">
         <div className="conversation__main">
           <div className="conversation__frame">
+            {/* The theme behind the history and the stage, under its fade. */}
+            <ThemeBackdrop image={chatTheme.entry.image} fade={chatTheme.active?.fade ?? 0} />
             <div
               ref={historyRef}
               className="conversation__history"
@@ -493,6 +516,19 @@ function ConversationScreen({
           onOpenTask={onOpenTask}
         />
       </div>
+
+      {themeOpen && chatTheme.active && (
+        <ThemePicker
+          entries={chatTheme.entries}
+          active={chatTheme.active}
+          ownChoice={chatTheme.ownChoice}
+          onApply={chatTheme.apply}
+          onAdd={chatTheme.add}
+          onRename={chatTheme.rename}
+          onRemove={chatTheme.remove}
+          onClose={() => setThemeOpen(false)}
+        />
+      )}
 
       {confirmNew && (
         <Dialog

@@ -10,6 +10,14 @@ import {
 import { chatChoice, listModels, saveChoice } from './modelChoice'
 import { prefetchModels } from './models'
 import {
+  addTheme,
+  listThemes,
+  removeTheme,
+  renameTheme,
+  setThemeChoice,
+  themeChoices
+} from './themes'
+import {
   answerPermission,
   applyChoiceToRun,
   isRunning,
@@ -175,6 +183,22 @@ export function registerIpc(): void {
       return saved
     }
   )
+  // Chat themes. The window names a theme by id only; themes.ts checks every id.
+  ipcMain.handle(IpcChannel.ThemesList, () => listThemes())
+  ipcMain.handle(IpcChannel.ThemesAdd, (event) =>
+    addTheme(BrowserWindow.fromWebContents(event.sender))
+  )
+  ipcMain.handle(IpcChannel.ThemesRename, (_event, id: unknown, name: unknown) =>
+    renameTheme(id, name)
+  )
+  ipcMain.handle(IpcChannel.ThemesRemove, (_event, id: unknown) =>
+    removeTheme(id, getProject()?.path ?? null)
+  )
+  ipcMain.handle(IpcChannel.ThemesGetChoice, () => themeChoices(getProject()?.path ?? null))
+  ipcMain.handle(IpcChannel.ThemesSetChoice, (_event, change: unknown) =>
+    setThemeChoice(getProject()?.path ?? null, change)
+  )
+
   ipcMain.handle(IpcChannel.ModelsList, async (): Promise<ModelsResult> => {
     const project = getProject()
     return project

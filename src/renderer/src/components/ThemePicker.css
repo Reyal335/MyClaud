@@ -1,0 +1,333 @@
+/* The theme picker from designs/11-chat-themes.html. Two columns: the tiles on the
+   left, scrolling inside their column when they do not fit; the preview, the fade
+   slider, and APPLY TO on the right. */
+.theme-picker {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 20px;
+  align-items: start;
+}
+
+/* The tiles scroll inside their own column so the whole dialog still fits in the
+   smallest window. The padding leaves room for the focus ring and the tile shadow. */
+.theme-picker__list {
+  min-height: 0;
+  max-height: calc(100vh - 184px);
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+  padding: 6px;
+  margin: -6px;
+}
+
+/* Two tiles across: each is 184px, so a thumbnail is 160x100. */
+.theme-picker__grid {
+  display: grid;
+  grid-template-columns: repeat(2, 184px);
+  align-content: start;
+  gap: 12px;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.theme-picker__cell {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* ADD THEME and its error take the whole row. */
+.theme-picker__cell--wide {
+  grid-column: 1 / -1;
+}
+
+/* A tile: a 160x100 thumbnail, the name with its radio, and the kind. */
+.theme-tile {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px;
+  background: var(--bg);
+  color: var(--text);
+  border: var(--border) solid var(--line);
+  cursor: pointer;
+}
+
+.theme-tile:hover {
+  border-color: var(--muted);
+}
+
+.theme-tile:has(:focus-visible) {
+  outline: var(--border-thin) solid var(--text);
+  outline-offset: 4px;
+}
+
+/* The draft selection. */
+.theme-tile--selected,
+.theme-tile--selected:hover {
+  border-color: var(--text);
+  box-shadow: 4px 4px 0 var(--accent);
+}
+
+/* The thumbnail is a small frame with the same layers as the chat. Its line border is
+   drawn over the picture. */
+.theme-tile__thumb {
+  position: relative;
+  display: block;
+  width: 160px;
+  height: 100px;
+  overflow: hidden;
+}
+
+.theme-tile__thumb::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  border: var(--border-thin) solid var(--line);
+  pointer-events: none;
+}
+
+.theme-tile__name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.theme-tile__name input,
+.theme-scope input {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  accent-color: var(--accent);
+}
+
+.theme-tile__kind {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+/* The theme this chat shows now. */
+.theme-tile__active {
+  padding: 4px 6px;
+  background: var(--accent);
+  color: var(--bg);
+  font-family: var(--font-pixel);
+  font-size: 8px;
+  line-height: 1;
+}
+
+.theme-tile__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.theme-tile__actions .button {
+  flex: 1;
+  min-width: 0;
+}
+
+/* ADD THEME: a dashed tile across both columns. */
+.theme-add {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  min-height: 88px;
+  background: var(--bg);
+  color: var(--accent);
+  border: var(--border) dashed var(--accent);
+  border-radius: 0;
+  font-family: var(--font-pixel);
+  font-size: 10px;
+  cursor: pointer;
+}
+
+.theme-add:hover {
+  border-color: var(--text);
+}
+
+.theme-add__plus {
+  font-size: 20px;
+}
+
+.theme-picker__error {
+  margin: 0;
+  font-size: 12px;
+  color: var(--error);
+}
+
+.theme-picker__format {
+  grid-column: 1 / -1;
+  padding: 10px 12px;
+  background: var(--bg);
+  border: var(--border) solid var(--accent);
+  font-size: 13px;
+}
+
+.theme-picker__format-title {
+  display: block;
+  margin-bottom: 4px;
+  font-family: var(--font-pixel);
+  font-size: 9px;
+  color: var(--accent);
+}
+
+/* The right column. */
+.theme-picker__side {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+
+.theme-picker__label {
+  margin: 0;
+  padding: 0;
+  font-family: var(--font-pixel);
+  font-size: 9px;
+  font-weight: normal;
+  color: var(--text);
+}
+
+/* The preview: the same layers as the CHAT frame, with two sample bubbles on top. */
+.theme-picker__preview {
+  position: relative;
+  display: flex;
+  /* Short enough that the whole dialog fits in a 960x600 window. */
+  height: 160px;
+  background: var(--bg);
+  border: var(--border) solid var(--line);
+  overflow: hidden;
+}
+
+.theme-picker__sample-box {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px;
+  font-size: 13px;
+  overflow: hidden;
+}
+
+.theme-picker__sample {
+  max-width: 78%;
+  padding: 8px 10px;
+  background: var(--panel);
+  border: var(--border) solid var(--line);
+}
+
+.theme-picker__sample--mine {
+  align-self: flex-end;
+  background: var(--line);
+  border-color: var(--accent);
+}
+
+.theme-picker__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.theme-picker__value {
+  font-family: var(--font-pixel);
+  font-size: 9px;
+  color: var(--accent);
+}
+
+.theme-picker__slider {
+  width: 100%;
+  min-height: 32px;
+  margin: 0;
+  accent-color: var(--accent);
+}
+
+/* APPLY TO: two choices side by side. */
+.theme-picker__scope {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.theme-picker__scope legend {
+  padding: 0 0 6px;
+}
+
+.theme-picker__scope-row {
+  display: flex;
+}
+
+.theme-scope {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 8px;
+  background: var(--bg);
+  color: var(--text);
+  border: var(--border) solid var(--line);
+  font-family: var(--font-pixel);
+  font-size: 9px;
+  cursor: pointer;
+}
+
+.theme-scope:hover {
+  border-color: var(--muted);
+}
+
+.theme-scope:has(:focus-visible) {
+  outline: var(--border-thin) solid var(--text);
+  outline-offset: 4px;
+}
+
+.theme-scope--selected,
+.theme-scope--selected:hover {
+  background: var(--accent);
+  color: var(--bg);
+  border-color: var(--text);
+}
+
+.theme-scope--selected input {
+  accent-color: var(--bg);
+}
+
+/* The rename dialog. */
+.theme-rename {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.theme-rename__input {
+  min-height: 44px;
+  padding: 0 12px;
+  background: var(--bg);
+  color: var(--text);
+  border: var(--border) solid var(--line);
+  border-radius: 0;
+  font-family: var(--font-mono);
+  font-size: 14px;
+}
+
+.theme-rename__input[aria-invalid='true'] {
+  border-color: var(--error);
+}

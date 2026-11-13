@@ -27,7 +27,7 @@ import { callBlock, hookBlock, winningAgent } from '../shared/agentGate'
 import { withCall } from '../shared/callAgent'
 import { labelText, toolLabel } from '../shared/toolLabel'
 import { listAgents } from './agents'
-import { getChatSession, setChatChoice, setChatSession } from './chats'
+import { getChatSession, setChatChoice, setChatSession, setChatTheme } from './chats'
 import { historyItems, type RecordedMessage, type SavedTask } from './history'
 import { DENY_MESSAGE, forIpc, isAgentTool } from './ipcInput'
 import { choiceForRun } from './modelChoice'
@@ -981,6 +981,8 @@ export async function resetChat(
   // The new chat starts from the saved defaults. With "Use for new chats too" the
   // defaults are the last pick, so it starts on the same choice.
   await setChatChoice(cwd, await getDefaultChoice())
+  // And with no chat theme of its own: it uses the default theme.
+  await setChatTheme(cwd, null)
   return { ok: true }
 }
 

@@ -3,6 +3,7 @@
 
 import type { MascotStateName } from './mascotRules'
 import type { ModelChoice, ModelLists } from './models'
+import type { ThemeChoice, ThemeInfo } from './themes'
 
 export const IpcChannel = {
   ProjectGet: 'project:get',
@@ -36,6 +37,12 @@ export const IpcChannel = {
   ChatGetModelChoice: 'chat:get-model-choice',
   ChatSetModelChoice: 'chat:set-model-choice',
   ModelsList: 'models:list',
+  ThemesList: 'themes:list',
+  ThemesAdd: 'themes:add',
+  ThemesRename: 'themes:rename',
+  ThemesRemove: 'themes:remove',
+  ThemesGetChoice: 'themes:get-choice',
+  ThemesSetChoice: 'themes:set-choice',
   TasksList: 'tasks:list',
   TasksGet: 'tasks:get',
   TasksMarkSeen: 'tasks:mark-seen',
@@ -253,6 +260,38 @@ export type ModelsResult = ({ ok: true } & ModelLists) | { ok: false; message: s
 // The open chat's choice, made to fit what is available now, or why it failed.
 export type ModelChoiceResult =
   { ok: true; choice: ModelChoice } | { ok: false; error: { message: string } }
+
+// Chat themes: uploaded pictures behind the CHAT history and stage (the built-in Tokyo
+// Night is bundled with the window), and the choice of which one and how faded.
+
+export type ThemesErrorCode =
+  | 'invalid'
+  | 'not_found'
+  | 'no_project'
+  | 'too_large'
+  | 'not_image'
+  | 'too_small'
+  | 'too_big_dimensions'
+  | 'io_error'
+
+export type ThemesError = { code: ThemesErrorCode; message: string }
+
+export type ThemesResult<T extends object = object> =
+  ({ ok: true } & T) | { ok: false; error: ThemesError }
+
+// ADD THEME: the file dialog was closed, a theme was added, or the file was refused
+// with the message to show.
+export type AddThemeResult =
+  | { ok: true; canceled: true }
+  | { ok: true; canceled: false; theme: ThemeInfo }
+  | { ok: false; error: ThemesError }
+
+// The open chat's own theme (null when it uses the default) and the default.
+export type ThemeChoices = { chat: ThemeChoice | null; default: ThemeChoice }
+
+// APPLY in the picker. 'chat' saves the choice for this chat only. 'all' saves it as
+// the default and clears this chat's own choice.
+export type ThemeChoiceChange = { scope: 'chat' | 'all'; themeId: string; fade: number }
 
 // A pick in the model picker. `asDefault` also saves it as the choice new chats start from.
 export type ModelChoiceChange = { model: string; effort: string; asDefault: boolean }
@@ -526,6 +565,18 @@ export type MyClaudApi = {
     // Saves a pick for the chat (and for new chats too with asDefault). During a run
     // it applies from the next message.
     setModelChoice: (change: ModelChoiceChange) => Promise<ModelChoiceResult>
+  }
+  themes: {
+    // The uploaded themes, oldest first.
+    list: () => Promise<ThemesResult<{ themes: ThemeInfo[] }>>
+    // Opens the file dialog and adds the file it returns, or says why it was refused.
+    add: () => Promise<AddThemeResult>
+    // Returns the name as saved (trimmed).
+    rename: (id: string, name: string) => Promise<ThemesResult<{ name: string }>>
+    // Chats that used the theme go back to the default. Returns the choices as they are now.
+    remove: (id: string) => Promise<ThemesResult<ThemeChoices>>
+    getChoice: () => Promise<ThemesResult<ThemeChoices>>
+    setChoice: (change: ThemeChoiceChange) => Promise<ThemesResult<ThemeChoices>>
   }
   models: {
     // Fetched once per project folder, in the order the SDK returns.

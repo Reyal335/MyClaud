@@ -4,6 +4,7 @@ import { basename, join } from 'path'
 import type { PartyPanelMode, ProjectInfo } from '../shared/ipc'
 import { DEFAULT_MASCOT_ID } from '../shared/mascotRules'
 import { AUTO, type ModelChoice } from '../shared/models'
+import { DEFAULT_THEME, isValidFade, type ThemeChoice } from '../shared/themes'
 import { writeFileSafely } from './safeWrite'
 
 type RawSettings = Record<string, unknown>
@@ -110,6 +111,27 @@ export async function getDefaultChoice(): Promise<ModelChoice> {
 
 export function setDefaultChoice(choice: ModelChoice): Promise<void> {
   return updateSettings({ defaultModel: choice.model, defaultEffort: choice.effort })
+}
+
+// The chat theme new chats and chats with no theme of their own use. Tokyo Night at
+// 60% fade until I save another. A saved value that is not a theme and a fade reads
+// as that default.
+export async function getDefaultTheme(): Promise<ThemeChoice> {
+  const { defaultTheme } = await readSettings()
+  if (
+    defaultTheme !== null &&
+    typeof defaultTheme === 'object' &&
+    typeof (defaultTheme as ThemeChoice).themeId === 'string' &&
+    isValidFade((defaultTheme as ThemeChoice).fade)
+  ) {
+    const { themeId, fade } = defaultTheme as ThemeChoice
+    return { themeId, fade }
+  }
+  return DEFAULT_THEME
+}
+
+export function setDefaultTheme(theme: ThemeChoice): Promise<void> {
+  return updateSettings({ defaultTheme: { themeId: theme.themeId, fade: theme.fade } })
 }
 
 // Popups are on until I turn them off.

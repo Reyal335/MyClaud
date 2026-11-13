@@ -62,6 +62,14 @@ const api: MyClaudApi = {
   models: {
     list: () => ipcRenderer.invoke(IpcChannel.ModelsList)
   },
+  themes: {
+    list: () => ipcRenderer.invoke(IpcChannel.ThemesList),
+    add: () => ipcRenderer.invoke(IpcChannel.ThemesAdd),
+    rename: (id, name) => ipcRenderer.invoke(IpcChannel.ThemesRename, id, name),
+    remove: (id) => ipcRenderer.invoke(IpcChannel.ThemesRemove, id),
+    getChoice: () => ipcRenderer.invoke(IpcChannel.ThemesGetChoice),
+    setChoice: (change) => ipcRenderer.invoke(IpcChannel.ThemesSetChoice, change)
+  },
   tasks: {
     list: () => ipcRenderer.invoke(IpcChannel.TasksList),
     get: (taskId) => ipcRenderer.invoke(IpcChannel.TasksGet, taskId),

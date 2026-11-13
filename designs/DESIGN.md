@@ -19,6 +19,7 @@ components in React and match these visually.
 | `8b-party-states.html` | Every state of a party member: panel row, rail icon, the rail hover card, and the input row |
 | `8c-party-rail.html` | CHAT in a narrow window, with the party panel collapsed to a rail |
 | `10-model-picker.html` | CHAT with the model and thinking picker open above the input row, and a reply with its tag |
+| `11-chat-themes.html` | The chat theme picker: the tiles, the preview, the fade slider, and APPLY TO |
 | `mascot.png` | Default mascot image used in the mockups |
 
 ## Colors
@@ -355,6 +356,120 @@ Thinking:
 - HIGH: "Plans carefully. Slower, better on tricky changes."
 - XHIGH: "Thinks longer than HIGH on hard problems."
 - MAX: "Thinks as long as it needs. Slowest and heaviest on limits."
+
+## Chat themes
+
+See `11-chat-themes.html` (the picker) and `8-chat-party.html` (the theme layer behind
+the history and the stage, and the THEME button in the header). CHAT shows a
+picture (pixel art or a bigger image) behind the history and the stage, under a stepped navy fade so
+text stays easy to read. Themes show on CHAT only, not INBOX, AGENTS, or MASCOTS.
+
+### Themes and where they live
+
+- Tokyo Night is the only built-in theme. Its id is "tokyo-night". It is bundled
+  with the app as a renderer asset (`src/renderer/src/assets/tokyo-night.png`), so it
+  is in the installed build. It cannot be renamed or deleted.
+- Uploaded themes live in `userData/themes/`: one image file per theme (PNG or JPG,
+  as uploaded), named by a generated id plus its extension, and `themes.json` with
+  `{ id, name, file, addedAt }` for each. Main never trusts a path or an id from the
+  window without checking it against `themes.json`. The file is stored as is: nothing
+  is resized or pixelated on import.
+- A theme choice is `{ themeId, fade }`. `themeId` is "none", "tokyo-night", or an
+  uploaded id. `fade` is 0 to 100 in steps of 10.
+- settings.json holds `defaultTheme`, `{ themeId: "tokyo-night", fade: 60 }` until I
+  save another. The current chat may hold its own choice in chats.json. With none,
+  it uses `defaultTheme`. NEW CHAT starts with none.
+- "THIS CHAT" changes the current conversation only. "ALL CHATS" changes the
+  default, which NEW CHAT starts from.
+
+### Uploads
+
+Lenient on size and shape, unlike mascots and icons: PNG or JPG, any aspect ratio,
+160x100 up to 6000x6000, 5 MB at most. The file is stored as is; nothing is resized or
+pixelated on import. ADD THEME opens a file dialog filtered to PNG and JPG. Main reads
+the file and checks, in order:
+
+1. Not larger than 5 MB. Error: "Theme must be 5 MB or smaller."
+2. A real PNG or JPEG (the file signature is checked, not the extension). Error: "Theme
+   must be a PNG or JPG."
+3. Dimensions, read with Electron's nativeImage. If the image cannot be read, the error
+   from step 2. At least 160x100, else "Theme must be at least 160x100. <file name> is
+   <w>x<h>." At most 6000 on each side, else "Theme must be 6000 px or smaller on each
+   side. <file name> is <w>x<h>."
+
+Errors show in the picker in the error style, under the ADD THEME tile, and clear on
+the next attempt. A valid file is copied in and gets the file name without its
+extension as its name, cut to 24 characters. It appears in the grid and becomes the
+draft selection.
+
+Uploaded themes can be renamed (1 to 24 characters, trimmed, not blank) and deleted.
+Delete asks first, in the confirm dialog style: "Delete <name>? Chats using it go back
+to the default." After a delete, a chat whose choice used that theme drops its own
+choice and uses the default. If the default used it, the default becomes "none" with
+the same fade.
+
+### Drawing the theme
+
+One ThemeBackdrop component draws it behind the CHAT history and stage frame and in
+the picker's preview.
+
+- Layers, back to front: the navy background (`--bg`), the image, the fade, then the
+  content. Bubbles, tool cards, agent cards, the dialogue box, and the input row keep
+  their solid fills. The plain lines in the history (notices, "Stopped.", errors) get
+  the same navy fill, so they stay readable over the picture.
+- Two scaling modes, chosen from the image's own size (iw by ih). Both are anchored to
+  the bottom edge, and whatever does not fit is cropped by the frame:
+  - Pixel art, when iw <= 640 and ih <= 640 (Tokyo Night is 320x200):
+    `scale = max(1, ceil(max(width / iw, height / ih)))`, a whole number, where width
+    and height are the frame's. The image is drawn at iw*scale by ih*scale, centered
+    horizontally, its bottom edge on the frame's bottom edge, with
+    `image-rendering: pixelated`.
+  - Picture, when either side is over 640: `scale = max(width / iw, height / ih)`, not
+    rounded, with smooth scaling, same anchoring.
+  The frame is measured again whenever it resizes (ResizeObserver). The picker's tile
+  thumbnails show the whole picture, anchored the same way, at a scale that fits the
+  160x100 tile, and the preview uses the same rule as CHAT.
+- The fade is five flat bands, top to bottom, at 0-14%, 14-28%, 28-42%, 42-56%, and
+  56-100% of the frame's height. At fade S, band i has navy (`--bg`) at opacity
+  `min(0.95, base[i] * S / 60)`, with base 0.9, 0.8, 0.7, 0.6, 0.55. So 60 matches the
+  mockup, 0 shows the image as it is, and 100 nearly hides it. No smooth gradient.
+- themeId "none": the plain frame, no image, no fade.
+- The image is decorative: empty alt, `aria-hidden`.
+- If the image fails to load, it draws as "none" and logs one warning.
+
+### The THEME button
+
+In the CHAT header, before NEW CHAT: "THEME: <NAME IN CAPITALS>" with a 12px swatch
+before it (the accent color for a theme; `--bg` with a `--line` border for none). It
+opens the picker. It works during a run.
+
+### The picker
+
+A modal dialog over CHAT.
+
+- It opens with a draft equal to the chat's current choice, and APPLY TO set to THIS
+  CHAT if the chat has its own choice, else ALL CHATS.
+- Left: a grid of tiles. None first, then Tokyo Night, then the uploads oldest first,
+  then the ADD THEME tile, then the FORMAT box. The FORMAT box reads: "PNG or JPG,
+  160x100 to 6000x6000, up to 5 MB, any shape. Small pixel art keeps crisp pixels;
+  bigger pictures scale smoothly. Anchored to the bottom edge." Tiles are radio inputs
+  in a fieldset with the legend "Theme", so the arrow keys move between them. A tile
+  shows a 160x100 thumbnail, the name, and "Built-in" or "Uploaded" ("Plain navy" for
+  None). The draft selection has the selected look (a `--text` border and a hard
+  `--accent` shadow). The theme in use has the ACTIVE tag. The selected uploaded tile
+  shows RENAME and DELETE buttons. If the grid does not fit, it scrolls inside its
+  column.
+- Right: PREVIEW, a ThemeBackdrop with two sample bubbles, showing the draft theme and
+  fade live. Under it, the FADE STRENGTH slider (0 to 100, step 10, its value shown as
+  a percent), then APPLY TO with THIS CHAT and ALL CHATS.
+- APPLY: THIS CHAT saves the draft as the chat's own choice. ALL CHATS saves it as
+  `defaultTheme` and clears the chat's own choice. Then the dialog closes and CHAT
+  shows the new theme at once.
+- CANCEL, Escape, and a click on the backdrop close without saving. Uploads, renames,
+  and deletes are saved when made, even if I cancel.
+- Focus moves into the dialog on open, stays inside while it is open, and returns to
+  the THEME button on close. At the minimum window size (960x600) the whole dialog fits,
+  and the grid scrolls if needed.
 
 ## Markdown
 

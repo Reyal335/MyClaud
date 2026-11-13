@@ -1,17 +1,20 @@
 import { app } from 'electron'
 import { join } from 'path'
 import type { ModelChoice } from '../shared/models'
+import { isValidFade, type ThemeChoice } from '../shared/themes'
 import { isObject, readJsonFile, serialQueue, writeJsonFile } from './jsonFile'
 
 // The main conversation of each project, kept in userData/chats.json as
-// { version: 1, chats: { <project path>: { sessionId?, model?, effort? } } }:
-// its Claude Code session id, and the model and thinking level chosen for it. The
-// session files themselves stay where Claude Code keeps them. A chat saved before
-// the model picker has neither choice, and reads as AUTO and AUTO.
+// { version: 1, chats: { <project path>: { sessionId?, model?, effort?, themeId?, fade? } } }:
+// its Claude Code session id, the model and thinking level chosen for it, and its
+// own chat theme if it has one. The session files themselves stay where Claude
+// Code keeps them. A chat saved before the model picker has neither choice, and
+// reads as AUTO and AUTO. One saved before themes has no theme of its own, so it
+// uses the default theme.
 
 const VERSION = 1
 
-type Chat = { sessionId: string | null; choice: ModelChoice | null }
+type Chat = { sessionId: string | null; choice: ModelChoice | null; theme: ThemeChoice | null }
 type Chats = Record<string, Chat>
 
 let cache: Chats | null = null
@@ -35,7 +38,13 @@ async function load(): Promise<Chats> {
           typeof entry.model === 'string' && typeof entry.effort === 'string'
             ? { model: entry.model, effort: entry.effort }
             : null
-        if (sessionId !== null || choice !== null) chats[path] = { sessionId, choice }
+        const theme =
+          typeof entry.themeId === 'string' && isValidFade(entry.fade)
+            ? { themeId: entry.themeId, fade: entry.fade }
+            : null
+        if (sessionId !== null || choice !== null || theme !== null) {
+          chats[path] = { sessionId, choice, theme }
+        }
       }
     }
   } catch (err) {
@@ -46,11 +55,15 @@ async function load(): Promise<Chats> {
 }
 
 async function save(chats: Chats): Promise<void> {
-  const out: Record<string, { sessionId?: string; model?: string; effort?: string }> = {}
+  const out: Record<
+    string,
+    { sessionId?: string; model?: string; effort?: string; themeId?: string; fade?: number }
+  > = {}
   for (const [path, chat] of Object.entries(chats)) {
     out[path] = {
       ...(chat.sessionId !== null ? { sessionId: chat.sessionId } : {}),
-      ...(chat.choice ? { model: chat.choice.model, effort: chat.choice.effort } : {})
+      ...(chat.choice ? { model: chat.choice.model, effort: chat.choice.effort } : {}),
+      ...(chat.theme ? { themeId: chat.theme.themeId, fade: chat.theme.fade } : {})
     }
   }
   try {
@@ -65,11 +78,20 @@ async function save(chats: Chats): Promise<void> {
 function update(projectPath: string, change: (chat: Chat) => Chat): Promise<void> {
   return queue(async () => {
     const chats = await load()
-    const before = chats[projectPath] ?? { sessionId: null, choice: null }
+    const before = chats[projectPath] ?? { sessionId: null, choice: null, theme: null }
     const after = change(before)
-    if (after.sessionId === before.sessionId && after.choice === before.choice) return
-    if (after.sessionId === null && after.choice === null) delete chats[projectPath]
-    else chats[projectPath] = after
+    if (
+      after.sessionId === before.sessionId &&
+      after.choice === before.choice &&
+      after.theme === before.theme
+    ) {
+      return
+    }
+    if (after.sessionId === null && after.choice === null && after.theme === null) {
+      delete chats[projectPath]
+    } else {
+      chats[projectPath] = after
+    }
     await save(chats)
   })
 }
@@ -98,4 +120,33 @@ export function setChatChoice(projectPath: string, choice: ModelChoice): Promise
       ? chat
       : { ...chat, choice }
   )
+}
+
+// The chat's own theme, or null when it uses the default theme.
+export function getChatTheme(projectPath: string): Promise<ThemeChoice | null> {
+  return queue(async () => (await load())[projectPath]?.theme ?? null)
+}
+
+// Saves the chat's own theme, or clears it with null: NEW CHAT, and ALL CHATS.
+export function setChatTheme(projectPath: string, theme: ThemeChoice | null): Promise<void> {
+  return update(projectPath, (chat) =>
+    chat.theme?.themeId === theme?.themeId && chat.theme?.fade === theme?.fade
+      ? chat
+      : { ...chat, theme }
+  )
+}
+
+// A theme was deleted: every chat that held it goes back to the default theme.
+export function dropThemeFromChats(themeId: string): Promise<void> {
+  return queue(async () => {
+    const chats = await load()
+    let changed = false
+    for (const [path, chat] of Object.entries(chats)) {
+      if (chat.theme?.themeId !== themeId) continue
+      changed = true
+      if (chat.sessionId === null && chat.choice === null) delete chats[path]
+      else chats[path] = { ...chat, theme: null }
+    }
+    if (changed) await save(chats)
+  })
 }

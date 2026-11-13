@@ -55,6 +55,20 @@
   color: var(--error);
 }
 
+/* A title with a quieter line beside it. */
+.dialog__header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 4px 12px;
+}
+
+.dialog__subtitle {
+  font-size: 12px;
+  color: var(--muted);
+}
+
 .dialog__body {
   display: flex;
   flex-direction: column;

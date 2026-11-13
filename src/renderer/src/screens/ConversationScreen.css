@@ -38,6 +38,31 @@
   flex: none;
 }
 
+/* THEME: <NAME>, with a 12px swatch before it. The swatch is the accent color for a
+   theme, and the plain frame color with a line border for none. */
+.conversation__theme {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 10px;
+  font-size: 9px;
+  box-shadow: none;
+}
+
+.conversation__swatch {
+  box-sizing: border-box;
+  width: 12px;
+  height: 12px;
+  background: var(--accent);
+  border: var(--border-thin) solid var(--text);
+}
+
+.conversation__swatch--none {
+  background: var(--bg);
+  border: var(--border-thin) solid var(--line);
+}
+
 .conversation__header-error {
   flex-basis: 100%;
   margin: 0;
@@ -98,6 +123,8 @@
    frame's automatic minimum is that minimum plus the stage. A tall input row
    cannot squeeze the history out of the frame. */
 .conversation__frame {
+  /* The chat theme fills the frame. The history and the stage sit above it. */
+  position: relative;
   flex: 1 1 auto;
   display: flex;
   flex-direction: column;
@@ -109,6 +136,7 @@
 
 /* History */
 .conversation__history {
+  position: relative;
   flex: 1 1 0;
   min-height: 96px;
   overflow-y: auto;
@@ -199,6 +227,15 @@
   color: var(--error);
 }
 
+/* Plain lines in the history have no box of their own, so they get the frame's solid
+   fill and stay readable over a theme picture. */
+.conversation__muted,
+.conversation__stopped,
+.conversation__error {
+  padding: 6px 10px;
+  background: var(--bg);
+}
+
 .conversation__tools {
   display: flex;
   flex-wrap: wrap;
@@ -208,6 +245,7 @@
 
 /* Stage: the mascot beside the dialogue box. */
 .conversation__stage {
+  position: relative;
   flex: none;
   display: flex;
   align-items: flex-end;
