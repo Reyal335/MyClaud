@@ -34,7 +34,7 @@ export function useMascots(): MascotsState {
 
   const reload = useCallback((): Promise<void> => {
     const request = ++latest.current
-    return window.myclaud.mascots.list().then(
+    return window.mya.mascots.list().then(
       (result) => {
         if (request !== latest.current) return
         if (result.ok) {
@@ -60,7 +60,7 @@ export function useMascots(): MascotsState {
     void reload()
     const onFocus = (): void => void reload()
     window.addEventListener('focus', onFocus)
-    const unsubscribe = window.myclaud.mascots.onChanged(onFocus)
+    const unsubscribe = window.mya.mascots.onChanged(onFocus)
     return () => {
       window.removeEventListener('focus', onFocus)
       unsubscribe()

@@ -21,7 +21,7 @@ export function useAgents(projectPath: string | null): AgentsState {
 
   const reload = useCallback((): Promise<void> => {
     const request = ++latest.current
-    return window.myclaud.agents.list().then(
+    return window.mya.agents.list().then(
       (result) => {
         if (request !== latest.current) return
         if (result.ok) {

@@ -28,7 +28,7 @@ const MAX_ACTIVITY = 100
 const MAX_PER_PROJECT = 200
 const PREVIEW_LENGTH = 80
 const NOTIFY_MS = 100
-export const INTERRUPTED_REPORT = 'Interrupted when MyClaud closed.'
+export const INTERRUPTED_REPORT = 'Interrupted when Mya closed.'
 
 type StoredAgent = { name: string; scope: AgentScope | null; filePath: string | null }
 

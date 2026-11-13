@@ -1,4 +1,4 @@
-# MyClaud build prompts
+# Mya build prompts
 
 One prompt per step of the build order in `CLAUDE.md`. Paste the preamble,
 then the step's prompt, into a fresh Claude Code chat. Finish, test, and
@@ -36,16 +36,16 @@ designs/1-inbox.html and study the left sidebar and the overall page frame.
 
 CONTEXT
 This repo is a fresh electron-vite scaffold (React + TypeScript).
-`npm run dev` currently opens the starter demo window. Nothing of MyClaud
+`npm run dev` currently opens the starter demo window. Nothing of Mya
 exists yet. If the scaffold is missing, stop and tell me.
 
 GOAL (build step 1 only)
-Replace the starter demo with the MyClaud app shell: one window with the
+Replace the starter demo with the Mya app shell: one window with the
 left navigation and three empty placeholder screens. No agents, no SDK,
 no app-specific IPC, no real data.
 
 WINDOW (main process)
-- 1280x800 default, minimum 960x600, title "MyClaud".
+- 1280x800 default, minimum 960x600, title "Mya".
 - Window background #0B132B so there is no white flash on load.
 - Keep contextIsolation on and nodeIntegration off.
 - Hide the default menu bar on Windows and Linux.
@@ -69,7 +69,7 @@ DESIGN TOKENS
 COMPONENTS (renderer)
 - AppShell: two columns filling the window height. Sidebar fixed at 176px
   wide. The content area takes the rest and scrolls on its own.
-- Sidebar, matching the mockup: the "MyClaud" wordmark in the pixel font
+- Sidebar, matching the mockup: the "Mya" wordmark in the pixel font
   in the accent color, three nav items (INBOX, AGENTS, MASCOTS), and a
   footer pinned to the bottom reading "Project" over "No project open".
 - NavItem: a real <button>, at least 44px tall, pixel font 10px, 4px

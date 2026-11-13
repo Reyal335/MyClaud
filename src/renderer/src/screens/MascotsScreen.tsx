@@ -67,7 +67,7 @@ function MascotsScreen({ setLeaveGuard }: MascotsScreenProps): React.JSX.Element
     setBusy(true)
     setActionError(null)
     try {
-      const result = await window.myclaud.mascots.setActive(id)
+      const result = await window.mya.mascots.setActive(id)
       if (!result.ok) setActionError(result.error.message)
     } catch (err) {
       console.error('Could not set the active mascot:', err)
@@ -80,7 +80,7 @@ function MascotsScreen({ setLeaveGuard }: MascotsScreenProps): React.JSX.Element
   async function confirmDelete(id: string): Promise<void> {
     setConfirm((current) => (current?.kind === 'delete' ? { ...current, busy: true } : current))
     try {
-      const result = await window.myclaud.mascots.remove(id)
+      const result = await window.mya.mascots.remove(id)
       setActionError(result.ok ? null : result.error.message)
     } catch (err) {
       console.error('Could not delete the mascot:', err)
@@ -95,7 +95,7 @@ function MascotsScreen({ setLeaveGuard }: MascotsScreenProps): React.JSX.Element
   async function confirmReset(): Promise<void> {
     setConfirm((current) => (current?.kind === 'reset' ? { ...current, busy: true } : current))
     try {
-      const result = await window.myclaud.mascots.resetDefault()
+      const result = await window.mya.mascots.resetDefault()
       setActionError(result.ok ? null : result.error.message)
     } catch (err) {
       console.error('Could not reset the default mascot:', err)

@@ -50,7 +50,7 @@ function InboxScreen({
   useEffect(() => {
     if (!selected) return
     const request = ++latest.current
-    window.myclaud.tasks
+    window.mya.tasks
       .get(selected.id)
       .then((result) => {
         if (request !== latest.current) return
@@ -63,7 +63,7 @@ function InboxScreen({
   // Opening a task marks it seen.
   useEffect(() => {
     if (selected && !selected.seen) {
-      void window.myclaud.tasks.markSeen(selected.id).catch(() => {})
+      void window.mya.tasks.markSeen(selected.id).catch(() => {})
     }
   }, [selected])
 
@@ -90,8 +90,8 @@ function InboxScreen({
     setConfirm(null)
     const result =
       action.kind === 'delete'
-        ? await window.myclaud.tasks.remove(action.taskId)
-        : await window.myclaud.tasks.clearFinished()
+        ? await window.mya.tasks.remove(action.taskId)
+        : await window.mya.tasks.clearFinished()
     if (!result.ok) {
       setActionError(result.error.message)
       return

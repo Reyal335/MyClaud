@@ -51,7 +51,7 @@ function AgentForm(props: AgentFormProps): React.JSX.Element {
   useEffect(() => {
     if (filePath === null) return
     let cancelled = false
-    window.myclaud.agents
+    window.mya.agents
       .read(filePath)
       .then((result) => {
         if (cancelled) return
@@ -211,7 +211,7 @@ function AgentFields({
   useEffect(
     () => () => {
       onDirtyChange(false)
-      if (pendingIcon.current) void window.myclaud.agents.discardIcon(pendingIcon.current)
+      if (pendingIcon.current) void window.mya.agents.discardIcon(pendingIcon.current)
     },
     [onDirtyChange, pendingIcon]
   )
@@ -268,14 +268,14 @@ function AgentFields({
   }
 
   function dropPendingIcon(): void {
-    if (pendingIcon.current) void window.myclaud.agents.discardIcon(pendingIcon.current)
+    if (pendingIcon.current) void window.mya.agents.discardIcon(pendingIcon.current)
     pendingIcon.current = null
   }
 
   async function chooseIcon(): Promise<void> {
     setIconError(null)
     try {
-      const result = await window.myclaud.agents.pickIcon()
+      const result = await window.mya.agents.pickIcon()
       if (!result.ok) {
         setIconError(result.error.message)
         return
@@ -304,8 +304,8 @@ function AgentFields({
     setConflict(false)
     try {
       const result = detail
-        ? await window.myclaud.agents.update(detail.filePath, draft, detail.modifiedTime)
-        : await window.myclaud.agents.create(draft)
+        ? await window.mya.agents.update(detail.filePath, draft, detail.modifiedTime)
+        : await window.mya.agents.create(draft)
       if (result.ok) {
         pendingIcon.current = null
         onSaved()
@@ -406,7 +406,7 @@ function AgentFields({
             <p className="agent-form__error">{roleError}</p>
           ) : (
             <p className="agent-form__note">
-              Optional. Shown in MyClaud only; not saved in the agent file.
+              Optional. Shown in Mya only; not saved in the agent file.
             </p>
           )}
         </div>

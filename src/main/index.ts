@@ -36,7 +36,7 @@ function createWindow(): BrowserWindow {
     height: 800,
     minWidth: 960,
     minHeight: 600,
-    title: 'MyClaud',
+    title: 'Mya',
     backgroundColor: WINDOW_BACKGROUND,
     show: false,
     ...frameOptions,

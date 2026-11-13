@@ -17,7 +17,7 @@ import SegmentBar from '../components/SegmentBar'
 import type { AccountStore } from '../hooks/useAccount'
 import './AccountScreen.css'
 
-const APP_NAME = 'MyClaud'
+const APP_NAME = 'Mya'
 
 type AccountScreenProps = {
   store: AccountStore
@@ -183,7 +183,7 @@ function AccountScreen({ store }: AccountScreenProps): React.JSX.Element {
                 type="button"
                 className="account__link"
                 onClick={() =>
-                  void window.myclaud.account.openUsagePage().catch((err: unknown) => {
+                  void window.mya.account.openUsagePage().catch((err: unknown) => {
                     console.error('Could not open the usage page:', err)
                   })
                 }

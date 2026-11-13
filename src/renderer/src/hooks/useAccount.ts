@@ -24,13 +24,13 @@ export function useAccount(): AccountStore {
     let active = true
     // A change that arrives before the first answer is newer than the answer.
     let changed = false
-    const stop = window.myclaud.account.onChange((next) => {
+    const stop = window.mya.account.onChange((next) => {
       if (!active) return
       changed = true
       setData(next)
       setNow(Date.now())
     })
-    window.myclaud.account.get().then(
+    window.mya.account.get().then(
       (first) => {
         if (active && !changed) {
           setData(first)
@@ -54,7 +54,7 @@ export function useAccount(): AccountStore {
   const check = useCallback(async (): Promise<AccountData | null> => {
     setChecking(true)
     try {
-      const next = await window.myclaud.account.check()
+      const next = await window.mya.account.check()
       setData(next)
       setNow(Date.now())
       return next

@@ -42,13 +42,13 @@ export function fileBlock(agent: GateAgent): GateBlock | null {
   }
   if (agent.permissionMode !== null && UNSAFE_MODES.includes(agent.permissionMode)) {
     return {
-      message: `The agent ${agent.name} sets its own permission mode (${agent.permissionMode}). MyClaud keeps approvals on, so it does not run this agent.`,
+      message: `The agent ${agent.name} sets its own permission mode (${agent.permissionMode}). Mya keeps approvals on, so it does not run this agent.`,
       short: 'Sets its own permission mode'
     }
   }
   if (agent.background) {
     return {
-      message: `The agent ${agent.name} is set to run in the background. MyClaud runs agents in the foreground.`,
+      message: `The agent ${agent.name} is set to run in the background. Mya runs agents in the foreground.`,
       short: 'Runs in the background'
     }
   }

@@ -12,7 +12,7 @@ export function usePopupsSetting(): {
 
   useEffect(() => {
     let disposed = false
-    window.myclaud.ui
+    window.mya.ui
       .getPopups()
       .then((value) => {
         if (disposed) return
@@ -28,13 +28,13 @@ export function usePopupsSetting(): {
   const toggle = useCallback((): void => {
     const next = !on
     setOn(next)
-    window.myclaud.ui
+    window.mya.ui
       .setPopups(next)
       .catch((err: unknown) => console.error('Could not save the popups setting:', err))
   }, [on])
 
   const test = useCallback((): void => {
-    window.myclaud.ui
+    window.mya.ui
       .testPopup()
       .catch((err: unknown) => console.error('Could not show the test popup:', err))
   }, [])

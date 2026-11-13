@@ -28,7 +28,7 @@ function App(): React.JSX.Element {
   const tasks = useTasks(project?.path ?? null)
   // The title bar's counts, the amber WAITING fill, and the breadcrumb all read what is
   // already here: the tasks, the screen, the project, and the mascot the chat speaks as.
-  const mascot = useActiveMascot(window.myclaud.mascots)
+  const mascot = useActiveMascot(window.mya.mascots)
   const waitingAlert = useWaitingAlert(tasks.tasks, tasks.loaded, screen === 'inbox')
   // Who I am signed in as and the usage numbers: the sidebar meter and ACCOUNT share them.
   const account = useAccount()
@@ -94,7 +94,7 @@ function App(): React.JSX.Element {
   // OPEN on a popup: CHAT, or the task in INBOX. Unsaved changes still ask first.
   useEffect(
     () =>
-      window.myclaud.ui.onOpen((target) => {
+      window.mya.ui.onOpen((target) => {
         confirmLeave(() => {
           if (target.screen === 'inbox') openTask(target.taskId)
           else setScreen('chat')

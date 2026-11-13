@@ -1,8 +1,8 @@
-import type { MyClaudApi } from '../shared/ipc'
+import type { MyaApi } from '../shared/ipc'
 
 declare global {
   interface Window {
-    myclaud: MyClaudApi
+    mya: MyaApi
   }
 }
 

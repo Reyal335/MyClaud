@@ -1,9 +1,9 @@
-import type { MyClaudPopupApi } from '../shared/ipc'
+import type { MyaPopupApi } from '../shared/ipc'
 
 declare global {
   interface Window {
     // Only in the popup window.
-    myclaudPopup: MyClaudPopupApi
+    myaPopup: MyaPopupApi
   }
 }
 

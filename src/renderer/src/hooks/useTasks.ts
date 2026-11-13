@@ -22,7 +22,7 @@ export function useTasks(projectPath: string | null): TasksStore {
 
   const reload = useCallback((): void => {
     const request = ++latest.current
-    window.myclaud.tasks.list().then(
+    window.mya.tasks.list().then(
       (result) => {
         if (request !== latest.current) return
         if (result.ok) {
@@ -44,7 +44,7 @@ export function useTasks(projectPath: string | null): TasksStore {
 
   useEffect(() => {
     reload()
-    return window.myclaud.tasks.onChanged(reload)
+    return window.mya.tasks.onChanged(reload)
   }, [reload, projectPath])
 
   const waitingCount = tasks.filter((task) => task.status === 'waiting').length

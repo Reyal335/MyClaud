@@ -3,13 +3,13 @@ import type { AccountData } from '../shared/account'
 import {
   IpcChannel,
   type AgentEvent,
-  type MyClaudApi,
+  type MyaApi,
   type PopupOpenTarget,
   type WindowState
 } from '../shared/ipc'
 
 // The only API the renderer gets. ipcRenderer itself is never exposed.
-const api: MyClaudApi = {
+const api: MyaApi = {
   project: {
     get: () => ipcRenderer.invoke(IpcChannel.ProjectGet),
     open: () => ipcRenderer.invoke(IpcChannel.ProjectOpen)
@@ -132,4 +132,4 @@ const api: MyClaudApi = {
   }
 }
 
-contextBridge.exposeInMainWorld('myclaud', api)
+contextBridge.exposeInMainWorld('mya', api)

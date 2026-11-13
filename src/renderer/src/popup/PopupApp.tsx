@@ -6,7 +6,7 @@ import PopupCard from './PopupCard'
 // What main says to show, or nothing. The card is keyed by the popup's id, so a
 // new popup starts with its buttons enabled.
 function PopupApp(): React.JSX.Element | null {
-  const api = window.myclaudPopup
+  const api = window.myaPopup
   const [view, setView] = useState<PopupView | null>(null)
   const mascot = useActiveMascot(api.mascot)
 

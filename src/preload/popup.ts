@@ -1,9 +1,9 @@
 import { contextBridge, ipcRenderer, type IpcRendererEvent } from 'electron'
-import { IpcChannel, type MyClaudPopupApi, type PopupView } from '../shared/ipc'
+import { IpcChannel, type MyaPopupApi, type PopupView } from '../shared/ipc'
 
 // The popup window's only API: what to show, the buttons, hover, and the active
 // mascot. It does not get the main window's API, and ipcRenderer is never exposed.
-const api: MyClaudPopupApi = {
+const api: MyaPopupApi = {
   getState: () => ipcRenderer.invoke(IpcChannel.PopupGetState),
   onState: (callback) => {
     const listener = (_event: IpcRendererEvent, view: PopupView | null): void => callback(view)
@@ -26,4 +26,4 @@ const api: MyClaudPopupApi = {
   }
 }
 
-contextBridge.exposeInMainWorld('myclaudPopup', api)
+contextBridge.exposeInMainWorld('myaPopup', api)

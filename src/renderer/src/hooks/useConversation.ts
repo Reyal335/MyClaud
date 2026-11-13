@@ -474,7 +474,7 @@ export function useConversation(): Conversation {
   }, [])
 
   useEffect(() => {
-    return window.myclaud.agent.onEvent((event) => {
+    return window.mya.agent.onEvent((event) => {
       if (event.requestId === liveRun.current) apply(event)
       else if (sendsOut.current > 0) early.current.push(event)
     })
@@ -513,7 +513,7 @@ export function useConversation(): Conversation {
         dispatch(runGoes ? { type: 'refused', messageId, error } : { type: 'failed', error })
       }
 
-      window.myclaud.agent
+      window.mya.agent
         .send(prompt, call?.ref ?? null, messageId)
         .then((result) => {
           if (!result.ok) {
@@ -540,7 +540,7 @@ export function useConversation(): Conversation {
   )
 
   const stop = useCallback((): void => {
-    void window.myclaud.agent.stop()
+    void window.mya.agent.stop()
   }, [])
 
   // Buttons stay disabled after one click until permission_resolved arrives. If main
@@ -548,7 +548,7 @@ export function useConversation(): Conversation {
   const answerPermission = useCallback(
     (permissionId: string, decision: PermissionDecision): void => {
       dispatch({ type: 'answering', permissionId, answering: true })
-      window.myclaud.agent
+      window.mya.agent
         .answerPermission(permissionId, decision)
         .then((result) => {
           if (!result.ok) dispatch({ type: 'answering', permissionId, answering: false })
@@ -561,7 +561,7 @@ export function useConversation(): Conversation {
   const loadHistory = useCallback((projectPath: string): void => {
     if (historyRequested.current === projectPath) return
     historyRequested.current = projectPath
-    window.myclaud.chat
+    window.mya.chat
       .history()
       .then((history) => dispatch({ type: 'loaded', projectPath, history }))
       .catch((err: unknown) => {
@@ -584,7 +584,7 @@ export function useConversation(): Conversation {
     if (liveRun.current !== null || sendsOut.current > 0) {
       return { code: 'busy', message: 'A run is already in progress.' }
     }
-    const result = await window.myclaud.chat.reset()
+    const result = await window.mya.chat.reset()
     if (!result.ok) return result.error
     // Nothing to load for this project now: the conversation starts empty.
     dispatch({ type: 'clear' })

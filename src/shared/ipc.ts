@@ -349,8 +349,8 @@ export type PopupView =
     }
   | { id: string; kind: 'finished' | 'error'; who: PopupWho; text: string }
 
-// The API the popup's preload exposes as window.myclaudPopup. Nothing else.
-export type MyClaudPopupApi = {
+// The API the popup's preload exposes as window.myaPopup. Nothing else.
+export type MyaPopupApi = {
   getState: () => Promise<PopupView | null>
   onState: (callback: (view: PopupView | null) => void) => () => void
   act: (id: string, action: PopupAction) => Promise<{ ok: boolean }>
@@ -378,7 +378,7 @@ export type AgentSummary = {
   model: string | null
   otherFields: string[]
   icon: string | null
-  // A MyClaud label such as "code-reader", kept in userData, not in the file.
+  // A Mya label such as "code-reader", kept in userData, not in the file.
   role: string | null
   // Read only, for the agent gate: the file's permissionMode and background fields.
   permissionMode: string | null
@@ -523,8 +523,8 @@ export type PickSheetResult =
 export type SliceSheetResult =
   { ok: true; token: string; frames: number; preview: string } | { ok: false; error: MascotsError }
 
-// The API the preload exposes as window.myclaud.
-export type MyClaudApi = {
+// The API the preload exposes as window.mya.
+export type MyaApi = {
   project: {
     get: () => Promise<ProjectInfo | null>
     open: () => Promise<ProjectInfo | null>

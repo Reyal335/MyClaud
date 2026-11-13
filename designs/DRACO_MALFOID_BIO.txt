@@ -1,8 +1,8 @@
-DRACO MALFOID - MyClaud Mascot Bio
+DRACO MALFOID - Mya Mascot Bio
 ===================================
 
 Who is Draco Malfoid?
-Draco Malfoid is the primary mascot for MyClaud, a retro 8-bit desktop app that
+Draco Malfoid is the primary mascot for Mya, a retro 8-bit desktop app that
 channels coding agents through an RPG-style interface. Despite the sinister name
 and sharp appearance, Draco is your helpful companion through the coding journey.
 
@@ -20,13 +20,13 @@ Appearance:
   * WORKING: Active and focused, executing tasks
   * ASKING: Attentive, awaiting your approval or input
 
-Role in MyClaud:
+Role in Mya:
 Draco serves as the visual anchor for the agent chat interface, appearing in
 dialogue boxes as conversations unfold. Their animations sync with the SDK stream
 events, bringing life to the retro pixel aesthetic. They're also featured in
 popup notifications when tasks complete, fail, or need approval.
 
 Design Philosophy:
-Draco embodies the retro 8-bit aesthetic of MyClaud while maintaining a modern,
+Draco embodies the retro 8-bit aesthetic of Mya while maintaining a modern,
 helpful personality. The name is a playful reference to literary villains—a
 reminder that even seemingly antagonistic figures can be excellent allies.

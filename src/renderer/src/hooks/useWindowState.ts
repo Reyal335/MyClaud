@@ -24,8 +24,8 @@ export function useWindowState(): WindowState {
     let disposed = false
     let unsubscribe = (): void => {}
     try {
-      unsubscribe = window.myclaud.window.onState(setState)
-      window.myclaud.window.getState().then(
+      unsubscribe = window.mya.window.onState(setState)
+      window.mya.window.getState().then(
         (initial) => {
           if (!disposed && initial) setState(initial)
         },

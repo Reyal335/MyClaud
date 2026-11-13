@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import type { ActiveMascotData, MyClaudApi } from '../../../shared/ipc'
+import type { ActiveMascotData, MyaApi } from '../../../shared/ipc'
 import { DEFAULT_MASCOT_ID } from '../../../shared/mascotRules'
 import { DEFAULT_MASCOT, withDefaultEdits } from './defaultMascot'
 import type { Mascot } from './types'
@@ -13,7 +13,7 @@ function toMascot(data: ActiveMascotData): Mascot {
 }
 
 // Where the active mascot comes from.
-export type MascotSource = Pick<MyClaudApi['mascots'], 'getActive' | 'onChanged'>
+export type MascotSource = Pick<MyaApi['mascots'], 'getActive' | 'onChanged'>
 
 // The mascot the app shows: the one chosen on the MASCOTS screen. It is the
 // bundled default until main answers and whenever anything fails. Main gives the

@@ -15,7 +15,7 @@ import { getUsage, noteSignedInAs, recordRateLimit } from './usage'
 const READ_TIMEOUT_MS = 30_000
 
 let account: AccountState = { kind: 'loading' }
-// Made-up values from MYCLAUD_ACCOUNT_FIXTURE, in an app that is not packaged.
+// Made-up values from MYA_ACCOUNT_FIXTURE, in an app that is not packaged.
 let fixture: AccountData | null = null
 
 export function accountData(): AccountData {
@@ -39,7 +39,7 @@ function setAccount(next: AccountState): void {
 
 function chooseFixture(): void {
   if (app.isPackaged) return
-  const name = process.env['MYCLAUD_ACCOUNT_FIXTURE']
+  const name = process.env['MYA_ACCOUNT_FIXTURE']
   if (!name) return
   fixture = fixtureData(name, Date.now())
   if (fixture) console.log(`[account] Showing the "${name}" fixture. Real values are ignored.`)
