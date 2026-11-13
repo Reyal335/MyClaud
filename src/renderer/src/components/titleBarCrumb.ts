@@ -13,7 +13,8 @@ const SCREEN_NAMES: Record<Screen, string> = {
   chat: 'CHAT',
   inbox: 'INBOX',
   agents: 'AGENTS',
-  mascots: 'MASCOTS'
+  mascots: 'MASCOTS',
+  account: 'ACCOUNT'
 }
 
 // What the title bar's breadcrumb shows. On CHAT it is the title and project the CHAT

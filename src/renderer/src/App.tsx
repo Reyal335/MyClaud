@@ -3,13 +3,16 @@ import AppShell from './components/AppShell'
 import NoProject from './components/NoProject'
 import Sidebar from './components/Sidebar'
 import TitleBar from './components/TitleBar'
+import UsageMeter from './components/UsageMeter'
 import { titleBarCrumb } from './components/titleBarCrumb'
 import { speakerName } from './conversation/agentName'
+import AccountScreen from './screens/AccountScreen'
 import ConversationScreen from './screens/ConversationScreen'
 import InboxScreen from './screens/InboxScreen'
 import AgentsScreen from './screens/AgentsScreen'
 import MascotsScreen from './screens/MascotsScreen'
 import { useActiveMascot } from './mascots/useActiveMascot'
+import { useAccount } from './hooks/useAccount'
 import { useConversation, type CallTarget } from './hooks/useConversation'
 import { useProject } from './hooks/useProject'
 import { useTasks } from './hooks/useTasks'
@@ -27,6 +30,8 @@ function App(): React.JSX.Element {
   // already here: the tasks, the screen, the project, and the mascot the chat speaks as.
   const mascot = useActiveMascot(window.myclaud.mascots)
   const waitingAlert = useWaitingAlert(tasks.tasks, tasks.loaded, screen === 'inbox')
+  // Who I am signed in as and the usage numbers: the sidebar meter and ACCOUNT share them.
+  const account = useAccount()
   const { clear } = conversation
   // The agent called for my next message, and the task open in INBOX.
   const [call, setCall] = useState<CallTarget | null>(null)
@@ -126,6 +131,14 @@ function App(): React.JSX.Element {
           onOpenProject={handleSidebarOpenProject}
           chatCount={mainWaiting ? 1 : 0}
           inboxCount={tasks.waitingCount}
+          meter={
+            <UsageMeter
+              data={account.data}
+              now={account.now}
+              active={screen === 'account'}
+              onOpen={() => handleNavigate('account')}
+            />
+          }
         />
       }
     >
@@ -160,6 +173,7 @@ function App(): React.JSX.Element {
         <AgentsScreen project={project} setLeaveGuard={setLeaveGuard} onCall={callAgent} />
       )}
       {screen === 'mascots' && <MascotsScreen setLeaveGuard={setLeaveGuard} />}
+      {screen === 'account' && <AccountScreen store={account} />}
     </AppShell>
   )
 }

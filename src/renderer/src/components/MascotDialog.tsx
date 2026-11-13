@@ -9,15 +9,20 @@ import {
   canReverse,
   DEFAULT_FPS,
   DEFAULT_MASCOT_ID,
+  EMOJI_LEVELS,
   fpsError,
   FRAME_SIZE,
   MASCOT_STATES,
   mascotNameError,
   MAX_FPS,
   MAX_MASCOT_NAME_LENGTH,
+  MAX_VOICE_LENGTH,
   MIN_FPS,
   parseFps,
-  type MascotStateName
+  voiceError,
+  type EmojiLevel,
+  type MascotStateName,
+  type MascotVoice
 } from '../../../shared/mascotRules'
 import { DEFAULT_MASCOT } from '../mascots/defaultMascot'
 import Dialog from './Dialog'
@@ -31,7 +36,8 @@ export type MascotDialogTarget =
   | { kind: 'new' }
   | { kind: 'edit'; mascot: Extract<MascotSummary, { problem: null }> }
   // The built-in mascot: `uploaded` holds only the loops the user uploaded for it.
-  | { kind: 'default'; name: string; uploaded: Partial<MascotLoops> }
+  // `voice` is null for the built-in voice (plain, no emoji).
+  | { kind: 'default'; name: string; uploaded: Partial<MascotLoops>; voice: MascotVoice | null }
 
 type MascotDialogProps = {
   target: MascotDialogTarget
@@ -120,6 +126,12 @@ function targetLoops(target: MascotDialogTarget): Partial<MascotLoops> {
   return {}
 }
 
+function targetVoice(target: MascotDialogTarget): MascotVoice | null {
+  if (target.kind === 'edit') return target.mascot.voice
+  if (target.kind === 'default') return target.voice
+  return null
+}
+
 function framesText(frames: number): string {
   return `${frames} ${frames === 1 ? 'frame' : 'frames'}`
 }
@@ -138,13 +150,21 @@ function MascotDialog({
   const isDefault = target.kind === 'default'
   // The id to update, or null for a new mascot.
   const editId = target.kind === 'edit' ? target.mascot.id : isDefault ? DEFAULT_MASCOT_ID : null
-  const [initial] = useState(() => ({
-    name: targetName(target),
-    slots: initialSlots(targetLoops(target), isDefault)
-  }))
+  const [initial] = useState(() => {
+    const voice = targetVoice(target)
+    return {
+      name: targetName(target),
+      slots: initialSlots(targetLoops(target), isDefault),
+      voiceText: voice?.text ?? '',
+      voiceEmoji: voice?.emoji ?? ('off' as EmojiLevel)
+    }
+  })
   const [name, setName] = useState(initial.name)
   const [nameTouched, setNameTouched] = useState(editId !== null)
   const [slots, setSlots] = useState(initial.slots)
+  const [voiceText, setVoiceText] = useState(initial.voiceText)
+  const [voiceTouched, setVoiceTouched] = useState(editId !== null)
+  const [voiceEmoji, setVoiceEmoji] = useState<EmojiLevel>(initial.voiceEmoji)
   const [saving, setSaving] = useState(false)
   const [formError, setFormError] = useState<string | null>(null)
   // The latest sheet picked in another layout. It stays loaded in the main
@@ -187,10 +207,17 @@ function MascotDialog({
   const nameError = mascotNameError(name)
   const filled = MASCOT_STATES.filter((state) => slots[state].sheet)
   const fpsValid = filled.every((state) => parseFps(slots[state].fps) !== null)
-  // An open slicer counts as a change, so closing the dialog asks first.
+  // Blank text means no voice, so it is never an error; only non-blank text is checked.
+  const trimmedVoice = voiceText.trim()
+  const voiceProblem = trimmedVoice === '' ? null : voiceError(voiceText)
+  // An open slicer counts as a change, so closing the dialog asks first. The emoji level
+  // only counts as a change while there is voice text: with none, it does not end up in
+  // the draft either way.
   const dirty =
     slicing !== null ||
     name.trim() !== initial.name.trim() ||
+    trimmedVoice !== initial.voiceText.trim() ||
+    (trimmedVoice !== '' && voiceEmoji !== initial.voiceEmoji) ||
     MASCOT_STATES.some(
       (state) =>
         slots[state].change.type !== 'keep' ||
@@ -198,7 +225,7 @@ function MascotDialog({
           (slots[state].fps !== initial.slots[state].fps ||
             slots[state].reverse !== initial.slots[state].reverse))
     )
-  const valid = nameError === null && slots.idle.sheet !== null && fpsValid
+  const valid = nameError === null && slots.idle.sheet !== null && fpsValid && voiceProblem === null
   const canSave = valid && dirty && !saving && slicing === null
 
   useEffect(() => {
@@ -360,11 +387,17 @@ function MascotDialog({
         sheet: slot.change
       }
     }
-    return { name: name.trim(), states }
+    const trimmed = voiceText.trim()
+    return {
+      name: name.trim(),
+      states,
+      voice: trimmed === '' ? null : { text: trimmed, emoji: voiceEmoji }
+    }
   }
 
   async function save(): Promise<void> {
     setNameTouched(true)
+    setVoiceTouched(true)
     if (!canSave) return
     setSaving(true)
     setFormError(null)
@@ -611,6 +644,62 @@ function MascotDialog({
             and the built-in files never change. RESET on its card brings back the built-in version.
           </p>
         )}
+
+        <div className="mascot-form__field">
+          <div className="mascot-form__voice-head">
+            <label htmlFor={`${id}-voice`} className="mascot-form__label">
+              VOICE
+            </label>
+            <span
+              className={`mascot-form__count${
+                trimmedVoice.length > MAX_VOICE_LENGTH ? ' mascot-form__count--over' : ''
+              }`}
+            >
+              {trimmedVoice.length} / {MAX_VOICE_LENGTH}
+            </span>
+          </div>
+          <textarea
+            id={`${id}-voice`}
+            className="mascot-form__input mascot-form__input--voice"
+            rows={3}
+            value={voiceText}
+            placeholder="How should this mascot talk? For example: Dry, smug wit. Sarcastic, clever observations. Short sentences with bite."
+            maxLength={MAX_VOICE_LENGTH}
+            aria-invalid={voiceTouched && voiceProblem !== null}
+            aria-describedby={`${id}-voice-help`}
+            onChange={(event) => {
+              setVoiceTouched(true)
+              setVoiceText(event.target.value)
+            }}
+          />
+          <div id={`${id}-voice-help`}>
+            {voiceTouched && voiceProblem && <p className="mascot-form__error">{voiceProblem}</p>}
+          </div>
+          <p className="mascot-form__note">
+            Shapes how Claude talks in the main conversation. Left blank, Claude speaks plainly.
+          </p>
+
+          <fieldset className="mascot-form__emoji" disabled={trimmedVoice === ''}>
+            <legend className="mascot-form__label">EMOJI</legend>
+            <div className="mascot-form__emoji-row">
+              {EMOJI_LEVELS.map((level) => (
+                <label
+                  key={level}
+                  className={`mascot-emoji${voiceEmoji === level ? ' mascot-emoji--selected' : ''}`}
+                >
+                  <input
+                    type="radio"
+                    name={`${id}-emoji`}
+                    checked={voiceEmoji === level}
+                    disabled={trimmedVoice === ''}
+                    onChange={() => setVoiceEmoji(level)}
+                  />
+                  {level.toUpperCase()}
+                </label>
+              ))}
+            </div>
+          </fieldset>
+        </div>
 
         <div className="mascot-form__format">
           <span className="mascot-form__format-title">FORMAT</span>

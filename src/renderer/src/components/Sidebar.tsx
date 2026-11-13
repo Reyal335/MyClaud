@@ -13,6 +13,8 @@ type SidebarProps = {
   // and the number of tasks waiting for me.
   chatCount: number
   inboxCount: number
+  // The account meter under the project name. It opens ACCOUNT.
+  meter: React.ReactNode
 }
 
 const NAV_ITEMS: { screen: Screen; label: string }[] = [
@@ -29,7 +31,8 @@ function Sidebar({
   canOpenProject,
   onOpenProject,
   chatCount,
-  inboxCount
+  inboxCount,
+  meter
 }: SidebarProps): React.JSX.Element {
   return (
     <nav className="sidebar" aria-label="Main">
@@ -59,6 +62,7 @@ function Sidebar({
           {project ? 'CHANGE' : 'OPEN'}
         </button>
       </div>
+      {meter}
     </nav>
   )
 }

@@ -1,4 +1,5 @@
 import { contextBridge, ipcRenderer, type IpcRendererEvent } from 'electron'
+import type { AccountData } from '../shared/account'
 import {
   IpcChannel,
   type AgentEvent,
@@ -89,6 +90,18 @@ const api: MyClaudApi = {
         ipcRenderer.removeListener(IpcChannel.TasksChanged, listener)
       }
     }
+  },
+  account: {
+    get: () => ipcRenderer.invoke(IpcChannel.AccountGet),
+    check: () => ipcRenderer.invoke(IpcChannel.AccountCheck),
+    onChange: (callback) => {
+      const listener = (_event: IpcRendererEvent, data: AccountData): void => callback(data)
+      ipcRenderer.on(IpcChannel.AccountChanged, listener)
+      return () => {
+        ipcRenderer.removeListener(IpcChannel.AccountChanged, listener)
+      }
+    },
+    openUsagePage: () => ipcRenderer.invoke(IpcChannel.AccountOpenUsagePage)
   },
   window: {
     minimize: () => ipcRenderer.invoke(IpcChannel.WindowMinimize),

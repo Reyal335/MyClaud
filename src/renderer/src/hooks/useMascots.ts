@@ -2,7 +2,13 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import type { DefaultMascotEdits, MascotSummary } from '../../../shared/ipc'
 import { DEFAULT_MASCOT_ID } from '../../../shared/mascotRules'
 
-const NO_EDITS: DefaultMascotEdits = { edited: false, name: null, loops: {}, problem: null }
+const NO_EDITS: DefaultMascotEdits = {
+  edited: false,
+  name: null,
+  loops: {},
+  voice: null,
+  problem: null
+}
 
 export type MascotsState = {
   // Uploaded mascots only. The screen adds the built-in default.

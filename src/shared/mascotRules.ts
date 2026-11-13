@@ -78,6 +78,41 @@ export function mascotNameError(name: string): string | null {
   return null
 }
 
+// A mascot's voice: free text that tells the agent how to talk, plus how many emoji to use.
+export const MAX_VOICE_LENGTH = 1000
+
+// In the order the editor shows them.
+export const EMOJI_LEVELS = ['off', 'some', 'lots'] as const
+export type EmojiLevel = (typeof EMOJI_LEVELS)[number]
+
+export interface MascotVoice {
+  text: string
+  emoji: EmojiLevel
+}
+
+export function isEmojiLevel(value: unknown): value is EmojiLevel {
+  return (EMOJI_LEVELS as readonly unknown[]).includes(value)
+}
+
+export function voiceError(text: string): string | null {
+  const trimmed = text.trim()
+  if (trimmed === '') return 'Voice text is required.'
+  if (trimmed.length > MAX_VOICE_LENGTH) {
+    return `Voice text must be ${MAX_VOICE_LENGTH} characters or fewer. This one is ${trimmed.length}.`
+  }
+  // eslint-disable-next-line no-control-regex
+  if (/[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/.test(trimmed)) {
+    return 'Voice text must not contain control characters.'
+  }
+  return null
+}
+
+export function voiceEmojiError(emoji: unknown): string | null {
+  return isEmojiLevel(emoji)
+    ? null
+    : `Emoji level must be 'off', 'some', or 'lots'. Got '${String(emoji)}'.`
+}
+
 // The sheet messages. The height message is the one in designs/DESIGN.md.
 export const SHEET_NOT_PNG = 'Sheet must be a PNG file.'
 export const SHEET_NOT_IMAGE = 'This file could not be read as an image.'

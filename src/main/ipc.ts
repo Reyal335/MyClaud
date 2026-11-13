@@ -7,6 +7,7 @@ import {
   type ModelsResult,
   type ProjectInfo
 } from '../shared/ipc'
+import { accountData, checkAccount, openUsagePage } from './account'
 import { chatChoice, listModels, saveChoice } from './modelChoice'
 import { prefetchModels } from './models'
 import { registerWindowIpc } from './windowControls'
@@ -219,6 +220,13 @@ export function registerIpc(): void {
   ipcMain.handle(IpcChannel.TasksClearFinished, () =>
     clearFinishedTasks(getProject()?.path ?? null)
   )
+
+  // The account and usage. None of these takes an argument from the window: the page
+  // that opens is a fixed address in account.ts, and a read asks Claude Code only for
+  // what it knows from starting up.
+  ipcMain.handle(IpcChannel.AccountGet, () => accountData())
+  ipcMain.handle(IpcChannel.AccountCheck, () => checkAccount())
+  ipcMain.handle(IpcChannel.AccountOpenUsagePage, () => openUsagePage())
 
   // The party panel's open or rail choice, kept in settings.json.
   ipcMain.handle(IpcChannel.UiGetPartyPanel, () => getPartyPanel())

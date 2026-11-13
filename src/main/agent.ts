@@ -26,13 +26,16 @@ import {
 import { callBlock, hookBlock, winningAgent } from '../shared/agentGate'
 import { withCall } from '../shared/callAgent'
 import { labelText, toolLabel } from '../shared/toolLabel'
+import { noteRateLimit, readAccountFromRun } from './account'
 import { listAgents } from './agents'
 import { getChatSession, setChatChoice, setChatSession, setChatTheme } from './chats'
 import { historyItems, type RecordedMessage, type SavedTask } from './history'
 import { DENY_MESSAGE, forIpc, isAgentTool } from './ipcInput'
+import { getActiveVoice } from './mascots'
 import { choiceForRun } from './modelChoice'
-import { childEnv, loadSdk, type Sdk } from './sdk'
+import { childEnv, claudeExecutable, loadSdk, type Sdk } from './sdk'
 import { getDefaultChoice } from './settings'
+import { voiceAppend } from './voice'
 import { AUTO, AUTO_CHOICE, isEffortLevel, type ModelChoice } from '../shared/models'
 import {
   createInputQueue,
@@ -663,6 +666,17 @@ async function execute(run: Run): Promise<void> {
     for (const text of picked.notices) emit(run, { requestId: run.requestId, type: 'notice', text })
     const { model, effort } = run.choice
 
+    // The active mascot's voice, as a system-prompt append. A broken lookup
+    // never blocks or fails the run: it just runs with no voice.
+    let voice: Awaited<ReturnType<typeof getActiveVoice>>
+    try {
+      voice = await getActiveVoice()
+    } catch (err) {
+      console.error('[agent] Could not read the active mascot voice:', errorMessage(err))
+      voice = { name: null, voice: null }
+    }
+    const append = voiceAppend(voice.name, voice.voice)
+
     const options: Options = {
       cwd: run.cwd,
       includePartialMessages: true,
@@ -674,10 +688,14 @@ async function execute(run: Run): Promise<void> {
       // Ignore MCP servers from user and project config, so no tools beyond the
       // built-ins above are available.
       strictMcpConfig: true,
-      systemPrompt: { type: 'preset', preset: 'claude_code' },
+      systemPrompt:
+        append !== null
+          ? { type: 'preset', preset: 'claude_code', append }
+          : { type: 'preset', preset: 'claude_code' },
       settingSources: ['user', 'project', 'local'],
       abortController: run.abortController,
       env: childEnv(),
+      ...claudeExecutable(),
       ...(model !== AUTO ? { model } : {}),
       ...(isEffortLevel(effort) ? { effort } : {}),
       ...(resumed ? { resume: resumed } : {})
@@ -687,6 +705,8 @@ async function execute(run: Run): Promise<void> {
     // result until main closes the queue.
     const query = sdk.query({ prompt: run.input.iterable, options })
     run.query = query
+    // The account is read again whenever a run starts, from this run's own query.
+    readAccountFromRun(query)
     for await (const message of query) {
       // Stopped by the user, or aborted below for an auth problem. The SDK can still
       // yield messages that were already in flight, so forward nothing more.
@@ -720,6 +740,13 @@ async function execute(run: Run): Promise<void> {
               await setChatSession(run.cwd, message.session_id)
             }
           }
+          break
+
+        // The session and weekly numbers for the ACCOUNT screen. Every run, the chat's and
+        // the agents', streams through this one loop. Only the numbers are kept: nothing
+        // is forwarded to the window and nothing about how the run handles a limit changes.
+        case 'rate_limit_event':
+          noteRateLimit(message.rate_limit_info)
           break
 
         case 'stream_event': {

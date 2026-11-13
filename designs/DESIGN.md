@@ -21,6 +21,8 @@ components in React and match these visually.
 | `10-model-picker.html` | CHAT with the model and thinking picker open above the input row, and a reply with its tag |
 | `11-chat-themes.html` | The chat theme picker: the tiles, the preview, the fade slider, and APPLY TO |
 | `12-title-bar.html` | The custom title bar: where I am, RUNNING and WAITING pills, window buttons, and its states |
+| `13-account.html` | ACCOUNT: who the agents run as, the session and weekly usage bars, and the sidebar meter that opens it |
+| `13b-account-states.html` | Every state of the sidebar meter, the usage panel, and the account panel |
 | `mascot.png` | Default mascot image used in the mockups |
 
 ## Colors
@@ -89,6 +91,62 @@ Conversations waiting for approval count as unread in the inbox.
   message, for example "Height must be 64px. Yours is 128px."
 - Idle is required. A state with no sheet plays the idle loop.
 - Display at 1x, 2x, or 3x only.
+
+## Mascot voice
+
+An optional `voice` field in the mascot's `manifest.json` shapes Claude's tone in the main
+conversation, changing how Claude speaks and how often it uses emoji. The field is
+`{ text: string; emoji: 'off' | 'some' | 'lots' }`, where `text` is the voice description
+and `emoji` sets the emoji level.
+
+### Voice text
+
+Text is free prose from 1 to 1000 characters, trimmed, allowing newlines. No control
+characters (ASCII 0–31 except tab and newline). It goes into the system prompt and is
+never sent to agents or affects tool behavior; it shapes the tone of Claude's own replies only.
+
+Example: "Draco Malfoid speaks with a dry, smug wit. Sarcastic, clever observations.
+Short sentences with bite."
+
+### Emoji levels
+
+- `off`: Claude does not use emoji in its replies.
+- `some`: Claude uses emoji occasionally, about 1–2 per reply where they fit naturally.
+- `lots`: Claude uses emoji freely in conversational replies, as many as it wants.
+
+Emoji never appear in code blocks, inline code, file paths, diffs, or any non-prose text.
+
+### Rendering
+
+- Emoji render in full color. Segoe UI is the fallback font for graphemes the main font
+  does not cover.
+- ZWJ sequences (emoji with modifiers, like skin tones or gendered forms) are supported
+  and render as graphemes, never split.
+- The typewriter handles grapheme boundaries correctly.
+
+### Default mascot
+
+The built-in default mascot has no voice by default, so Claude speaks plainly with no
+emoji. A voice only applies when the mascot is explicitly named. An unnamed mascot (the
+placeholder "Default" name) uses the system prompt without a voice field.
+
+### Validation
+
+Voice is validated strictly. A mascot with an invalid voice field is marked as broken.
+Show the exact error:
+
+- Text exceeds 1000 characters: "Voice text must be 1000 characters or fewer. This one is
+  1247."
+- Invalid emoji level (not 'off', 'some', or 'lots'): "Emoji level must be 'off', 'some',
+  or 'lots'. Got 'lots2'."
+- Control characters (ASCII 0–31 except tab and newline) in text: "Voice text must not
+  contain control characters."
+
+### Prompt injection safeguard
+
+Voice text is user-written and trusted. It runs in the system prompt of the main
+conversation only, not agents. If mascot sharing is added later, voice fields must be
+reviewed before sharing.
 
 ## Sheet slicer
 
@@ -162,7 +220,8 @@ See `8-chat-party.html`, `8b-party-states.html`, `8c-party-rail.html`, and
 `1-inbox.html`. The sidebar reads CHAT, INBOX, AGENTS, MASCOTS, and the app
 opens on CHAT. CHAT shows a count of 1 while a request from the main
 conversation itself is pending; INBOX shows the number of waiting tasks. Both
-are hidden at zero.
+are hidden at zero. Under the project name sits the account meter, which opens
+ACCOUNT (see Account and usage).
 
 ### Party panel
 
@@ -589,6 +648,105 @@ borders `--line`, as in the mockup). A filled WAITING pill dims with the rest.
 - The sidebar no longer shows the app name, since the bar does. Its nav order and focus
   order are unchanged. Tab reaches the bar's pills and buttons first, as it would an
   operating system title bar.
+
+## Account and usage
+
+See `13-account.html` and `13b-account-states.html`. ACCOUNT shows who the agents run as
+and how much of the plan's session (5 hour) and weekly (7 day) limits is used. It has no
+nav button: the meter at the bottom of the sidebar opens it, and the title bar shows
+ACCOUNT as the screen name. The mockups say "Mya"; the app says MyClaud.
+
+### Where the numbers come from
+
+- The account is the SDK's `accountInfo()`, asked through a query with no message in it:
+  Claude Code answers from its start-up information, nothing is sent to a model, and
+  nothing is used from the plan. It is read at app start, whenever a run starts (from that
+  run's own query), and on CHECK AGAIN. The email goes to the window and is never logged.
+- Usage is never asked for. It comes from the `rate_limit_event` messages every run
+  already streams, caught in the one message loop in `agent.ts`. Nothing is requested to
+  refresh it, so looking at it costs nothing.
+- One event can carry both windows. The per-window block (`unifiedWindows`) is used when
+  present; it is marked `@internal` and is not in the SDK's type file. Otherwise the
+  event's own fields count when `rateLimitType` names the window. Per-model weekly limits
+  and extra usage are ignored.
+- `utilization` is a fraction of the window: 0.52 is 52%, and a value past 1 stops at
+  100. `resetsAt` arrives in epoch seconds and is kept in milliseconds. A percent is never
+  estimated: no number, no percent.
+- The latest value of each window is saved in `userData/usage.json`, so it is back after a
+  restart, with a short fingerprint of the email (not the email). Another account signing
+  in drops the numbers that belonged to the last one.
+- A window whose reset time has passed counts as reset and shows as "no percent yet"
+  until a new event arrives.
+
+### The account panel
+
+- EMAIL, PLAN as a badge, SIGNED IN WITH, then the note about switching accounts (run
+  `claude` in a terminal, use `/login`; the app picks the new account up on its next run).
+  Switching accounts stays in the terminal.
+- PLAN is the subscription type without "Claude ", in capitals: PRO, MAX. Missing, or
+  something that does not look like a plan (an API account reports "Claude API"), shows
+  "Claude plan". SIGNED IN WITH is "Claude Code login", or "API key (<source>)".
+- Not signed in: "Not signed in to Claude Code, so agents can't run.", the three steps,
+  and CHECK AGAIN. The USAGE panel and the legend are hidden. After CHECK AGAIN the panel
+  says "Still not signed in." (read out as a status), or moves focus to the heading once
+  the sign-in is found and the button is gone.
+- API key (or another provider): SIGNED IN WITH and PLAN ("Claude Console") and the note
+  that limits do not apply. The USAGE panel and the legend are hidden. Runs that use an API
+  key are already refused (the `api_key_in_use` check in `agent.ts`); this only says so.
+- Claude Code could not be asked: "Couldn't read the account from Claude Code." and CHECK
+  AGAIN. Not in the mockups; the sign-in steps would be wrong here.
+
+### The bars
+
+20 segments, 5% each, 2px gaps, 16px tall on the screen; 10 segments, 10px tall in the
+sidebar. Empty segments are a 2px solid `--line` border. No gradients, no transitions.
+Each row is a group with an aria-label such as "Session (5 hr): 52 percent used"; the bar
+itself is `aria-hidden`.
+
+| Row | Bar | Value (screen / sidebar) |
+| --- | --- | --- |
+| Percent known | round(percent / 5) segments (round(percent / 10) in the sidebar). `--accent` under 80, `--waiting` 80 to 99, `--error` at 100 | `52%`, in `--text`, `--waiting`, or `--error` |
+| Status `rejected` | all segments `--error`, even with no percent | `100%` in `--error` |
+| No percent, `allowed_warning` | 16 of 20 (8 of 10) `--waiting` | `NEAR LIMIT` / `80%+` in `--waiting` |
+| No percent, `allowed` | no fill, dashed `--line` segments | `UNDER 80%` / `--` in `--muted` |
+| Nothing yet, or reset | no fill, dashed `--line` segments | `--` in `--muted` |
+
+- Under each bar: "Resets at 7:30 PM, in 2 h 18 min" when it resets today, else "Resets
+  Mon, Nov 16, 8:00 AM", in local time. The relative part updates every minute and when the
+  window is focused. With nothing yet it says "Updates after a reply."
+- Footer of the USAGE panel: "Updated after each reply. Last update 2 min ago.", or "No
+  usage reported yet. Updates after a reply." With a row that has no percent, "Last update"
+  follows the note "Claude Code reports exact percentages only near a limit. The reset
+  times are exact." Claude Code sends an event when a window's whole percent, reset time,
+  or status changes, so "Last update" is the last change.
+- The legend under the panels: Under 80% (`--accent`), 80% and up (`--waiting`), Limit
+  reached (`--error`).
+- A window at its limit puts a red alert box (`role="alert"`) at the top of the USAGE
+  panel: "Session limit reached. Agents can't start new replies until <time>." or "Weekly
+  limit reached...", the time in bold. The time is the clock when it is today, else the day
+  and the clock. How runs handle a limit is not changed. A window's own status decides, so
+  with extra usage turned on the box can show while replies still go through.
+- VIEW DETAILS ON CLAUDE.AI > is a button styled as a link. It asks main to open
+  `https://claude.ai/settings/usage` in the default browser; main opens that one address.
+
+### The sidebar meter
+
+- At the bottom of the sidebar, under the project name, on every screen. One button:
+  `--bg` fill, 4px `--line` border; with ACCOUNT open, a `--text` border and the hard
+  shadow, and `aria-current="page"`. Inside: ACCOUNT in `--accent` (8px), then a 5H row
+  and a 7D row with the 10-segment bars and their values.
+- Under the bars: "Session resets 7:30 PM" for a window at its limit (the day and the
+  clock when it is not today), or "Updates after a reply" while no row has a percent.
+- Signed out: "Not signed in" instead of the bars. API key: "API key".
+- aria-label such as "Account. Session 52 percent used, weekly 61 percent used."
+- The sidebar is 200px wide (it was 176px) so the bars have room.
+
+### Seeing each state
+
+Start an unpackaged app (`npm start`) with `MYCLAUD_ACCOUNT_FIXTURE` set to one of: normal,
+warning, limit, nopercent, nearnopercent, nothing, reset, signedout, apikey, unreadable.
+Real reads and real events are ignored, and `usage.json` is not written, while it is set.
+A packaged app ignores it.
 
 ## Markdown
 

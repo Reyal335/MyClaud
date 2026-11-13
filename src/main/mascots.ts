@@ -22,10 +22,12 @@ import {
   canReverse,
   DEFAULT_MASCOT_ID,
   FRAME_SIZE,
+  isEmojiLevel,
   isMascotState,
   isValidFps,
   MASCOT_STATES,
   mascotNameError,
+  type MascotVoice,
   MAX_FPS,
   MAX_SHEET_BYTES,
   MAX_SOURCE_SIDE,
@@ -35,6 +37,8 @@ import {
   sheetSizeProblem,
   sheetTooBigMessage,
   sourceTooLargeMessage,
+  voiceEmojiError,
+  voiceError,
   type MascotStateName
 } from '../shared/mascotRules'
 import { pngSize, readPngHeader, toPngDataUrl, type PngSize } from './png'
@@ -317,7 +321,7 @@ type ManifestEntry = { file: string; frames: number; fps: number; reverse: boole
 type ManifestStates = Partial<Record<MascotStateName, ManifestEntry>>
 
 type ParsedManifest =
-  | { ok: true; name: string; states: ManifestStates }
+  | { ok: true; name: string; states: ManifestStates; voice: MascotVoice | null }
   | { ok: false; name: string | null; problem: string }
 
 // The default's edits may leave out idle: the bundled idle sheet is used then.
@@ -363,7 +367,21 @@ function parseManifest(text: string, idleRequired: boolean): ParsedManifest {
     }
   }
   if (idleRequired && !states.idle) return broken('This mascot has no idle sheet.')
-  return { ok: true, name, states }
+
+  let voice: MascotVoice | null = null
+  if (parsed.voice !== undefined) {
+    if (
+      !isObject(parsed.voice) ||
+      typeof parsed.voice.text !== 'string' ||
+      voiceError(parsed.voice.text) !== null ||
+      !isEmojiLevel(parsed.voice.emoji)
+    ) {
+      return broken('manifest.json has a broken voice.')
+    }
+    voice = { text: parsed.voice.text.trim(), emoji: parsed.voice.emoji }
+  }
+
+  return { ok: true, name, states, voice }
 }
 
 type LoadedSheet = { ok: true; bytes: Buffer; frames: number } | { ok: false; problem: string }
@@ -386,7 +404,7 @@ async function loadSheet(folder: string, file: string): Promise<LoadedSheet> {
 }
 
 type FolderContents =
-  | { ok: true; name: string; loops: Partial<MascotLoops> }
+  | { ok: true; name: string; loops: Partial<MascotLoops>; voice: MascotVoice | null }
   | { ok: false; name: string | null; problem: string }
 
 // Reads a mascot folder and runs the sheet rules on every sheet. Never throws:
@@ -424,7 +442,7 @@ async function readMascotFolder(id: string, idleRequired: boolean): Promise<Fold
       reverse: entry.reverse && canReverse(sheet.frames)
     }
   }
-  return { ok: true, name: manifest.name, loops }
+  return { ok: true, name: manifest.name, loops, voice: manifest.voice }
 }
 
 async function loadMascot(id: string): Promise<MascotSummary> {
@@ -435,17 +453,30 @@ async function loadMascot(id: string): Promise<MascotSummary> {
   const { idle } = contents.loops
   if (!idle)
     return { id, name: contents.name, loops: {}, problem: 'This mascot has no idle sheet.' }
-  return { id, name: contents.name, loops: { ...contents.loops, idle }, problem: null }
+  return {
+    id,
+    name: contents.name,
+    loops: { ...contents.loops, idle },
+    voice: contents.voice,
+    problem: null
+  }
 }
 
 // The user's edits to the built-in default. No folder means no edits.
 async function loadDefaultEdits(): Promise<DefaultMascotEdits> {
   if (!(await isFolder(folderOf(DEFAULT_MASCOT_ID)))) {
-    return { edited: false, name: null, loops: {}, problem: null }
+    return { edited: false, name: null, loops: {}, voice: null, problem: null }
   }
   const contents = await readMascotFolder(DEFAULT_MASCOT_ID, false)
-  if (!contents.ok) return { edited: true, name: null, loops: {}, problem: contents.problem }
-  return { edited: true, name: contents.name, loops: contents.loops, problem: null }
+  if (!contents.ok)
+    return { edited: true, name: null, loops: {}, voice: null, problem: contents.problem }
+  return {
+    edited: true,
+    name: contents.name,
+    loops: contents.loops,
+    voice: contents.voice,
+    problem: null
+  }
 }
 
 async function createdTime(path: string): Promise<number> {
@@ -497,20 +528,45 @@ export function listMascots(): Promise<
   })
 }
 
-// The mascot to show. A missing or broken mascot gives the default, and broken
-// edits to the default give the bundled mascot, so there is always one.
+// The id, name, loops, and voice of the mascot to show now. A missing or broken
+// mascot gives the default, and broken edits to the default give the bundled
+// mascot, so there is always one. Shared by the active-mascot IPC call and by
+// the system-prompt voice, so both resolve "active" the same way.
+async function resolveActiveMascot(): Promise<{
+  id: string
+  name: string | null
+  loops: Partial<MascotLoops>
+  voice: MascotVoice | null
+}> {
+  const id = await getActiveMascotId()
+  if (isUuid(id)) {
+    const mascot = await loadMascot(id)
+    if (mascot.problem === null) {
+      return { id, name: mascot.name, loops: mascot.loops, voice: mascot.voice }
+    }
+  }
+  const edits = await loadDefaultEdits()
+  return { id: DEFAULT_MASCOT_ID, name: edits.name, loops: edits.loops, voice: edits.voice }
+}
+
+// The mascot to show.
 export function getActiveMascot(): Promise<MascotsResult<{ mascot: ActiveMascotData }>> {
   return run(async () => {
-    const id = await getActiveMascotId()
-    if (isUuid(id)) {
-      const mascot = await loadMascot(id)
-      if (mascot.problem === null) {
-        return { mascot: { id, name: mascot.name, loops: mascot.loops } }
-      }
-    }
-    const edits = await loadDefaultEdits()
-    return { mascot: { id: DEFAULT_MASCOT_ID, name: edits.name, loops: edits.loops } }
+    const { id, name, loops } = await resolveActiveMascot()
+    return { mascot: { id, name, loops } }
   })
+}
+
+// The active mascot's name and voice, for the agent run's system-prompt append.
+// Goes through the same queue as every other mascot read, and never throws: a
+// missing or broken mascot gives no voice rather than failing the caller.
+export function getActiveVoice(): Promise<{ name: string | null; voice: MascotVoice | null }> {
+  return run(async () => {
+    const { name, voice } = await resolveActiveMascot()
+    return { name, voice }
+  }).then((result) =>
+    result.ok ? { name: result.name, voice: result.voice } : { name: null, voice: null }
+  )
 }
 
 // --- Changing mascots ----------------------------------------------------
@@ -518,6 +574,7 @@ export function getActiveMascot(): Promise<MascotsResult<{ mascot: ActiveMascotD
 type CleanDraft = {
   name: string
   states: Record<MascotStateName, { fps: number; reverse: boolean; sheet: MascotSheetChange }>
+  voice: MascotVoice | null
 }
 
 function readSheetChange(raw: unknown): MascotSheetChange | null {
@@ -555,7 +612,21 @@ function readDraft(raw: unknown): CleanDraft {
     }
     states[state] = { fps: entry.fps, reverse: entry.reverse, sheet }
   }
-  return { name: raw.name.trim(), states }
+
+  let voice: MascotVoice | null = null
+  if (raw.voice !== null) {
+    if (!isObject(raw.voice) || typeof raw.voice.text !== 'string') {
+      invalid('The mascot voice is missing.')
+    }
+    const textError = voiceError(raw.voice.text)
+    if (textError) invalid(textError)
+    if (!isEmojiLevel(raw.voice.emoji)) {
+      invalid(voiceEmojiError(raw.voice.emoji) ?? 'Emoji level is not valid.')
+    }
+    voice = { text: raw.voice.text.trim(), emoji: raw.voice.emoji }
+  }
+
+  return { name: raw.name.trim(), states, voice }
 }
 
 type SavePlan = {
@@ -607,7 +678,12 @@ function planSave(
 
 // Builds a whole mascot folder in a temporary folder, manifest last, then
 // renames it into place, so a half-written folder never appears.
-async function writeNewFolder(target: string, name: string, plan: SavePlan): Promise<void> {
+async function writeNewFolder(
+  target: string,
+  name: string,
+  voice: MascotVoice | null,
+  plan: SavePlan
+): Promise<void> {
   const dir = mascotsDir()
   await mkdir(dir, { recursive: true })
   const temp = join(dir, `${TEMP_PREFIX}${randomUUID()}`)
@@ -616,7 +692,7 @@ async function writeNewFolder(target: string, name: string, plan: SavePlan): Pro
     for (const { state, bytes } of plan.writes) {
       await writeFile(join(temp, sheetFile(state)), bytes)
     }
-    await writeFileSafely(join(temp, MANIFEST), manifestText(name, plan.states))
+    await writeFileSafely(join(temp, MANIFEST), manifestText(name, voice, plan.states))
     await renameWithRetry(temp, target)
   } catch (err) {
     await rm(temp, { recursive: true, force: true }).catch(() => {})
@@ -626,11 +702,16 @@ async function writeNewFolder(target: string, name: string, plan: SavePlan): Pro
 
 // Changes an existing folder: new sheets first, each through a temporary file,
 // then the manifest, then removed sheets.
-async function writeExistingFolder(folder: string, name: string, plan: SavePlan): Promise<void> {
+async function writeExistingFolder(
+  folder: string,
+  name: string,
+  voice: MascotVoice | null,
+  plan: SavePlan
+): Promise<void> {
   for (const { state, bytes } of plan.writes) {
     await writeFileSafely(join(folder, sheetFile(state)), bytes)
   }
-  await writeFileSafely(join(folder, MANIFEST), manifestText(name, plan.states))
+  await writeFileSafely(join(folder, MANIFEST), manifestText(name, voice, plan.states))
   // The manifest no longer lists removed sheets, so a failure here only leaves a stray file.
   for (const state of plan.removals) {
     await unlink(join(folder, sheetFile(state))).catch((err: unknown) => {
@@ -642,7 +723,7 @@ async function writeExistingFolder(folder: string, name: string, plan: SavePlan)
 // What is written for a state: `reverse` is left out when it is off.
 type StoredEntry = Omit<ManifestEntry, 'reverse'> & { reverse?: true }
 
-function manifestText(name: string, states: ManifestStates): string {
+function manifestText(name: string, voice: MascotVoice | null, states: ManifestStates): string {
   // States in the dialog's order. `reverse` is written only when it is on.
   const ordered: Partial<Record<MascotStateName, StoredEntry>> = {}
   for (const state of MASCOT_STATES) {
@@ -651,7 +732,14 @@ function manifestText(name: string, states: ManifestStates): string {
     const { reverse, ...rest } = entry
     ordered[state] = reverse ? { ...rest, reverse: true } : rest
   }
-  return `${JSON.stringify({ version: MANIFEST_VERSION, name, states: ordered }, null, 2)}\n`
+  // `voice` is written only when set, right after `name`.
+  const manifest = {
+    version: MANIFEST_VERSION,
+    name,
+    ...(voice ? { voice } : {}),
+    states: ordered
+  }
+  return `${JSON.stringify(manifest, null, 2)}\n`
 }
 
 // An id the renderer sent for an uploaded mascot. The default cannot be changed.
@@ -675,7 +763,7 @@ export function createMascot(rawDraft: unknown): Promise<MascotsResult<{ id: str
     const draft = readDraft(rawDraft)
     const plan = planSave(draft, null, true)
     const id = randomUUID()
-    await writeNewFolder(folderOf(id), draft.name, plan)
+    await writeNewFolder(folderOf(id), draft.name, draft.voice, plan)
     for (const token of plan.tokens) pendingSheets.delete(token)
     return { id }
   })
@@ -690,8 +778,8 @@ async function updateDefault(rawDraft: unknown): Promise<{ id: string }> {
   const draft = readDraft(rawDraft)
   const plan = planSave(draft, edits.loops, false)
   const folder = folderOf(DEFAULT_MASCOT_ID)
-  if (edits.edited) await writeExistingFolder(folder, draft.name, plan)
-  else await writeNewFolder(folder, draft.name, plan)
+  if (edits.edited) await writeExistingFolder(folder, draft.name, draft.voice, plan)
+  else await writeNewFolder(folder, draft.name, draft.voice, plan)
   for (const token of plan.tokens) pendingSheets.delete(token)
   // The default also stands in for a missing or broken active mascot, so always tell.
   broadcastChanged()
@@ -710,7 +798,7 @@ export function updateMascot(
     if (existing.problem !== null) invalid(`This mascot cannot be edited. ${existing.problem}`)
     const draft = readDraft(rawDraft)
     const plan = planSave(draft, existing.loops, true)
-    await writeExistingFolder(folderOf(id), draft.name, plan)
+    await writeExistingFolder(folderOf(id), draft.name, draft.voice, plan)
     for (const token of plan.tokens) pendingSheets.delete(token)
 
     if ((await getActiveMascotId()) === id) broadcastChanged()

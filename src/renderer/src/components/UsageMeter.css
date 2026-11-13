@@ -1,0 +1,89 @@
+/* The sidebar meter from designs/13-account.html and 13b-account-states.html. */
+.usage-meter {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  margin: 0;
+  padding: 10px;
+  background: var(--bg);
+  color: var(--text);
+  border: var(--border) solid var(--line);
+  border-radius: 0;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.usage-meter:hover {
+  border-color: var(--accent);
+}
+
+/* ACCOUNT is open: the --text border and hard shadow the active nav item has. */
+.usage-meter--active,
+.usage-meter--active:hover {
+  border-color: var(--text);
+  box-shadow: var(--shadow-hard);
+}
+
+.usage-meter__title {
+  font-family: var(--font-pixel);
+  font-size: 8px;
+  line-height: 1.5;
+  color: var(--accent);
+}
+
+.usage-meter__row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.usage-meter__name {
+  flex: none;
+  width: 22px;
+  font-family: var(--font-pixel);
+  font-size: 8px;
+  color: var(--muted);
+}
+
+.usage-meter__bar {
+  flex: 1;
+  min-width: 0;
+}
+
+.usage-meter__value {
+  flex: none;
+  width: 34px;
+  text-align: right;
+  font-family: var(--font-pixel);
+  font-size: 8px;
+  color: var(--text);
+}
+
+.usage-meter__value--muted {
+  color: var(--muted);
+}
+
+.usage-meter__value--waiting {
+  color: var(--waiting);
+}
+
+.usage-meter__value--error {
+  color: var(--error);
+}
+
+.usage-meter__note,
+.usage-meter__text {
+  font-size: 11px;
+  line-height: 1.4;
+  color: var(--muted);
+  /* "Session resets 7:30 PM" breaks into two even lines, not one with "PM" alone. */
+  text-wrap: balance;
+}
+
+/* "Not signed in" and "API key" stand in for the bars. */
+.usage-meter__text {
+  font-size: 12px;
+  color: var(--text);
+}
