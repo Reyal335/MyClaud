@@ -1,5 +1,11 @@
 import { contextBridge, ipcRenderer, type IpcRendererEvent } from 'electron'
-import { IpcChannel, type AgentEvent, type MyClaudApi } from '../shared/ipc'
+import {
+  IpcChannel,
+  type AgentEvent,
+  type MyClaudApi,
+  type PopupOpenTarget,
+  type WindowState
+} from '../shared/ipc'
 
 // The only API the renderer gets. ipcRenderer itself is never exposed.
 const api: MyClaudApi = {
@@ -8,7 +14,8 @@ const api: MyClaudApi = {
     open: () => ipcRenderer.invoke(IpcChannel.ProjectOpen)
   },
   agent: {
-    send: (prompt, call) => ipcRenderer.invoke(IpcChannel.AgentSend, prompt, call ?? null),
+    send: (prompt, call, messageId) =>
+      ipcRenderer.invoke(IpcChannel.AgentSend, prompt, call ?? null, messageId),
     stop: () => ipcRenderer.invoke(IpcChannel.AgentStop),
     answerPermission: (permissionId, decision) =>
       ipcRenderer.invoke(IpcChannel.AgentPermission, permissionId, decision),
@@ -54,7 +61,20 @@ const api: MyClaudApi = {
   },
   chat: {
     history: () => ipcRenderer.invoke(IpcChannel.ChatHistory),
-    reset: () => ipcRenderer.invoke(IpcChannel.ChatReset)
+    reset: () => ipcRenderer.invoke(IpcChannel.ChatReset),
+    getModelChoice: () => ipcRenderer.invoke(IpcChannel.ChatGetModelChoice),
+    setModelChoice: (change) => ipcRenderer.invoke(IpcChannel.ChatSetModelChoice, change)
+  },
+  models: {
+    list: () => ipcRenderer.invoke(IpcChannel.ModelsList)
+  },
+  themes: {
+    list: () => ipcRenderer.invoke(IpcChannel.ThemesList),
+    add: () => ipcRenderer.invoke(IpcChannel.ThemesAdd),
+    rename: (id, name) => ipcRenderer.invoke(IpcChannel.ThemesRename, id, name),
+    remove: (id) => ipcRenderer.invoke(IpcChannel.ThemesRemove, id),
+    getChoice: () => ipcRenderer.invoke(IpcChannel.ThemesGetChoice),
+    setChoice: (change) => ipcRenderer.invoke(IpcChannel.ThemesSetChoice, change)
   },
   tasks: {
     list: () => ipcRenderer.invoke(IpcChannel.TasksList),
@@ -70,9 +90,32 @@ const api: MyClaudApi = {
       }
     }
   },
+  window: {
+    minimize: () => ipcRenderer.invoke(IpcChannel.WindowMinimize),
+    toggleMaximize: (source) => ipcRenderer.invoke(IpcChannel.WindowToggleMaximize, source),
+    close: () => ipcRenderer.invoke(IpcChannel.WindowClose),
+    getState: () => ipcRenderer.invoke(IpcChannel.WindowGetState),
+    onState: (callback) => {
+      const listener = (_event: IpcRendererEvent, state: WindowState): void => callback(state)
+      ipcRenderer.on(IpcChannel.WindowState, listener)
+      return () => {
+        ipcRenderer.removeListener(IpcChannel.WindowState, listener)
+      }
+    }
+  },
   ui: {
     getPartyPanel: () => ipcRenderer.invoke(IpcChannel.UiGetPartyPanel),
-    setPartyPanel: (mode) => ipcRenderer.invoke(IpcChannel.UiSetPartyPanel, mode)
+    setPartyPanel: (mode) => ipcRenderer.invoke(IpcChannel.UiSetPartyPanel, mode),
+    getPopups: () => ipcRenderer.invoke(IpcChannel.UiGetPopups),
+    setPopups: (on) => ipcRenderer.invoke(IpcChannel.UiSetPopups, on),
+    testPopup: () => ipcRenderer.invoke(IpcChannel.UiTestPopup),
+    onOpen: (callback) => {
+      const listener = (_event: IpcRendererEvent, target: PopupOpenTarget): void => callback(target)
+      ipcRenderer.on(IpcChannel.UiOpen, listener)
+      return () => {
+        ipcRenderer.removeListener(IpcChannel.UiOpen, listener)
+      }
+    }
   }
 }
 

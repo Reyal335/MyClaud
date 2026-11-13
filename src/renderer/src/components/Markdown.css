@@ -1,0 +1,243 @@
+/* Markdown from Claude and the agents (DESIGN.md, Markdown). Every rule sits
+   under .md so nothing leaks into the rest of the app. Nothing here animates. */
+.md {
+  min-width: 0;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--text);
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.md :where(p, ul, ol, li, blockquote, pre, table, hr, h1, h2, h3, h4, h5, h6, section) {
+  margin: 0;
+}
+
+/* 12px between blocks, at every level. */
+.md > * + *,
+.md li > * + *,
+.md blockquote > * + *,
+.md section > * + * {
+  margin-top: 12px;
+}
+
+/* More space above a heading than under it. */
+.md > * + :is(h1, h2, h3, h4, h5, h6, .md__heading) {
+  margin-top: 20px;
+}
+
+.md > :is(h1, h2, h3, h4, h5, h6, .md__heading) + * {
+  margin-top: 8px;
+}
+
+/* Inbox detail: lines of text at most about 78 characters. Code and tables use the full width. */
+.md--measure > :is(p, ul, ol, blockquote, h1, h2, h3, h4, h5, h6, section) {
+  max-width: 78ch;
+}
+
+/* Headings: the pixel font in the accent color, never bigger than the screen's
+   own section labels (9px). A paragraph that is only bold text looks like h3. */
+.md :is(h1, h2, h3),
+.md .md__heading {
+  font-family: var(--font-pixel);
+  font-weight: normal;
+  line-height: 1.8;
+  color: var(--accent);
+}
+
+.md :is(h1, h2) {
+  font-size: 9px;
+  padding-bottom: 6px;
+  border-bottom: var(--border-thin) solid var(--line);
+}
+
+.md h3,
+.md .md__heading {
+  font-size: 8px;
+}
+
+.md .md__heading strong {
+  font-weight: normal;
+  color: inherit;
+}
+
+.md :is(h4, h5, h6) {
+  font-size: 1em;
+  font-weight: 600;
+  color: var(--text);
+}
+
+/* Inline */
+.md strong {
+  font-weight: 600;
+  color: var(--text);
+}
+
+.md em {
+  font-style: italic;
+}
+
+.md del {
+  text-decoration: line-through;
+  color: var(--muted);
+}
+
+.md a {
+  color: var(--accent);
+  text-decoration: underline;
+}
+
+.md a:hover {
+  color: var(--text);
+}
+
+/* Inline code: paths and names. Long ones wrap anywhere. */
+.md code {
+  padding: 0 4px;
+  background: var(--raised);
+  border: 1px solid var(--line);
+  font-family: var(--font-mono);
+  font-size: 1em;
+  overflow-wrap: anywhere;
+}
+
+.md :is(h1, h2, h3, .md__heading) code {
+  font-family: inherit;
+}
+
+/* Lists: a small accent square, accent numbers, 6px between items, 20px nesting. */
+.md ul {
+  padding-left: 20px;
+}
+
+/* Room for the numbers, which sit in the padding. */
+.md ol {
+  padding-left: 4ch;
+}
+
+.md li + li,
+.md li > :is(ul, ol) {
+  margin-top: 6px;
+}
+
+.md ul > li {
+  position: relative;
+  list-style: none;
+}
+
+.md ul > li::before {
+  content: '';
+  position: absolute;
+  left: -14px;
+  top: calc((1.6em - 6px) / 2);
+  width: 6px;
+  height: 6px;
+  background: var(--accent);
+}
+
+.md ol > li::marker {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+/* Task lists: a drawn pixel box in place of the bullet. */
+.md ul > li.task-list-item::before {
+  display: none;
+}
+
+.md .md__box {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  margin-right: 8px;
+  vertical-align: -1px;
+  border: var(--border-thin) solid var(--accent);
+}
+
+.md .md__box--checked {
+  background: var(--accent);
+}
+
+/* Code blocks: a box that scrolls sideways inside itself. No syntax colors. */
+.md .md__code {
+  max-width: 100%;
+  background: var(--bg);
+  border: var(--border-thin) solid var(--line);
+}
+
+.md .md__code-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 6px 6px 12px;
+  border-bottom: var(--border-thin) solid var(--line);
+}
+
+.md .md__code-lang {
+  font-family: var(--font-pixel);
+  font-size: 8px;
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+
+.md .md__copy {
+  margin-left: auto;
+  box-shadow: none;
+}
+
+.md .md__pre {
+  padding: 10px 12px;
+  overflow-x: auto;
+  scrollbar-color: var(--line) var(--bg);
+  white-space: pre;
+  overflow-wrap: normal;
+}
+
+.md .md__pre code {
+  padding: 0;
+  background: none;
+  border: 0;
+  white-space: inherit;
+  overflow-wrap: normal;
+  word-break: normal;
+}
+
+/* Quotes: a 4px bar and muted text. */
+.md blockquote {
+  padding-left: 12px;
+  border-left: var(--border) solid var(--line);
+  color: var(--muted);
+}
+
+/* Tables: borders on every cell, a lighter bold header, sideways scroll in the wrapper. */
+.md .md__table {
+  max-width: 100%;
+  overflow-x: auto;
+  scrollbar-color: var(--line) var(--panel);
+}
+
+.md table {
+  border-collapse: collapse;
+  overflow-wrap: normal;
+  word-break: normal;
+}
+
+.md :is(th, td) {
+  padding: 6px 10px;
+  border: var(--border-thin) solid var(--line);
+  text-align: left;
+  vertical-align: top;
+}
+
+.md th {
+  font-weight: 600;
+  background: var(--raised);
+}
+
+/* A rule is a 2px dashed line. */
+.md hr {
+  height: 0;
+  border: 0;
+  border-top: var(--border-thin) dashed var(--line);
+}

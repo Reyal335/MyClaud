@@ -185,16 +185,31 @@
   cursor: not-allowed;
 }
 
-.slicer__stepper output {
-  width: 52px;
+/* The typed value keeps the old inverted look. The native spinner is hidden: the
+   - and + buttons do that job. A value that is not a valid size gets an error
+   border; the message is in the status line. */
+.slicer__stepper input {
+  width: 64px;
   height: 44px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  padding: 0;
   background: var(--text);
   color: var(--bg);
+  border: var(--border) solid var(--text);
+  border-radius: 0;
+  text-align: center;
   font-family: var(--font-pixel);
   font-size: 12px;
+  appearance: textfield;
+}
+
+.slicer__stepper input::-webkit-inner-spin-button,
+.slicer__stepper input::-webkit-outer-spin-button {
+  margin: 0;
+  -webkit-appearance: none;
+}
+
+.slicer__stepper input[aria-invalid='true'] {
+  border-color: var(--error);
 }
 
 /* Status: a mark and a message, never color alone. */
@@ -251,6 +266,36 @@
   flex-wrap: wrap;
   gap: 12px;
   align-items: center;
+}
+
+/* REVERSE AT END: a checkbox in the loop header, as tall as the buttons beside it. */
+.slicer__check {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  font-family: var(--font-pixel);
+  font-size: 8px;
+  line-height: 1.5;
+  cursor: pointer;
+}
+
+.slicer__check input {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  accent-color: var(--accent);
+}
+
+.slicer__check:has(:focus-visible) {
+  outline: var(--border-thin) solid var(--text);
+  outline-offset: 2px;
+}
+
+.slicer__check--off {
+  color: var(--muted);
+  cursor: not-allowed;
 }
 
 .slicer__push {

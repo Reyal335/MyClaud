@@ -1,6 +1,6 @@
-import type { AgentError } from '../../../shared/ipc'
+import type { AgentError } from './ipc'
 
-// The message shown for a failed run, in the history and in the dialogue box.
+// The message shown for a failed run: in the history, the dialogue box, and the error popup.
 export function errorText(error: AgentError): string {
   switch (error.code) {
     case 'not_signed_in':

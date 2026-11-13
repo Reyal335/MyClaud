@@ -3,6 +3,8 @@ import { readFile, stat } from 'fs/promises'
 import { basename, join } from 'path'
 import type { PartyPanelMode, ProjectInfo } from '../shared/ipc'
 import { DEFAULT_MASCOT_ID } from '../shared/mascotRules'
+import { AUTO, type ModelChoice } from '../shared/models'
+import { DEFAULT_THEME, isValidFade, type ThemeChoice } from '../shared/themes'
 import { writeFileSafely } from './safeWrite'
 
 type RawSettings = Record<string, unknown>
@@ -95,4 +97,49 @@ export async function getPartyPanel(): Promise<PartyPanelMode | null> {
 
 export function setPartyPanel(mode: PartyPanelMode): Promise<void> {
   return updateSettings({ partyPanel: mode })
+}
+
+// The model and thinking choice a new chat starts from. AUTO and AUTO until I save
+// one with "Use for new chats too". A value that is not text reads as AUTO.
+export async function getDefaultChoice(): Promise<ModelChoice> {
+  const { defaultModel, defaultEffort } = await readSettings()
+  return {
+    model: typeof defaultModel === 'string' && defaultModel !== '' ? defaultModel : AUTO,
+    effort: typeof defaultEffort === 'string' && defaultEffort !== '' ? defaultEffort : AUTO
+  }
+}
+
+export function setDefaultChoice(choice: ModelChoice): Promise<void> {
+  return updateSettings({ defaultModel: choice.model, defaultEffort: choice.effort })
+}
+
+// The chat theme new chats and chats with no theme of their own use. Tokyo Night at
+// 60% fade until I save another. A saved value that is not a theme and a fade reads
+// as that default.
+export async function getDefaultTheme(): Promise<ThemeChoice> {
+  const { defaultTheme } = await readSettings()
+  if (
+    defaultTheme !== null &&
+    typeof defaultTheme === 'object' &&
+    typeof (defaultTheme as ThemeChoice).themeId === 'string' &&
+    isValidFade((defaultTheme as ThemeChoice).fade)
+  ) {
+    const { themeId, fade } = defaultTheme as ThemeChoice
+    return { themeId, fade }
+  }
+  return DEFAULT_THEME
+}
+
+export function setDefaultTheme(theme: ThemeChoice): Promise<void> {
+  return updateSettings({ defaultTheme: { themeId: theme.themeId, fade: theme.fade } })
+}
+
+// Popups are on until I turn them off.
+export async function getPopups(): Promise<boolean> {
+  const { popups } = await readSettings()
+  return popups !== false
+}
+
+export function setPopups(on: boolean): Promise<void> {
+  return updateSettings({ popups: on })
 }

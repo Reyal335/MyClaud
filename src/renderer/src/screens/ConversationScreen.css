@@ -38,6 +38,31 @@
   flex: none;
 }
 
+/* THEME: <NAME>, with a 12px swatch before it. The swatch is the accent color for a
+   theme, and the plain frame color with a line border for none. */
+.conversation__theme {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 10px;
+  font-size: 9px;
+  box-shadow: none;
+}
+
+.conversation__swatch {
+  box-sizing: border-box;
+  width: 12px;
+  height: 12px;
+  background: var(--accent);
+  border: var(--border-thin) solid var(--text);
+}
+
+.conversation__swatch--none {
+  background: var(--bg);
+  border: var(--border-thin) solid var(--line);
+}
+
 .conversation__header-error {
   flex-basis: 100%;
   margin: 0;
@@ -94,9 +119,13 @@
   gap: 16px;
 }
 
+/* No min-height: 0 here. The history has a flex basis of 0 and a minimum, so the
+   frame's automatic minimum is that minimum plus the stage. A tall input row
+   cannot squeeze the history out of the frame. */
 .conversation__frame {
+  /* The chat theme fills the frame. The history and the stage sit above it. */
+  position: relative;
   flex: 1 1 auto;
-  min-height: 0;
   display: flex;
   flex-direction: column;
   gap: 16px;
@@ -107,8 +136,9 @@
 
 /* History */
 .conversation__history {
-  flex: 1 1 auto;
-  min-height: 0;
+  position: relative;
+  flex: 1 1 0;
+  min-height: 96px;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
@@ -136,10 +166,51 @@
   border: var(--border) solid var(--accent);
 }
 
+/* A message sent while a run was going: QUEUED until Claude takes it in, or a line
+   saying the run ended first. Text color on the message bubble, never muted: muted
+   is too faint on this background. */
+.conversation__delivery,
+.conversation__undelivered {
+  align-self: flex-end;
+  color: var(--text);
+}
+
+.conversation__delivery {
+  font-family: var(--font-pixel);
+  font-size: 8px;
+  line-height: 1;
+}
+
+.conversation__undelivered {
+  font-size: 12px;
+}
+
+/* Rendered Markdown: its own rules decide wrapping. A wide code block or table
+   scrolls inside itself, so the reply never grows past its max width. */
 .conversation__reply {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  white-space: normal;
   padding: 12px 14px;
   background: var(--panel);
   border: var(--border) solid var(--line);
+}
+
+.conversation__reply > * {
+  min-width: 0;
+}
+
+/* The model and level that answered, above the reply text. */
+.conversation__tag {
+  align-self: flex-start;
+  padding: 4px 6px;
+  border: var(--border-thin) solid var(--line);
+  font-family: var(--font-pixel);
+  font-size: 8px;
+  line-height: 1;
+  color: var(--muted);
 }
 
 .conversation__stopped,
@@ -156,6 +227,15 @@
   color: var(--error);
 }
 
+/* Plain lines in the history have no box of their own, so they get the frame's solid
+   fill and stay readable over a theme picture. */
+.conversation__muted,
+.conversation__stopped,
+.conversation__error {
+  padding: 6px 10px;
+  background: var(--bg);
+}
+
 .conversation__tools {
   display: flex;
   flex-wrap: wrap;
@@ -165,6 +245,7 @@
 
 /* Stage: the mascot beside the dialogue box. */
 .conversation__stage {
+  position: relative;
   flex: none;
   display: flex;
   align-items: flex-end;
@@ -233,19 +314,29 @@
   background: var(--waiting);
 }
 
-/* Input row */
+/* Input row. The textarea grows with its text up to a cap, then scrolls. The
+   buttons and the agent chip stay at the bottom, at their own height. */
 .conversation__input-row {
+  /* The model picker's dialog opens above the row, anchored to it. */
+  position: relative;
   flex: none;
   display: flex;
-  align-items: stretch;
+  align-items: flex-end;
   gap: 12px;
   margin: 0;
+}
+
+.conversation__input-row > .button {
+  min-height: 48px;
 }
 
 .conversation__input {
   flex: 1 1 auto;
   min-width: 0;
+  field-sizing: content;
   min-height: 48px;
+  max-height: min(40vh, 12lh);
+  overflow-y: auto;
   padding: 12px 14px;
   resize: none;
   background: var(--bg);

@@ -1,7 +1,41 @@
 import { BrowserWindow, dialog, ipcMain } from 'electron'
-import { IpcChannel, type AgentSendResult, type ChatHistory, type ProjectInfo } from '../shared/ipc'
-import { answerPermission, isRunning, loadChatHistory, resetChat, startRun, stopRun } from './agent'
-import { getPartyPanel, getProject, setPartyPanel, setProject } from './settings'
+import {
+  IpcChannel,
+  type AgentSendResult,
+  type ChatHistory,
+  type ModelChoiceResult,
+  type ModelsResult,
+  type ProjectInfo
+} from '../shared/ipc'
+import { chatChoice, listModels, saveChoice } from './modelChoice'
+import { prefetchModels } from './models'
+import { registerWindowIpc } from './windowControls'
+import {
+  addTheme,
+  listThemes,
+  removeTheme,
+  renameTheme,
+  setThemeChoice,
+  themeChoices
+} from './themes'
+import {
+  answerPermission,
+  applyChoiceToRun,
+  isRunning,
+  loadChatHistory,
+  resetChat,
+  sendMessage,
+  stopRun
+} from './agent'
+import {
+  getPartyPanel,
+  getPopups,
+  getProject,
+  setPartyPanel,
+  setPopups,
+  setProject
+} from './settings'
+import { setPopupsEnabled, showTestPopup } from './popupWindow'
 import { clearFinishedTasks, getTask, listTasks, markTaskSeen, removeTask } from './tasks'
 import { createAgent, listAgents, readAgent, removeAgent, updateAgent } from './agents'
 import { discardIcon, pickIcon } from './agentIcons'
@@ -20,6 +54,8 @@ import {
 } from './mascots'
 
 export function registerIpc(): void {
+  registerWindowIpc()
+
   ipcMain.handle(IpcChannel.ProjectGet, (): ProjectInfo | null => getProject())
 
   ipcMain.handle(IpcChannel.ProjectOpen, async (event): Promise<ProjectInfo | null> => {
@@ -36,13 +72,17 @@ export function registerIpc(): void {
       : await dialog.showOpenDialog(options)
     if (result.canceled || result.filePaths.length === 0 || isRunning()) return null
 
-    return setProject(result.filePaths[0])
+    const opened = await setProject(result.filePaths[0])
+    // The new folder's model list starts loading now.
+    prefetchModels(opened.path)
+    return opened
   })
 
   // `call` is { scope, filePath } of an agent from the list; agent.ts checks it again.
+  // `messageId` is the window's UUID for this message; agent.ts checks its shape.
   ipcMain.handle(
     IpcChannel.AgentSend,
-    async (event, prompt: unknown, call: unknown): Promise<AgentSendResult> => {
+    async (event, prompt: unknown, call: unknown, messageId: unknown): Promise<AgentSendResult> => {
       if (typeof prompt !== 'string' || prompt.trim() === '') {
         return {
           ok: false,
@@ -53,7 +93,7 @@ export function registerIpc(): void {
       if (!project) {
         return { ok: false, error: { code: 'no_project', message: 'No project is open.' } }
       }
-      return startRun(prompt, call, project.path, event.sender)
+      return sendMessage(prompt, call, messageId, project.path, event.sender)
     }
   )
 
@@ -128,6 +168,47 @@ export function registerIpc(): void {
     return resetChat(project.path)
   })
 
+  // The chat's model and thinking choice, and the models the account can use. The
+  // window names no folder: main uses the open project.
+  const noProject = { ok: false, error: { message: 'No project is open.' } } as const
+  ipcMain.handle(IpcChannel.ChatGetModelChoice, async (): Promise<ModelChoiceResult> => {
+    const project = getProject()
+    return project ? chatChoice(project.path) : noProject
+  })
+  ipcMain.handle(
+    IpcChannel.ChatSetModelChoice,
+    async (_event, change: unknown): Promise<ModelChoiceResult> => {
+      const project = getProject()
+      if (!project) return noProject
+      const saved = await saveChoice(project.path, change)
+      // During a run the pick applies from the next message.
+      if (saved.ok) await applyChoiceToRun(saved.choice)
+      return saved
+    }
+  )
+  // Chat themes. The window names a theme by id only; themes.ts checks every id.
+  ipcMain.handle(IpcChannel.ThemesList, () => listThemes())
+  ipcMain.handle(IpcChannel.ThemesAdd, (event) =>
+    addTheme(BrowserWindow.fromWebContents(event.sender))
+  )
+  ipcMain.handle(IpcChannel.ThemesRename, (_event, id: unknown, name: unknown) =>
+    renameTheme(id, name)
+  )
+  ipcMain.handle(IpcChannel.ThemesRemove, (_event, id: unknown) =>
+    removeTheme(id, getProject()?.path ?? null)
+  )
+  ipcMain.handle(IpcChannel.ThemesGetChoice, () => themeChoices(getProject()?.path ?? null))
+  ipcMain.handle(IpcChannel.ThemesSetChoice, (_event, change: unknown) =>
+    setThemeChoice(getProject()?.path ?? null, change)
+  )
+
+  ipcMain.handle(IpcChannel.ModelsList, async (): Promise<ModelsResult> => {
+    const project = getProject()
+    return project
+      ? listModels(project.path)
+      : { ok: false, message: "Couldn't load the model list." }
+  })
+
   // Tasks. The renderer names a task by id only; tasks.ts checks it is one it knows.
   ipcMain.handle(IpcChannel.TasksList, () => listTasks(getProject()?.path ?? null))
   ipcMain.handle(IpcChannel.TasksGet, (_event, id: unknown) =>
@@ -151,4 +232,20 @@ export function registerIpc(): void {
       return { ok: false }
     }
   })
+
+  // Popups on or off, kept in settings.json, and TEST POPUP.
+  ipcMain.handle(IpcChannel.UiGetPopups, () => getPopups())
+  ipcMain.handle(IpcChannel.UiSetPopups, async (_event, on: unknown) => {
+    if (typeof on !== 'boolean') return { ok: false }
+    // Takes effect at once, even if saving fails.
+    setPopupsEnabled(on)
+    try {
+      await setPopups(on)
+      return { ok: true }
+    } catch (err) {
+      console.error('Could not save settings:', err instanceof Error ? err.message : err)
+      return { ok: false }
+    }
+  })
+  ipcMain.handle(IpcChannel.UiTestPopup, () => showTestPopup())
 }

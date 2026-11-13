@@ -6,6 +6,7 @@ import type {
   MascotSummary
 } from '../../../shared/ipc'
 import {
+  canReverse,
   DEFAULT_FPS,
   DEFAULT_MASCOT_ID,
   fpsError,
@@ -54,6 +55,8 @@ type Slot = {
   change: MascotSheetChange
   // The fps field's text, checked with parseFps.
   fps: string
+  // REVERSE AT END: play forward, then back. Only means something with 3+ frames.
+  reverse: boolean
   error: string | null
 }
 
@@ -63,7 +66,10 @@ const BUILT_IN_IDLE = DEFAULT_MASCOT.loops.idle
 
 // What an empty slot falls back to: for the default's idle row, the bundled
 // idle sheet; otherwise nothing (the state plays the idle loop).
-function fallbackSlot(isDefault: boolean, state: MascotStateName): Pick<Slot, 'sheet' | 'fps'> {
+function fallbackSlot(
+  isDefault: boolean,
+  state: MascotStateName
+): Pick<Slot, 'sheet' | 'fps' | 'reverse'> {
   if (isDefault && state === 'idle') {
     return {
       sheet: {
@@ -73,10 +79,11 @@ function fallbackSlot(isDefault: boolean, state: MascotStateName): Pick<Slot, 's
         fileName: 'built-in sheet',
         builtIn: true
       },
-      fps: String(BUILT_IN_IDLE.fps)
+      fps: String(BUILT_IN_IDLE.fps),
+      reverse: false
     }
   }
-  return { sheet: null, fps: String(DEFAULT_FPS) }
+  return { sheet: null, fps: String(DEFAULT_FPS), reverse: false }
 }
 
 function initialSlots(loops: Partial<MascotLoops>, isDefault: boolean): Slots {
@@ -92,7 +99,8 @@ function initialSlots(loops: Partial<MascotLoops>, isDefault: boolean): Slots {
             fileName: `${state}.png`,
             builtIn: false
           },
-          fps: String(loop.fps)
+          fps: String(loop.fps),
+          reverse: loop.reverse
         }
       : fallbackSlot(isDefault, state)
     slots[state] = { ...base, change: { type: 'keep' }, error: null }
@@ -148,6 +156,8 @@ function MascotDialog({
   const [slicing, setSlicing] = useState<{
     state: MascotStateName
     fps: string
+    // Whether the slicer opens with REVERSE AT END on.
+    reverse: boolean
     key: number
   } | null>(null)
   const slicerOpenings = useRef(0)
@@ -184,7 +194,9 @@ function MascotDialog({
     MASCOT_STATES.some(
       (state) =>
         slots[state].change.type !== 'keep' ||
-        (slots[state].sheet !== null && slots[state].fps !== initial.slots[state].fps)
+        (slots[state].sheet !== null &&
+          (slots[state].fps !== initial.slots[state].fps ||
+            slots[state].reverse !== initial.slots[state].reverse))
     )
   const valid = nameError === null && slots.idle.sheet !== null && fpsValid
   const canSave = valid && dirty && !saving && slicing === null
@@ -212,11 +224,18 @@ function MascotDialog({
     return before.sheet && !before.sheet.builtIn ? before.fps : String(DEFAULT_FPS)
   }
 
+  // Likewise a replaced upload keeps REVERSE AT END; anything else starts with it off.
+  function startingReverse(state: MascotStateName): boolean {
+    const before = slotsRef.current[state]
+    return Boolean(before.sheet && !before.sheet.builtIn && before.reverse)
+  }
+
   // Puts a strip that waits in the main process behind `token` into a row.
   function fillSlot(
     state: MascotStateName,
     strip: { token: string; preview: string; frames: number; fileName: string },
-    fps: string
+    fps: string,
+    reverse: boolean
   ): void {
     dropToken(slotsRef.current[state].change)
     pending.current.add(strip.token)
@@ -230,6 +249,7 @@ function MascotDialog({
       },
       change: { type: 'token', token: strip.token },
       fps,
+      reverse,
       error: null
     })
   }
@@ -238,7 +258,12 @@ function MascotDialog({
   // a time, so this closes any other slicer.
   function openSlicer(state: MascotStateName): void {
     slicerOpenings.current += 1
-    setSlicing({ state, fps: startingFps(state), key: slicerOpenings.current })
+    setSlicing({
+      state,
+      fps: startingFps(state),
+      reverse: startingReverse(state),
+      key: slicerOpenings.current
+    })
     updateSlot(state, { error: null })
   }
 
@@ -253,7 +278,7 @@ function MascotDialog({
       if (result.canceled) return
       if (result.kind === 'strip') {
         // A legal strip is used as it is.
-        fillSlot(state, result, startingFps(state))
+        fillSlot(state, result, startingFps(state), startingReverse(state))
         setSlicing((current) => (current?.state === state ? null : current))
         return
       }
@@ -283,7 +308,8 @@ function MascotDialog({
     state: MascotStateName,
     fps: string,
     grid: SliceGrid,
-    cells: number[]
+    cells: number[],
+    reverse: boolean
   ): Promise<string | null> {
     if (!source) return 'This sheet is no longer loaded. Upload it again.'
     try {
@@ -297,7 +323,8 @@ function MascotDialog({
       fillSlot(
         state,
         { ...result, fileName: `${source.fileName} · sliced ${grid.columns} x ${grid.rows}` },
-        fps
+        fps,
+        reverse
       )
       const token = source.token
       setSource((current) => (current?.token === token ? { ...current, grid } : current))
@@ -327,7 +354,11 @@ function MascotDialog({
     const states = {} as MascotDraft['states']
     for (const state of MASCOT_STATES) {
       const slot = slots[state]
-      states[state] = { fps: parseFps(slot.fps) ?? DEFAULT_FPS, sheet: slot.change }
+      states[state] = {
+        fps: parseFps(slot.fps) ?? DEFAULT_FPS,
+        reverse: slot.sheet !== null && slot.reverse,
+        sheet: slot.change
+      }
     }
     return { name: name.trim(), states }
   }
@@ -385,30 +416,36 @@ function MascotDialog({
           <span className={`sheet-row__state sheet-row__state--${state}`}>{label}</span>
           {state === 'idle' && <span className="sheet-row__required">required</span>}
           <span className="sheet-row__meta">{meta}</span>
+          {/* Always FPS, UPLOAD or REPLACE, REUSE SHEET, REMOVE, in this order. A control
+              that does not apply is disabled, so the buttons never move. */}
           <div className="sheet-row__controls">
-            {(slicer || sheet) && (
-              <label className="sheet-row__fps">
-                FPS
-                <input
-                  className="sheet-row__fps-input"
-                  type="number"
-                  inputMode="numeric"
-                  min={MIN_FPS}
-                  max={MAX_FPS}
-                  step={1}
-                  value={fpsText}
-                  disabled={oneFrame}
-                  aria-label={`${state} FPS`}
-                  aria-invalid={Boolean(fpsProblem)}
-                  title={oneFrame ? 'A one-frame sheet does not animate.' : undefined}
-                  onChange={(event) => {
-                    const value = event.target.value
-                    if (slicer) setSlicing((current) => current && { ...current, fps: value })
-                    else updateSlot(state, { fps: value })
-                  }}
-                />
-              </label>
-            )}
+            <label className="sheet-row__fps">
+              FPS
+              <input
+                className="sheet-row__fps-input"
+                type="number"
+                inputMode="numeric"
+                min={MIN_FPS}
+                max={MAX_FPS}
+                step={1}
+                value={slicer || sheet ? fpsText : ''}
+                disabled={!(slicer || sheet) || oneFrame}
+                aria-label={`${state} FPS`}
+                aria-invalid={Boolean(fpsProblem)}
+                title={
+                  oneFrame
+                    ? 'A one-frame sheet does not animate.'
+                    : !(slicer || sheet)
+                      ? 'No sheet yet.'
+                      : undefined
+                }
+                onChange={(event) => {
+                  const value = event.target.value
+                  if (slicer) setSlicing((current) => current && { ...current, fps: value })
+                  else updateSlot(state, { fps: value })
+                }}
+              />
+            </label>
             <button
               type="button"
               className="button button--small sheet-row__button"
@@ -417,34 +454,39 @@ function MascotDialog({
             >
               {sheet ? 'REPLACE' : 'UPLOAD'}
             </button>
-            {source && !slicer && (
-              <button
-                type="button"
-                className="button button--secondary button--small sheet-row__button"
-                aria-label={`Reuse sheet ${source.fileName} for ${state}`}
-                title={`Slice ${source.fileName} again for this state`}
-                onClick={() => openSlicer(state)}
-              >
-                REUSE SHEET
-              </button>
-            )}
+            <button
+              type="button"
+              className="button button--secondary button--small sheet-row__button sheet-row__button--wide"
+              disabled={!source || Boolean(slicer)}
+              aria-label={
+                source ? `Reuse sheet ${source.fileName} for ${state}` : `Reuse sheet for ${state}`
+              }
+              title={
+                source ? `Slice ${source.fileName} again for this state` : 'No sheet loaded yet.'
+              }
+              onClick={() => openSlicer(state)}
+            >
+              REUSE SHEET
+            </button>
             {/* The default's idle row can drop an uploaded sheet: the built-in one comes back. */}
-            {!slicer && (state !== 'idle' || isDefault) && (
-              <button
-                type="button"
-                className="button button--secondary button--small sheet-row__button"
-                disabled={!sheet || sheet.builtIn}
-                aria-label={`Remove ${state} sheet`}
-                title={
-                  isDefault && state === 'idle'
+            <button
+              type="button"
+              className="button button--secondary button--small sheet-row__button"
+              disabled={
+                Boolean(slicer) || !sheet || sheet.builtIn || (state === 'idle' && !isDefault)
+              }
+              aria-label={`Remove ${state} sheet`}
+              title={
+                state === 'idle'
+                  ? isDefault
                     ? 'Goes back to the built-in idle sheet.'
-                    : undefined
-                }
-                onClick={() => remove(state)}
-              >
-                REMOVE
-              </button>
-            )}
+                    : 'Idle is required'
+                  : undefined
+              }
+              onClick={() => remove(state)}
+            >
+              REMOVE
+            </button>
           </div>
         </div>
 
@@ -464,8 +506,9 @@ function MascotDialog({
             initialGrid={
               slicer.source.grid ?? startingGrid(slicer.source.width, slicer.source.height)
             }
+            initialReverse={slicer.reverse}
             fps={fps}
-            onUse={(grid, cells) => confirmSlice(state, slicer.fps, grid, cells)}
+            onUse={(grid, cells, reverse) => confirmSlice(state, slicer.fps, grid, cells, reverse)}
             onCancel={() => setSlicing(null)}
           />
         ) : sheet ? (
@@ -475,6 +518,7 @@ function MascotDialog({
                 src={sheet.src}
                 frames={sheet.frames}
                 fps={fps ?? 0}
+                reverse={slot.reverse}
                 scale={1}
                 label={`${state} loop playing`}
               />
@@ -489,6 +533,19 @@ function MascotDialog({
           <div className="sheet-row__placeholder">
             {state === 'idle' ? 'Idle is required' : 'Plays the idle loop'}
           </div>
+        )}
+
+        {!slicer && sheet && !sheet.builtIn && canReverse(sheet.frames) && (
+          <label className="sheet-row__reverse">
+            <input
+              type="checkbox"
+              checked={slot.reverse}
+              aria-label={`${state} reverse at end`}
+              onChange={(event) => updateSlot(state, { reverse: event.target.checked })}
+            />
+            REVERSE AT END
+            <span className="sheet-row__reverse-note">Plays forward, then back.</span>
+          </label>
         )}
 
         {fpsProblem && <p className="sheet-row__fps-error">{fpsProblem}</p>}

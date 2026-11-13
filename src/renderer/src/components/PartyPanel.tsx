@@ -11,8 +11,9 @@ type PartyPanelProps = {
   loaded: boolean
   call: CallTarget | null
   onCall: (agent: AgentSummary | null) => void
-  // A run is in progress: nobody can be called.
-  busy: boolean
+  // Three agents are working: nobody else can be called until one finishes. A run
+  // going is not enough: while it goes I can still call an agent.
+  full: boolean
   // What each agent is doing in the current run, by agentKey.
   work: Map<string, PartyWork>
   mode: PartyPanelMode
@@ -34,10 +35,14 @@ type Member = {
   action: { kind: 'call' } | { kind: 'open'; taskId: string } | null
 }
 
+// The smaller line on every row that cannot be called because three agents are working.
+const FULL_REASON = 'Three agents are working'
+
 function members(
   agents: AgentSummary[],
   call: CallTarget | null,
-  work: Map<string, PartyWork>
+  work: Map<string, PartyWork>,
+  full: boolean
 ): Member[] {
   const fileKeys = new Set<string>()
   const list: Member[] = agents.map((agent) => {
@@ -64,6 +69,8 @@ function members(
     }
     const block = callBlock(agent, agents)
     if (block) return { key, agent, look, state: 'off', smaller: block.short, action: null }
+    // Working and waiting rows above still open their task. Every other row waits.
+    if (full) return { key, agent, look, state: 'off', smaller: FULL_REASON, action: null }
     const calling = call?.ref.filePath === agent.filePath
     return {
       key,
@@ -106,7 +113,7 @@ function PartyPanel({
   loaded,
   call,
   onCall,
-  busy,
+  full,
   work,
   mode,
   onToggle,
@@ -115,7 +122,7 @@ function PartyPanel({
   const [pointed, setPointed] = useState<string | null>(null)
   const [cardTop, setCardTop] = useState(0)
   const railRef = useRef<HTMLElement>(null)
-  const list = members(agents, call, work)
+  const list = members(agents, call, work, full)
   const pointedMember = list.find((member) => member.key === pointed) ?? null
   const calledMember = call
     ? (list.find((member) => member.agent?.filePath === call.ref.filePath) ?? null)
@@ -127,7 +134,7 @@ function PartyPanel({
       onOpenTask(member.action.taskId)
       return
     }
-    if (busy || !member.agent) return
+    if (!member.agent) return
     onCall(member.state === 'calling' ? null : member.agent)
   }
 
@@ -202,7 +209,6 @@ function PartyPanel({
                 aria-pressed={
                   member.action.kind === 'call' ? member.state === 'calling' : undefined
                 }
-                aria-disabled={member.action.kind === 'call' && busy ? true : undefined}
                 onClick={() => activate(member)}
                 {...pointHandlers(member)}
               >
@@ -291,7 +297,6 @@ function PartyPanel({
                   : accessibleName(member)
               }
               aria-pressed={member.action.kind === 'call' ? member.state === 'calling' : undefined}
-              aria-disabled={member.action.kind === 'call' && busy ? true : undefined}
               onClick={() => activate(member)}
               {...pointHandlers(member)}
             >

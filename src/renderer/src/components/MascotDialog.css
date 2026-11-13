@@ -102,14 +102,16 @@
   border-color: var(--accent);
 }
 
+/* The controls never wrap: the file name and size text takes what is left and
+   wraps inside itself. */
 .sheet-row__head {
   display: flex;
-  flex-wrap: wrap;
   gap: 12px;
   align-items: center;
 }
 
 .sheet-row__state {
+  flex: none;
   font-family: var(--font-pixel);
   font-size: 10px;
   line-height: 1.5;
@@ -131,6 +133,7 @@
 }
 
 .sheet-row__required {
+  flex: none;
   padding: 2px 6px;
   border: var(--border-thin) solid var(--line);
   font-size: 12px;
@@ -138,6 +141,7 @@
 }
 
 .sheet-row__meta {
+  flex: 1 1 0;
   min-width: 0;
   font-size: 12px;
   color: var(--muted);
@@ -145,14 +149,15 @@
 }
 
 .sheet-row__controls {
+  flex: none;
   display: flex;
-  flex-wrap: wrap;
   gap: 12px;
   align-items: center;
   margin-left: auto;
 }
 
 .sheet-row__fps {
+  flex: none;
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -181,9 +186,16 @@
   cursor: not-allowed;
 }
 
+/* Every button has the same width in every row; REUSE SHEET is the longer word. */
 .sheet-row__button {
+  flex: none;
+  min-width: 84px;
   background: var(--panel);
   box-shadow: none;
+}
+
+.sheet-row__button--wide {
+  min-width: 116px;
 }
 
 .sheet-row__button:disabled {
@@ -214,6 +226,39 @@
 .sheet-row__loop {
   flex: none;
   border: var(--border) solid var(--text);
+}
+
+/* REVERSE AT END on a filled row: the same checkbox as in the slicer. */
+.sheet-row__reverse {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-height: 44px;
+  font-family: var(--font-pixel);
+  font-size: 8px;
+  line-height: 1.5;
+  cursor: pointer;
+}
+
+.sheet-row__reverse input {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  accent-color: var(--accent);
+}
+
+.sheet-row__reverse:has(:focus-visible) {
+  outline: var(--border-thin) solid var(--text);
+  outline-offset: 2px;
+}
+
+.sheet-row__reverse-note {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--muted);
 }
 
 .sheet-row__placeholder {

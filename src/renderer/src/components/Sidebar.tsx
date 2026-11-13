@@ -33,7 +33,6 @@ function Sidebar({
 }: SidebarProps): React.JSX.Element {
   return (
     <nav className="sidebar" aria-label="Main">
-      <div className="sidebar__wordmark">MyClaud</div>
       {NAV_ITEMS.map((item) => (
         <NavItem
           key={item.screen}

@@ -1,6 +1,7 @@
 .dialog-backdrop {
   position: fixed;
-  inset: 0;
+  /* Below the title bar, so its window buttons stay usable while a dialog is open. */
+  inset: var(--titlebar-height) 0 0;
   z-index: 10;
   display: grid;
   place-items: center;
@@ -26,8 +27,20 @@
 
 .dialog--wide {
   max-width: 820px;
-  max-height: calc(100vh - 32px);
+  max-height: calc(100vh - var(--titlebar-height) - 32px);
   overflow-y: auto;
+}
+
+/* The buttons stay in view while the body scrolls. The negative margin cancels the
+   bottom padding added here, so at rest the footer sits where it did. */
+.dialog--wide .dialog__actions {
+  position: sticky;
+  bottom: 0;
+  z-index: 1;
+  margin-bottom: -20px;
+  padding: 12px 0 20px;
+  background: var(--panel);
+  border-top: var(--border-thin) solid var(--line);
 }
 
 .dialog__title {
@@ -41,6 +54,20 @@
 
 .dialog--danger .dialog__title {
   color: var(--error);
+}
+
+/* A title with a quieter line beside it. */
+.dialog__header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 4px 12px;
+}
+
+.dialog__subtitle {
+  font-size: 12px;
+  color: var(--muted);
 }
 
 .dialog__body {

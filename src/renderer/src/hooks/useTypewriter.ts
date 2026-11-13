@@ -10,35 +10,37 @@ const CATCH_UP_SECONDS = 1
 const MAX_FRAME_MS = 100
 
 export type Typewriter = {
-  shown: string
+  // How many characters show now.
+  shown: number
   typing: boolean
   skip: () => void
 }
 
-// Shows `text` one character at a time. `blockKey` identifies the text block: a new
-// key types from the start. The block present on mount starts fully shown, so a
-// reply that finished while the box was away is not typed out again.
+// Counts up to `length` visible characters, one at a time. The caller draws that
+// many (the dialogue box draws rendered Markdown). `blockKey` identifies the text
+// block: a new key types from the start. The block present on mount starts fully
+// shown, so a reply that finished while the box was away is not typed out again.
 export function useTypewriter(
-  text: string,
+  length: number,
   blockKey: number | null,
   reducedMotion: boolean
 ): Typewriter {
-  const [count, setCount] = useState(text.length)
+  const [count, setCount] = useState(length)
   const [prevKey, setPrevKey] = useState(blockKey)
   if (blockKey !== prevKey) {
     setPrevKey(blockKey)
     setCount(0)
   }
 
-  const visible = reducedMotion ? text.length : Math.min(count, text.length)
-  const behind = visible < text.length
+  const visible = reducedMotion ? length : Math.min(count, length)
+  const behind = visible < length
 
-  const lengthRef = useRef(text.length)
+  const lengthRef = useRef(length)
   const countRef = useRef(count)
   useEffect(() => {
-    lengthRef.current = text.length
+    lengthRef.current = length
     countRef.current = count
-  }, [text.length, count])
+  }, [length, count])
 
   useEffect(() => {
     if (!behind) return
@@ -79,5 +81,5 @@ export function useTypewriter(
     setCount(lengthRef.current)
   }, [])
 
-  return { shown: text.slice(0, visible), typing: behind, skip }
+  return { shown: visible, typing: behind, skip }
 }

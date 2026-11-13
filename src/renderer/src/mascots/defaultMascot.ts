@@ -6,8 +6,9 @@ import type { Mascot } from './types'
 // It cannot be deleted, and its bundled file never changes.
 export const DEFAULT_MASCOT: Mascot = {
   name: 'Default',
+  named: false,
   loops: {
-    idle: { src: mascotSheet, frames: 1, fps: 1 }
+    idle: { src: mascotSheet, frames: 1, fps: 1, reverse: false }
   }
 }
 
@@ -17,6 +18,7 @@ export const DEFAULT_MASCOT: Mascot = {
 export function withDefaultEdits(name: string | null, loops: Partial<MascotLoops>): Mascot {
   return {
     name: name ?? DEFAULT_MASCOT.name,
+    named: name !== null,
     loops: { ...loops, idle: loops.idle ?? DEFAULT_MASCOT.loops.idle }
   }
 }

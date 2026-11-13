@@ -12,6 +12,7 @@ import {
   type TaskSummary,
   type ToolState
 } from '../shared/ipc'
+import { toPlainText } from '../shared/plainText'
 import { labelText } from '../shared/toolLabel'
 import { loadIcons } from './agentIcons'
 import { loadRoles } from './agentRoles'
@@ -197,6 +198,8 @@ function preview(task: TaskRecord): string {
     const latest = task.activity[task.activity.length - 1]
     return latest ? oneLine(labelText(latest)) : 'Starting...'
   }
+  // A done report is Markdown: the preview is its plain text, harness note left out.
+  if (task.status === 'done') return oneLine(toPlainText(task.report ?? ''))
   return oneLine(task.report ?? '')
 }
 

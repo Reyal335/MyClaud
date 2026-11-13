@@ -73,11 +73,13 @@ export function historyItems(messages: RecordedMessage[], context: HistoryContex
     )
   }
 
-  const addReplyText = (text: string): void => {
+  // `model` is the exact model that wrote the reply. Text Claude Code writes itself
+  // is marked '<synthetic>': no model.
+  const addReplyText = (text: string, model: string | null): void => {
     if (text === '') return
     const last = items[items.length - 1]
     if (last?.kind === 'text') items[items.length - 1] = { ...last, text: last.text + text }
-    else items.push({ kind: 'text', text })
+    else items.push({ kind: 'text', text, model })
   }
 
   const settle = (block: Block): void => {
@@ -118,9 +120,11 @@ export function historyItems(messages: RecordedMessage[], context: HistoryContex
     }
 
     if (recorded.type !== 'assistant' || typeof blocks === 'string') continue
+    const written = str((recorded.message as { model?: unknown } | null)?.model)
+    const model = written === '' || written.startsWith('<') ? null : written
     for (const block of blocks) {
       if (block.type === 'text') {
-        addReplyText(str(block.text))
+        addReplyText(str(block.text), model)
       } else if (block.type === 'tool_use') {
         const id = str(block.id)
         const name = str(block.name)

@@ -2,6 +2,8 @@
 // Our own small types only: never raw Agent SDK messages.
 
 import type { MascotStateName } from './mascotRules'
+import type { ModelChoice, ModelLists } from './models'
+import type { ThemeChoice, ThemeInfo } from './themes'
 
 export const IpcChannel = {
   ProjectGet: 'project:get',
@@ -32,6 +34,15 @@ export const IpcChannel = {
   MascotsChanged: 'mascots:changed',
   ChatHistory: 'chat:history',
   ChatReset: 'chat:reset',
+  ChatGetModelChoice: 'chat:get-model-choice',
+  ChatSetModelChoice: 'chat:set-model-choice',
+  ModelsList: 'models:list',
+  ThemesList: 'themes:list',
+  ThemesAdd: 'themes:add',
+  ThemesRename: 'themes:rename',
+  ThemesRemove: 'themes:remove',
+  ThemesGetChoice: 'themes:get-choice',
+  ThemesSetChoice: 'themes:set-choice',
   TasksList: 'tasks:list',
   TasksGet: 'tasks:get',
   TasksMarkSeen: 'tasks:mark-seen',
@@ -39,8 +50,29 @@ export const IpcChannel = {
   TasksClearFinished: 'tasks:clear-finished',
   // Main to every window: a task started, changed, ended, or was removed.
   TasksChanged: 'tasks:changed',
+  // The main window's own buttons, for the custom title bar. Each acts on the window
+  // that sent it.
+  WindowMinimize: 'window:minimize',
+  WindowToggleMaximize: 'window:toggle-maximize',
+  WindowClose: 'window:close',
+  WindowGetState: 'window:get-state',
+  // Main to the main window: it was maximized, restored, put in or taken out of full
+  // screen, focused, or blurred.
+  WindowState: 'window:state',
   UiGetPartyPanel: 'ui:get-party-panel',
-  UiSetPartyPanel: 'ui:set-party-panel'
+  UiSetPartyPanel: 'ui:set-party-panel',
+  UiGetPopups: 'ui:get-popups',
+  UiSetPopups: 'ui:set-popups',
+  UiTestPopup: 'ui:test-popup',
+  // Main to the main window: OPEN on a popup, with the screen to show.
+  UiOpen: 'ui:open',
+  // The popup window's own channels. Main answers them only from the popup.
+  PopupGetState: 'popup:get-state',
+  // Main to the popup: what to show now, or null.
+  PopupState: 'popup:state',
+  PopupAct: 'popup:act',
+  PopupHover: 'popup:hover',
+  PopupGetMascot: 'popup:get-mascot'
 } as const
 
 export type ProjectInfo = {
@@ -65,7 +97,14 @@ export type AgentError = {
   message: string
 }
 
-export type AgentSendResult = { ok: true; requestId: string } | { ok: false; error: AgentError }
+// `joined` is true when the message went into the run that was already going, and
+// false when it started a new run. The requestId is the run's, one per run.
+export type AgentSendResult =
+  { ok: true; requestId: string; joined: boolean } | { ok: false; error: AgentError }
+
+// Where a message I sent into a run that was already going stands. It is queued
+// until Claude Code takes it in; main reports the two ways that can end.
+export type MessageDelivery = 'queued' | 'received' | 'not_delivered'
 
 // An agent I call for my next message, as the step 5 list gives it. Main reads
 // the name from the file itself.
@@ -143,6 +182,19 @@ export type AgentEvent =
       report: string
       truncated: boolean
     }
+  // A message I sent while the run was going: Claude took it in, or the run ended
+  // first. Only for messages sent into a run already going, never the run's first.
+  | {
+      requestId: string
+      type: 'message_state'
+      messageId: string
+      state: Exclude<MessageDelivery, 'queued'>
+    }
+  // A reply of Claude's is starting: the exact model answering and the thinking
+  // level in force ('auto' or a level). Only for the main conversation.
+  | { requestId: string; type: 'reply_start'; model: string; level: string }
+  // Claude thought for `ms` milliseconds before answering. Only for the main conversation.
+  | { requestId: string; type: 'thought'; ms: number }
   // A line of information in the conversation, such as a lost saved conversation.
   | { requestId: string; type: 'notice'; text: string }
   | { requestId: string; type: 'done' }
@@ -180,7 +232,8 @@ export type TasksResult<T extends object = object> =
 // conversation builds from events, without ids.
 export type HistoryItem =
   | { kind: 'user'; text: string; call: TaskAgent | null }
-  | { kind: 'text'; text: string }
+  // `model` is the exact model that answered, from the saved session, or null.
+  | { kind: 'text'; text: string; model: string | null }
   | {
       kind: 'tool'
       toolId: string
@@ -208,6 +261,100 @@ export type ChatHistory = {
 }
 
 export type PartyPanelMode = 'open' | 'rail'
+
+// Model and thinking: the models the logged-in account can use (AUTO is not a row),
+// or why the list could not be loaded.
+export type ModelsResult = ({ ok: true } & ModelLists) | { ok: false; message: string }
+
+// The open chat's choice, made to fit what is available now, or why it failed.
+export type ModelChoiceResult =
+  { ok: true; choice: ModelChoice } | { ok: false; error: { message: string } }
+
+// The main window, for the custom title bar. `platform` decides whether the bar draws
+// its own window buttons (win32, linux) or leaves room for the native ones (darwin).
+export type WindowPlatform = 'win32' | 'darwin' | 'linux'
+
+export type WindowState = {
+  // Maximized or in full screen: the button then offers Restore.
+  maximized: boolean
+  focused: boolean
+  platform: WindowPlatform
+}
+
+// Chat themes: uploaded pictures behind the CHAT history and stage (the built-in Tokyo
+// Night is bundled with the window), and the choice of which one and how faded.
+
+export type ThemesErrorCode =
+  | 'invalid'
+  | 'not_found'
+  | 'no_project'
+  | 'too_large'
+  | 'not_image'
+  | 'too_small'
+  | 'too_big_dimensions'
+  | 'io_error'
+
+export type ThemesError = { code: ThemesErrorCode; message: string }
+
+export type ThemesResult<T extends object = object> =
+  ({ ok: true } & T) | { ok: false; error: ThemesError }
+
+// ADD THEME: the file dialog was closed, a theme was added, or the file was refused
+// with the message to show.
+export type AddThemeResult =
+  | { ok: true; canceled: true }
+  | { ok: true; canceled: false; theme: ThemeInfo }
+  | { ok: false; error: ThemesError }
+
+// The open chat's own theme (null when it uses the default) and the default.
+export type ThemeChoices = { chat: ThemeChoice | null; default: ThemeChoice }
+
+// APPLY in the picker. 'chat' saves the choice for this chat only. 'all' saves it as
+// the default and clears this chat's own choice.
+export type ThemeChoiceChange = { scope: 'chat' | 'all'; themeId: string; fade: number }
+
+// A pick in the model picker. `asDefault` also saves it as the choice new chats start from.
+export type ModelChoiceChange = { model: string; effort: string; asDefault: boolean }
+
+// Popups: the small always-on-top window with the mascot (designs/5-popup-notifications.html).
+
+// Who speaks in the bubble: an agent with its icon, or the main conversation's
+// speaker (the dialogue box's name), with no icon.
+export type PopupWho = { kind: 'agent'; name: string; icon: string | null } | { kind: 'speaker' }
+
+export type PopupAction = 'approve' | 'deny' | 'open' | 'details' | 'dismiss'
+
+// Where OPEN takes the main window.
+export type PopupOpenTarget = { screen: 'chat' } | { screen: 'inbox'; taskId: string }
+
+export type PopupView =
+  | {
+      id: string
+      kind: 'approval'
+      who: PopupWho
+      // The tool card's one-line label, such as "Editing src/auth.js".
+      label: string
+      // Where this request is among those pending, shown as "1 of 3" when more than one.
+      position: { index: number; total: number }
+      request: { name: string; input: ToolInput; truncated: boolean; projectPath: string }
+      // Short enough to show in full in the compact popup.
+      fits: boolean
+      detailsOpen: boolean
+    }
+  | { id: string; kind: 'finished' | 'error'; who: PopupWho; text: string }
+
+// The API the popup's preload exposes as window.myclaudPopup. Nothing else.
+export type MyClaudPopupApi = {
+  getState: () => Promise<PopupView | null>
+  onState: (callback: (view: PopupView | null) => void) => () => void
+  act: (id: string, action: PopupAction) => Promise<{ ok: boolean }>
+  // The pointer is over the card: finished and error popups wait.
+  hover: (isOver: boolean) => void
+  mascot: {
+    getActive: () => Promise<MascotsResult<{ mascot: ActiveMascotData }>>
+    onChanged: (callback: () => void) => () => void
+  }
+}
 
 // Agent files: Claude Code subagents in <project>/.claude/agents/ and the global folder.
 
@@ -275,11 +422,14 @@ export type PickIconResult =
 // uploaded ones in userData/mascots/<uuid>/.
 
 // One spritesheet: a horizontal strip of 64x64 frames, played at `fps`. `src`
-// is a data URL. The frame count always comes from the image width.
+// is a data URL. The frame count always comes from the image width. With `reverse`
+// the loop plays forward, then back, then forward again (see loopOrder); it only
+// takes effect with three or more frames.
 export type MascotLoop = {
   src: string
   frames: number
   fps: number
+  reverse: boolean
 }
 
 export type MascotLoops = { idle: MascotLoop } & Partial<
@@ -320,7 +470,7 @@ export type MascotDraft = {
   name: string
   // Every state, in any order. `keep` on a state without a sheet leaves it empty.
   // For the default, an empty idle means the bundled idle sheet.
-  states: Record<MascotStateName, { fps: number; sheet: MascotSheetChange }>
+  states: Record<MascotStateName, { fps: number; reverse: boolean; sheet: MascotSheetChange }>
 }
 
 export type MascotsErrorCode = 'invalid' | 'invalid_slice' | 'not_found' | 'no_idle' | 'io_error'
@@ -370,7 +520,10 @@ export type MyClaudApi = {
   }
   agent: {
     // `call` names an agent for this message. Main checks it and adds the sentence.
-    send: (prompt: string, call?: AgentCallRef | null) => Promise<AgentSendResult>
+    // `messageId` is a lowercase UUID the window makes up: main sends it to Claude
+    // Code as the message's id and reports its delivery under it. While a run is
+    // going the message goes into that run; otherwise it starts one.
+    send: (prompt: string, call: AgentCallRef | null, messageId: string) => Promise<AgentSendResult>
     stop: () => Promise<void>
     answerPermission: (
       permissionId: string,
@@ -430,6 +583,27 @@ export type MyClaudApi = {
     history: () => Promise<ChatHistory>
     // NEW CHAT: forgets the open project's session id. Refused while a run is going.
     reset: () => Promise<{ ok: true } | { ok: false; error: AgentError }>
+    // The open project's chat: its model and thinking choice.
+    getModelChoice: () => Promise<ModelChoiceResult>
+    // Saves a pick for the chat (and for new chats too with asDefault). During a run
+    // it applies from the next message.
+    setModelChoice: (change: ModelChoiceChange) => Promise<ModelChoiceResult>
+  }
+  themes: {
+    // The uploaded themes, oldest first.
+    list: () => Promise<ThemesResult<{ themes: ThemeInfo[] }>>
+    // Opens the file dialog and adds the file it returns, or says why it was refused.
+    add: () => Promise<AddThemeResult>
+    // Returns the name as saved (trimmed).
+    rename: (id: string, name: string) => Promise<ThemesResult<{ name: string }>>
+    // Chats that used the theme go back to the default. Returns the choices as they are now.
+    remove: (id: string) => Promise<ThemesResult<ThemeChoices>>
+    getChoice: () => Promise<ThemesResult<ThemeChoices>>
+    setChoice: (change: ThemeChoiceChange) => Promise<ThemesResult<ThemeChoices>>
+  }
+  models: {
+    // Fetched once per project folder, in the order the SDK returns.
+    list: () => Promise<ModelsResult>
   }
   tasks: {
     // The open project's tasks, newest first.
@@ -442,9 +616,26 @@ export type MyClaudApi = {
     clearFinished: () => Promise<TasksResult>
     onChanged: (callback: () => void) => () => void
   }
+  window: {
+    minimize: () => Promise<void>
+    // Maximizes, or restores a maximized or full-screen window. 'doubleClick' marks a
+    // double-click on the bar: main ignores it when the system has just done the same.
+    toggleMaximize: (source?: 'doubleClick') => Promise<void>
+    // Closes the window the way closing it any other way does.
+    close: () => Promise<void>
+    getState: () => Promise<WindowState>
+    onState: (callback: (state: WindowState) => void) => () => void
+  }
   ui: {
     // null until I choose with the collapse button.
     getPartyPanel: () => Promise<PartyPanelMode | null>
     setPartyPanel: (mode: PartyPanelMode) => Promise<{ ok: boolean }>
+    // Popups on or off, kept in settings.json. On when never set.
+    getPopups: () => Promise<boolean>
+    setPopups: (on: boolean) => Promise<{ ok: boolean }>
+    // A sample finished popup for 6 seconds, even with popups off or the app in front.
+    testPopup: () => Promise<void>
+    // OPEN on a popup: the screen the main window should show.
+    onOpen: (callback: (target: PopupOpenTarget) => void) => () => void
   }
 }
