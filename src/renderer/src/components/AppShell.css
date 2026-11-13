@@ -9,7 +9,8 @@
 
 .app-shell__body {
   display: grid;
-  grid-template-columns: 176px minmax(0, 1fr);
+  /* 200px, as in designs/13-account.html: the meter's 10-segment bar needs the room. */
+  grid-template-columns: 200px minmax(0, 1fr);
   min-height: 0;
   overflow: hidden;
 }

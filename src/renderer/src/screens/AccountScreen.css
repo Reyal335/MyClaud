@@ -1,0 +1,277 @@
+/* The ACCOUNT screen from designs/13-account.html and 13b-account-states.html. */
+.account {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 20px 28px;
+}
+
+.account__head {
+  padding-bottom: 16px;
+  border-bottom: var(--border) solid var(--line);
+}
+
+.account__title {
+  margin: 0 0 8px;
+  font-family: var(--font-pixel);
+  font-size: 12px;
+  font-weight: normal;
+  line-height: 1.5;
+}
+
+.account__title:focus {
+  outline: none;
+}
+
+.account__subtitle {
+  margin: 0;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.account__panels {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  max-width: 880px;
+}
+
+.account__panel {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 20px;
+  background: var(--panel);
+  border: var(--border) solid var(--line);
+}
+
+.account__panel-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.account__panel-title {
+  margin: 0;
+  font-family: var(--font-pixel);
+  font-size: 10px;
+  font-weight: normal;
+  line-height: 1.5;
+  color: var(--accent);
+}
+
+/* VIEW DETAILS ON CLAUDE.AI: a link that main opens in the default browser. */
+.account__link {
+  margin: 0;
+  padding: 6px 0;
+  background: none;
+  border: 0;
+  border-radius: 0;
+  color: var(--accent);
+  font-family: var(--font-pixel);
+  font-size: 8px;
+  line-height: 1.5;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.account__link:hover {
+  color: var(--text);
+}
+
+/* ----- The account panel ----- */
+
+.account__fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px 24px;
+  margin: 0;
+}
+
+.account__fields--two {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.account__field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.account__field dt {
+  font-family: var(--font-pixel);
+  font-size: 8px;
+  line-height: 1.5;
+  color: var(--muted);
+}
+
+.account__field dd {
+  margin: 0;
+}
+
+.account__email {
+  overflow-wrap: anywhere;
+}
+
+.account__plan {
+  display: inline-block;
+  padding: 2px 8px;
+  background: var(--accent);
+  color: var(--bg);
+  font-family: var(--font-pixel);
+  font-size: 9px;
+  line-height: 1.5;
+}
+
+.account__note {
+  margin: 0;
+  padding-top: 12px;
+  border-top: var(--border) solid var(--line);
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.account__note code,
+.account__steps code,
+.account__text code {
+  font-family: var(--font-mono);
+  color: var(--text);
+}
+
+.account__text {
+  margin: 0;
+}
+
+.account__text--muted {
+  color: var(--muted);
+}
+
+.account__steps {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0;
+  padding-left: 20px;
+  font-size: 13px;
+}
+
+.account__check-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+}
+
+.account__check[aria-disabled='true'] {
+  cursor: progress;
+}
+
+/* Said after CHECK AGAIN when the answer is not a sign-in. Empty until then, and beside
+   the button so it takes no room of its own. */
+.account__status {
+  margin: 0;
+  font-size: 12px;
+  color: var(--waiting);
+}
+
+/* ----- The usage panel ----- */
+
+.account__alert {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px;
+  background: var(--bg);
+  border: var(--border) solid var(--error);
+}
+
+.account__alert-mark {
+  flex: none;
+  width: 12px;
+  height: 12px;
+  margin-top: 4px;
+  background: var(--error);
+}
+
+.account__usage-row {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.account__usage-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.account__usage-name,
+.account__usage-value {
+  font-family: var(--font-pixel);
+  font-size: 9px;
+  line-height: 1.5;
+}
+
+.account__usage-value {
+  color: var(--text);
+}
+
+.account__usage-value--muted {
+  color: var(--muted);
+}
+
+.account__usage-value--waiting {
+  color: var(--waiting);
+}
+
+.account__usage-value--error {
+  color: var(--error);
+}
+
+.account__usage-reset {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.account__usage-note {
+  margin: 0;
+  padding-top: 12px;
+  border-top: var(--border) solid var(--line);
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.account__legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.account__legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.account__swatch {
+  width: 12px;
+  height: 12px;
+}
+
+.account__swatch--accent {
+  background: var(--accent);
+}
+
+.account__swatch--waiting {
+  background: var(--waiting);
+}
+
+.account__swatch--error {
+  background: var(--error);
+}

@@ -1,0 +1,40 @@
+/* The usage bars from designs/13-account.html and 13b-account-states.html. 2px gaps, no
+   gradients, no transitions. */
+.segment-bar {
+  display: flex;
+  gap: 2px;
+}
+
+.segment-bar--screen {
+  height: 16px;
+}
+
+.segment-bar--meter {
+  height: 10px;
+}
+
+.segment-bar__cell {
+  flex: 1;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.segment-bar__cell--accent {
+  background: var(--accent);
+}
+
+.segment-bar__cell--waiting {
+  background: var(--waiting);
+}
+
+.segment-bar__cell--error {
+  background: var(--error);
+}
+
+.segment-bar__cell--empty {
+  border: var(--border-thin) solid var(--line);
+}
+
+.segment-bar__cell--dashed {
+  border: var(--border-thin) dashed var(--line);
+}

@@ -1,6 +1,7 @@
 import { app, shell, BrowserWindow } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
+import { startAccount } from './account'
 import { appIcon, windowIconOptions } from './appIcon'
 import { stopRun } from './agent'
 import { closePopups, setupPopups } from './popupWindow'
@@ -8,6 +9,7 @@ import { registerIpc } from './ipc'
 import { prefetchModels } from './models'
 import { getProject, loadProject } from './settings'
 import { loadTasks } from './tasks'
+import { loadUsage } from './usage'
 import { watchWindow } from './windowControls'
 
 // Matches --bg in the renderer tokens, so the window never flashes white on load.
@@ -111,7 +113,10 @@ app.whenReady().then(async () => {
   prefetchModels(getProject()?.path ?? null)
   // Tasks cut off when the app last closed become stopped before anything reads them.
   await loadTasks()
+  // The saved usage numbers come back first; the account is read on its own after that.
+  await loadUsage()
   registerIpc()
+  startAccount()
   setupPopups(createWindow())
 
   app.on('activate', function () {

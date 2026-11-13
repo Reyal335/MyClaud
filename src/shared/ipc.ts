@@ -1,6 +1,7 @@
 // Shared IPC contract between main, preload, and renderer.
 // Our own small types only: never raw Agent SDK messages.
 
+import type { AccountData } from './account'
 import type { MascotStateName } from './mascotRules'
 import type { ModelChoice, ModelLists } from './models'
 import type { ThemeChoice, ThemeInfo } from './themes'
@@ -50,6 +51,11 @@ export const IpcChannel = {
   TasksClearFinished: 'tasks:clear-finished',
   // Main to every window: a task started, changed, ended, or was removed.
   TasksChanged: 'tasks:changed',
+  AccountGet: 'account:get',
+  AccountCheck: 'account:check',
+  AccountOpenUsagePage: 'account:open-usage-page',
+  // Main to every window: the account or the usage numbers changed. Carries both.
+  AccountChanged: 'account:changed',
   // The main window's own buttons, for the custom title bar. Each acts on the window
   // that sent it.
   WindowMinimize: 'window:minimize',
@@ -615,6 +621,15 @@ export type MyClaudApi = {
     // Removes the open project's done, error, and stopped tasks.
     clearFinished: () => Promise<TasksResult>
     onChanged: (callback: () => void) => () => void
+  }
+  account: {
+    // Who I am signed in as and the saved usage numbers, as main has them now.
+    get: () => Promise<AccountData>
+    // Reads the account again from Claude Code (CHECK AGAIN). Uses none of the plan.
+    check: () => Promise<AccountData>
+    onChange: (callback: (data: AccountData) => void) => () => void
+    // Opens claude.ai's usage page in the default browser. Main opens that one address.
+    openUsagePage: () => Promise<{ ok: boolean }>
   }
   window: {
     minimize: () => Promise<void>
