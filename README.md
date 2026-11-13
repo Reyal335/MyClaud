@@ -1,10 +1,10 @@
 <p align="center">
-  <img src="resources/icon.png" alt="MyClaud logo" width="256">
+  <img src="resources/icon.png" alt="Mya logo" width="256">
 </p>
 
-# MyClaud
+# Mya
 
-MyClaud is a personal desktop app that puts a custom 8-bit retro interface on
+Mya is a personal desktop app that puts a custom 8-bit retro interface on
 top of Claude Code. You chat with coding agents, and the replies type out in an
 RPG-style dialogue box next to a small pixel mascot.
 
@@ -62,12 +62,12 @@ machine. It is not a product and it has no accounts of its own.
 
 - **Node.js and npm.** The project does not pin a Node version in
   `package.json`.
-- **Claude Code, signed in.** MyClaud uses the Claude Code login on your
+- **Claude Code, signed in.** Mya uses the Claude Code login on your
   machine. See [Authentication](#authentication).
 
 ## Authentication
 
-MyClaud has no login screen and no API key. It runs on the Claude Code login
+Mya has no login screen and no API key. It runs on the Claude Code login
 that is already on your machine, so usage counts against your Claude plan.
 
 Sign in once in a terminal:
@@ -131,14 +131,14 @@ npm run icon            # regenerates the app icon files from scripts/make-icon.
 
 ### Opening a project
 
-When you start MyClaud, click **OPEN** in the sidebar and pick a project folder.
-MyClaud remembers the folder for next time. Chat runs in that folder, and the
+When you start Mya, click **OPEN** in the sidebar and pick a project folder.
+Mya remembers the folder for next time. Chat runs in that folder, and the
 project's agents are loaded from it.
 
 ## Project structure
 
 ```
-myclaud/
+mya/
 ├── src/
 │   ├── main/        Electron main process: runs the Agent SDK, file access, IPC
 │   ├── preload/     The typed bridge between the main process and the window
@@ -158,7 +158,7 @@ back to the main process.
 
 ## Where app data lives
 
-MyClaud keeps its data in Electron's `userData` folder. On Windows this is
+Mya keeps its data in Electron's `userData` folder. On Windows this is
 normally under `%APPDATA%`.
 
 | File or folder | What it holds |
@@ -177,10 +177,10 @@ same format, and an empty idle slot keeps the built-in idle sheet. RESET on its
 card moves that folder to the trash. Deleting a mascot moves its folder to the trash. If a mascot folder is broken,
 the MASCOTS screen lists it with the reason, and the app uses the default.
 
-The icon and role maps use the agent file path as the key. MyClaud never adds
+The icon and role maps use the agent file path as the key. Mya never adds
 its own fields to agent files, so Claude Code only sees the standard fields.
 
-Deleting an agent in MyClaud moves its file to the trash. It also removes that
+Deleting an agent in Mya moves its file to the trash. It also removes that
 agent's icon and role entries.
 
 ## Agent files
@@ -218,12 +218,12 @@ Notes on agent fields:
   `WebFetch`, and `WebSearch`. Chat runs enable only `Read`, `Grep`, `Glob`,
   `Edit`, `Write`, and `Bash`, and an agent gets the ones it lists from that set
   (all six when it lists none). See [Current limits](#current-limits).
-- MyClaud does not run an agent whose file sets `permissionMode` to
+- Mya does not run an agent whose file sets `permissionMode` to
   `acceptEdits`, `auto`, or `bypassPermissions`, or sets `background: true`.
   Inside an agent, only `Read`, `Grep`, and `Glob` run without asking.
 - A **role** is an optional label of up to 40 characters, such as
-  `code-reader`. MyClaud stores it in `agent-roles.json`, not in the agent file.
-- An **icon** is optional. It must be a PNG that is exactly 16x16 pixels. MyClaud
+  `code-reader`. Mya stores it in `agent-roles.json`, not in the agent file.
+- An **icon** is optional. It must be a PNG that is exactly 16x16 pixels. Mya
   rejects any other size and does not resize it. Agents without an icon show a
   placeholder.
 

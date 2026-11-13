@@ -1,5 +1,5 @@
 appId: com.electron.app
-productName: myclaud
+productName: mya
 directories:
   buildResources: build
 files:
@@ -13,7 +13,7 @@ files:
 asarUnpack:
   - resources/**
 win:
-  executableName: myclaud
+  executableName: mya
 nsis:
   artifactName: ${name}-${version}-setup.${ext}
   shortcutName: ${productName}

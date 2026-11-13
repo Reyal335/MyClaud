@@ -1,4 +1,4 @@
-# MyClaud
+# Mya
 
 A personal desktop app that puts a custom 8-bit retro interface on top of
 Claude Code, using the Claude Agent SDK.

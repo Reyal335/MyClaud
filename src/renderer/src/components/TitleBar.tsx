@@ -5,7 +5,7 @@ import AppIcon from './AppIcon'
 import './TitleBar.css'
 
 // The app name in capitals, as the code names the app everywhere else.
-const APP_NAME = 'MYCLAUD'
+const APP_NAME = 'MYA'
 
 type TitleBarProps = {
   crumb: Crumb
@@ -95,7 +95,7 @@ function TitleBar({
   function handleDoubleClick(event: MouseEvent<HTMLElement>): void {
     if (platform !== 'linux') return
     if ((event.target as HTMLElement).closest('button')) return
-    void window.myclaud.window.toggleMaximize('doubleClick').catch((err: unknown) => {
+    void window.mya.window.toggleMaximize('doubleClick').catch((err: unknown) => {
       console.error('Could not maximize the window:', err)
     })
   }
@@ -144,7 +144,7 @@ function TitleBar({
             type="button"
             className="title-bar__button"
             aria-label="Minimize"
-            onClick={() => void window.myclaud.window.minimize()}
+            onClick={() => void window.mya.window.minimize()}
           >
             <Glyph name="minimize" />
           </button>
@@ -152,7 +152,7 @@ function TitleBar({
             type="button"
             className="title-bar__button"
             aria-label={maximized ? 'Restore' : 'Maximize'}
-            onClick={() => void window.myclaud.window.toggleMaximize()}
+            onClick={() => void window.mya.window.toggleMaximize()}
           >
             <Glyph name={maximized ? 'restore' : 'maximize'} />
           </button>
@@ -160,7 +160,7 @@ function TitleBar({
             type="button"
             className="title-bar__button title-bar__button--close"
             aria-label="Close"
-            onClick={() => void window.myclaud.window.close()}
+            onClick={() => void window.mya.window.close()}
           >
             <Glyph name="close" />
           </button>

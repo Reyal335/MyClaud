@@ -2,7 +2,7 @@ import type { AccountData, AccountState, UsageData, UsageWindow } from '../share
 
 // Made-up account and usage values, so every look of the ACCOUNT screen and the sidebar
 // meter can be seen without using any of a real plan. Chosen with the
-// MYCLAUD_ACCOUNT_FIXTURE environment variable, and only in an app that is not packaged
+// MYA_ACCOUNT_FIXTURE environment variable, and only in an app that is not packaged
 // (see account.ts). While one is chosen, real reads and real events are ignored and
 // usage.json is not written.
 

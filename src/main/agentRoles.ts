@@ -1,7 +1,7 @@
 import { agentRoleError } from '../shared/agentRules'
 import { normalizePath, prunePathMap, readPathMap, writePathMap, type PathMap } from './pathMap'
 
-// An agent's role (for example "code-reader") is a MyClaud label, kept in
+// An agent's role (for example "code-reader") is a Mya label, kept in
 // userData/agent-roles.json by agent file path. It is never written into the
 // agent file, so Claude Code does not see it.
 

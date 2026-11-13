@@ -34,7 +34,7 @@ export type ParsedAgentFile = {
   description: string | null
   tools: string[] | null
   model: string | null
-  // Read only, for the agent gate. Never written by MyClaud.
+  // Read only, for the agent gate. Never written by Mya.
   permissionMode: string | null
   background: boolean
   otherFields: string[]

@@ -9,7 +9,7 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import PopupApp from './PopupApp'
 
-// The popup window's page. It only talks to window.myclaudPopup.
+// The popup window's page. It only talks to window.myaPopup.
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <PopupApp />

@@ -292,7 +292,7 @@ function createPopupWindow(): BrowserWindow {
     minimizable: false,
     maximizable: false,
     fullscreenable: false,
-    title: 'MyClaud',
+    title: 'Mya',
     webPreferences: {
       preload: join(__dirname, '../preload/popup.js'),
       contextIsolation: true,

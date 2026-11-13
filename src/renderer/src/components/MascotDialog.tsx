@@ -195,9 +195,9 @@ function MascotDialog({
   // Closing the dialog drops picks that were not saved and every loaded source sheet.
   useEffect(
     () => () => {
-      for (const token of pending.current) void window.myclaud.mascots.discardSheet(token)
+      for (const token of pending.current) void window.mya.mascots.discardSheet(token)
       pending.current.clear()
-      void window.myclaud.mascots.dropSources()
+      void window.mya.mascots.dropSources()
       if (sourceUrl.current) URL.revokeObjectURL(sourceUrl.current)
       sourceUrl.current = null
     },
@@ -241,7 +241,7 @@ function MascotDialog({
   function dropToken(change: MascotSheetChange): void {
     if (change.type !== 'token') return
     pending.current.delete(change.token)
-    void window.myclaud.mascots.discardSheet(change.token)
+    void window.mya.mascots.discardSheet(change.token)
   }
 
   // The speed a new sheet starts at: a replaced upload keeps its speed; an
@@ -296,7 +296,7 @@ function MascotDialog({
 
   async function pick(state: MascotStateName): Promise<void> {
     try {
-      const result = await window.myclaud.mascots.pickSheet()
+      const result = await window.mya.mascots.pickSheet()
       // A refused sheet leaves the row as it was, slicer and all.
       if (!result.ok) {
         updateSlot(state, { error: result.error.message })
@@ -340,7 +340,7 @@ function MascotDialog({
   ): Promise<string | null> {
     if (!source) return 'This sheet is no longer loaded. Upload it again.'
     try {
-      const result = await window.myclaud.mascots.sliceSheet(
+      const result = await window.mya.mascots.sliceSheet(
         source.token,
         grid.columns,
         grid.rows,
@@ -404,8 +404,8 @@ function MascotDialog({
     try {
       const draft = toDraft()
       const result = editId
-        ? await window.myclaud.mascots.update(editId, draft)
-        : await window.myclaud.mascots.create(draft)
+        ? await window.mya.mascots.update(editId, draft)
+        : await window.mya.mascots.create(draft)
       if (result.ok) {
         // Saved sheets are no longer pending; main has already let go of them.
         pending.current.clear()

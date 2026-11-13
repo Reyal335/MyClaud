@@ -16,7 +16,7 @@ export function usePartyPanelMode(): { mode: PartyPanelMode; toggle: () => void 
 
   useEffect(() => {
     let disposed = false
-    window.myclaud.ui
+    window.mya.ui
       .getPartyPanel()
       .then((mode) => {
         if (!disposed && mode) setSaved((current) => current ?? mode)
@@ -34,7 +34,7 @@ export function usePartyPanelMode(): { mode: PartyPanelMode; toggle: () => void 
   const toggle = useCallback((): void => {
     const next: PartyPanelMode = mode === 'open' ? 'rail' : 'open'
     setSaved(next)
-    window.myclaud.ui
+    window.mya.ui
       .setPartyPanel(next)
       .catch((err: unknown) => console.error('Could not save the party panel setting:', err))
   }, [mode])

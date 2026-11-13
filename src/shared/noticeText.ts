@@ -4,7 +4,7 @@ import type { AgentError } from './ipc'
 export function errorText(error: AgentError): string {
   switch (error.code) {
     case 'not_signed_in':
-      return 'MyClaud uses your Claude Code login. Open a terminal, run `claude`, sign in with /login, then try again.'
+      return 'Mya uses your Claude Code login. Open a terminal, run `claude`, sign in with /login, then try again.'
     case 'api_key_in_use':
       return 'An API key is set for Claude Code on this machine, so this would be billed to the API. Remove it and try again.'
     case 'rate_limit':

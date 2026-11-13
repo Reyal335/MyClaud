@@ -15,7 +15,7 @@ export function useProject(): ProjectState {
 
   useEffect(() => {
     let cancelled = false
-    window.myclaud.project
+    window.mya.project
       .get()
       .then((saved) => {
         if (!cancelled) setProject(saved)
@@ -32,7 +32,7 @@ export function useProject(): ProjectState {
   }, [])
 
   const openProject = useCallback(async (): Promise<ProjectInfo | null> => {
-    const opened = await window.myclaud.project.open()
+    const opened = await window.mya.project.open()
     if (opened) setProject(opened)
     return opened
   }, [])

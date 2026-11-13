@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import type { MyClaudPopupApi, PopupAction, PopupView, PopupWho } from '../../../shared/ipc'
+import type { MyaPopupApi, PopupAction, PopupView, PopupWho } from '../../../shared/ipc'
 import type { MascotStateName } from '../../../shared/mascotRules'
 import AgentIcon from '../components/AgentIcon'
 import Mascot from '../components/Mascot'
@@ -11,7 +11,7 @@ import './PopupCard.css'
 type PopupCardProps = {
   view: PopupView
   mascot: MascotData
-  api: MyClaudPopupApi
+  api: MyaPopupApi
 }
 
 const MASCOT_STATES: Record<PopupView['kind'], MascotStateName> = {

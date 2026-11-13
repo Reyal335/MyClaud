@@ -40,7 +40,7 @@ export function useModelChoice(projectPath: string): ModelChoiceStore {
 
   const reload = useCallback((): void => {
     const request = ++latestLoad.current
-    Promise.all([window.myclaud.models.list(), window.myclaud.chat.getModelChoice()]).then(
+    Promise.all([window.mya.models.list(), window.mya.chat.getModelChoice()]).then(
       ([models, saved]) => {
         if (request !== latestLoad.current) return
         if (models.ok) {
@@ -75,7 +75,7 @@ export function useModelChoice(projectPath: string): ModelChoiceStore {
       const request = ++latestPick.current
       picking.current++
       setChoice(fitted)
-      window.myclaud.chat
+      window.mya.chat
         .setModelChoice({ ...fitted, asDefault })
         .then((result) => {
           picking.current--

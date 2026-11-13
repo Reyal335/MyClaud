@@ -1,4 +1,4 @@
-# MyClaud design reference
+# Mya design reference
 
 These files are static mockups. Open any `.html` file in a browser to see it.
 They show the intended look and layout, not working code. Build the real
@@ -293,7 +293,7 @@ inbox are not changed.
   working." and nothing is sent. With more than one agent working, the dialogue
   box reads "<n> agents are working".
 - NEW CHAT asks "Start a new conversation? The current one is cleared from
-  MyClaud."
+  Mya."
 - Saved history: "Earlier messages are not shown." (more than 200 messages) and
   "Earlier messages are not available." (the saved conversation cannot be
   read). A lost session: "The saved conversation was not found. This reply
@@ -303,11 +303,11 @@ inbox are not changed.
 
 - The sentence put in front of a message sent with an agent called: "Use the
   <name> agent for this request."
-- "The agent <name> sets its own permission mode (<value>). MyClaud keeps
+- "The agent <name> sets its own permission mode (<value>). Mya keeps
   approvals on, so it does not run this agent."
-- "The agent <name> is set to run in the background. MyClaud runs agents in the
+- "The agent <name> is set to run in the background. Mya runs agents in the
   foreground."
-- "This agent went to the background, which MyClaud does not support yet."
+- "This agent went to the background, which Mya does not support yet."
 
 ### Inbox
 
@@ -327,7 +327,7 @@ inbox are not changed.
 - CLEAR FINISHED removes done, error, and stopped tasks after one confirmation.
   A running or waiting task cannot be deleted.
 - Empty: "Nothing here yet. Call an agent from the party panel on CHAT."
-- A task cut off when the app closed: "Interrupted when MyClaud closed."
+- A task cut off when the app closed: "Interrupted when Mya closed."
 
 ## Model and thinking
 
@@ -587,7 +587,7 @@ popup notification window is not changed.
 - App icon: the pixel icon (the cloud with a face), 16x12 at 1x with crisp edges. It is
   drawn from the same grid as `scripts/make-icon.mjs`; keep the two the same. Decorative:
   `aria-hidden`.
-- App name: MYCLAUD, Press Start 2P, 10px, `--accent`.
+- App name: MYA, Press Start 2P, 10px, `--accent`.
 - Breadcrumb: 12px, `--muted`, one line, an ellipsis when it does not fit. The screen name
   in capitals, then " / " and the item in view in `--text`. On CHAT: "<chat title> in
   <project>", with only the title in `--text`: the same title (the speaker name) and project
@@ -654,7 +654,7 @@ borders `--line`, as in the mockup). A filled WAITING pill dims with the rest.
 See `13-account.html` and `13b-account-states.html`. ACCOUNT shows who the agents run as
 and how much of the plan's session (5 hour) and weekly (7 day) limits is used. It has no
 nav button: the meter at the bottom of the sidebar opens it, and the title bar shows
-ACCOUNT as the screen name. The mockups say "Mya"; the app says MyClaud.
+ACCOUNT as the screen name. The mockups and the app both say "Mya".
 
 ### Where the numbers come from
 
@@ -743,7 +743,7 @@ itself is `aria-hidden`.
 
 ### Seeing each state
 
-Start an unpackaged app (`npm start`) with `MYCLAUD_ACCOUNT_FIXTURE` set to one of: normal,
+Start an unpackaged app (`npm start`) with `MYA_ACCOUNT_FIXTURE` set to one of: normal,
 warning, limit, nopercent, nearnopercent, nothing, reset, signedout, apikey, unreadable.
 Real reads and real events are ignored, and `usage.json` is not written, while it is set.
 A packaged app ignores it.

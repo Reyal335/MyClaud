@@ -36,7 +36,7 @@ export function useChatTheme(projectPath: string): ChatTheme {
 
   const reload = useCallback((): void => {
     const request = ++latest.current
-    Promise.all([window.myclaud.themes.list(), window.myclaud.themes.getChoice()]).then(
+    Promise.all([window.mya.themes.list(), window.mya.themes.getChoice()]).then(
       ([listed, chosen]) => {
         if (request !== latest.current) return
         if (listed.ok) setUploaded(listed.themes)
@@ -58,7 +58,7 @@ export function useChatTheme(projectPath: string): ChatTheme {
 
   const apply = useCallback(async (change: ThemeChoiceChange): Promise<string | null> => {
     try {
-      const result = await window.myclaud.themes.setChoice(change)
+      const result = await window.mya.themes.setChoice(change)
       if (!result.ok) return result.error.message
       setChoices({ chat: result.chat, default: result.default })
       return null
@@ -70,7 +70,7 @@ export function useChatTheme(projectPath: string): ChatTheme {
 
   const add = useCallback(async (): Promise<AddThemeResult> => {
     try {
-      const result = await window.myclaud.themes.add()
+      const result = await window.mya.themes.add()
       if (result.ok && !result.canceled) {
         setUploaded((current) => [...current, result.theme])
       }
@@ -86,7 +86,7 @@ export function useChatTheme(projectPath: string): ChatTheme {
 
   const rename = useCallback(async (id: string, name: string): Promise<string | null> => {
     try {
-      const result = await window.myclaud.themes.rename(id, name)
+      const result = await window.mya.themes.rename(id, name)
       if (!result.ok) return result.error.message
       setUploaded((current) =>
         current.map((theme) => (theme.id === id ? { ...theme, name: result.name } : theme))
@@ -101,7 +101,7 @@ export function useChatTheme(projectPath: string): ChatTheme {
   const remove = useCallback(
     async (id: string): Promise<{ error: string | null; active: ThemeChoice | null }> => {
       try {
-        const result = await window.myclaud.themes.remove(id)
+        const result = await window.mya.themes.remove(id)
         if (!result.ok) return { error: result.error.message, active: null }
         setUploaded((current) => current.filter((theme) => theme.id !== id))
         setChoices({ chat: result.chat, default: result.default })

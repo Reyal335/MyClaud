@@ -214,7 +214,7 @@ function ConversationScreen({
   const { items, status, running, send, stop, answerPermission, loadHistory, newChat } =
     conversation
   const reducedMotion = usePrefersReducedMotion()
-  const mascot = useActiveMascot(window.myclaud.mascots)
+  const mascot = useActiveMascot(window.mya.mascots)
   // The name the conversation speaks under: the mascot's.
   const speaker = speakerName(mascot)
   const { agents, loaded: agentsLoaded } = useAgents(project.path)
@@ -556,7 +556,7 @@ function ConversationScreen({
             </>
           }
         >
-          <p>Start a new conversation? The current one is cleared from MyClaud.</p>
+          <p>Start a new conversation? The current one is cleared from Mya.</p>
         </Dialog>
       )}
     </section>

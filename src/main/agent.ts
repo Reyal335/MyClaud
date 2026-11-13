@@ -63,7 +63,7 @@ const TOOLS = [...READ_ONLY_TOOLS, 'Edit', 'Write', 'Bash', 'Agent']
 
 const NOT_FOUND_NOTICE =
   'The saved conversation was not found. This reply starts from a fresh context.'
-const BACKGROUND_REPORT = 'This agent went to the background, which MyClaud does not support yet.'
+const BACKGROUND_REPORT = 'This agent went to the background, which Mya does not support yet.'
 const HISTORY_LIMIT = 200
 // The most agents working at once. Claude Code's own limit is set to the same in childEnv.
 const MAX_AGENTS = 3

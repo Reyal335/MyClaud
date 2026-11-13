@@ -84,7 +84,7 @@ function AgentsScreen({ project, setLeaveGuard, onCall }: AgentsScreenProps): Re
   async function confirmDelete(filePath: string): Promise<void> {
     setDialog((current) => (current?.kind === 'delete' ? { ...current, busy: true } : current))
     try {
-      const result = await window.myclaud.agents.remove(filePath)
+      const result = await window.mya.agents.remove(filePath)
       if (result.ok) {
         if (selection?.target.kind === 'edit' && selection.target.filePath === filePath) {
           closeForm()
